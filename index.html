@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Star Academy Classroom Café POS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-circle">⭐</div>
+        <div class="sidebar-logo-text">
+          <div class="sidebar-logo-main">Star Academy</div>
+          <div class="sidebar-logo-sub">Classroom Café</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item nav-item-active" data-target="pos">
+          <span class="nav-icon">💳</span>
+          <span>POS</span>
+        </button>
+        <button class="nav-item" data-target="barista">
+          <span class="nav-icon">☕</span>
+          <span>Barista View</span>
+        </button>
+        <button class="nav-item" data-target="menu">
+          <span class="nav-icon">📋</span>
+          <span>Menu</span>
+        </button>
+        <button class="nav-item" data-target="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-target="inventory">
+          <span class="nav-icon">📦</span>
+          <span>Inventory</span>
+        </button>
+        <button class="nav-item" data-target="time">
+          <span class="nav-icon">⏱️</span>
+          <span>Time Tracking</span>
+        </button>
+        <button class="nav-item" data-target="products">
+          <span class="nav-icon">🧾</span>
+          <span>Products</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-tag">Training Mode Only</div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+
+      <!-- POS VIEW -->
+      <section id="pos" class="view view-active">
+        <header class="view-header">
+          <h1>Point of Sale</h1>
+        </header>
+
+        <div class="pos-layout">
+          <!-- Left: products -->
+          <div class="pos-products">
+            <div id="categoryTabs" class="category-tabs"></div>
+
+            <div id="productGrid" class="product-grid">
+              <!-- product cards rendered in JS -->
+            </div>
+          </div>
+
+          <!-- Right: current order -->
+          <aside class="pos-order">
+            <header class="pos-order-header">
+              <div>
+                <h2>Current Order</h2>
+                <div id="orderItemCount" class="pos-order-subtitle">0 items</div>
+              </div>
+            </header>
+
+            <div id="orderItems" class="order-items empty">
+              <p class="order-empty-text">No items yet<br/><span>Tap a product to add it</span></p>
+            </div>
+
+            <div class="order-summary">
+              <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="orderSubtotal">$0.00</span>
+              </div>
+              <div class="summary-row">
+                <span>Tax (8.5%)</span>
+                <span id="orderTax">$0.00</span>
+              </div>
+              <div class="summary-row summary-row-total">
+                <span>Total</span>
+                <span id="orderTotal">$0.00</span>
+              </div>
+
+              <div class="pos-buttons">
+                <button id="cashPaymentBtn" class="btn btn-primary">Cash Payment</button>
+                <button id="cardPracticeBtn" class="btn btn-secondary">
+                  Card Practice
+                </button>
+                <button id="trainingOrderBtn" class="btn btn-ghost">
+                  Training Order (no stock change)
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- BARISTA VIEW -->
+      <section id="barista" class="view">
+        <header class="view-header">
+          <h1>Barista View</h1>
+          <p class="view-subtitle">Prepare orders as they come in.</p>
+        </header>
+
+        <div id="baristaOrders" class="barista-orders">
+          <!-- orders rendered in JS -->
+        </div>
+      </section>
+
+      <!-- MENU (customer-facing board) -->
+      <section id="menu" class="view">
+        <header class="view-header menu-header">
+          <button class="back-btn" data-target="pos">← Back to POS</button>
+        </header>
+        <div id="menuContent" class="menu-content">
+          <!-- built by renderMenu() -->
+        </div>
+      </section>
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="view">
+        <header class="view-header">
+          <h1>Dashboard</h1>
+        </header>
+
+        <div class="dashboard-grid">
+          <div class="stat-card stat-blue">
+            <div class="stat-label">Total Revenue</div>
+            <div id="dashTotalRevenue" class="stat-value">$0.00</div>
+            <div class="stat-sub">All non-training orders</div>
+          </div>
+          <div class="stat-card stat-green">
+            <div class="stat-label">Total Orders</div>
+            <div id="dashTotalOrders" class="stat-value">0</div>
+            <div class="stat-sub">All non-training orders</div>
+          </div>
+          <div class="stat-card stat-purple">
+            <div class="stat-label">Average Sale</div>
+            <div id="dashAvgSale" class="stat-value">$0.00</div>
+            <div class="stat-sub">Per order</div>
+          </div>
+          <div class="stat-card stat-orange">
+            <div class="stat-label">Training Orders</div>
+            <div id="dashTrainingOrders" class="stat-value">0</div>
+            <div class="stat-sub">Practice only</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INVENTORY -->
+      <section id="inventory" class="view">
+        <header class="view-header">
+          <h1>Inventory</h1>
+          <p class="view-subtitle">Track stock for each menu item.</p>
+        </header>
+
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TIME TRACKING -->
+      <section id="time" class="view">
+        <header class="view-header">
+          <h1>Employee Time Tracking</h1>
+          <p class="view-subtitle">Clock in and out for practice shifts.</p>
+        </header>
+
+        <div class="time-layout">
+          <div class="time-panel">
+            <label class="field-label" for="timeEmployeeName">Your Name</label>
+            <input id="timeEmployeeName" class="field-input" type="text" placeholder="Enter your name" />
+            <div class="time-buttons">
+              <button id="clockInBtn" class="btn btn-primary">Clock In</button>
+              <button id="clockOutBtn" class="btn btn-secondary">Clock Out</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Hours</th>
+                </tr>
+              </thead>
+              <tbody id="timeTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCTS (read-only list + quick add) -->
+      <section id="products" class="view">
+        <header class="view-header">
+          <h1>Products</h1>
+          <p class="view-subtitle">Sample data that powers the café.</p>
+        </header>
+
+        <div class="products-layout">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="product-add-panel">
+            <h2>Add New Product</h2>
+            <label class="field-label" for="newProdName">Name</label>
+            <input id="newProdName" class="field-input" type="text" />
+
+            <label class="field-label" for="newProdCategory">Category</label>
+            <input id="newProdCategory" class="field-input" type="text" placeholder="Beverages, Baked Goods..." />
+
+            <label class="field-label" for="newProdPrice">Price</label>
+            <input id="newProdPrice" class="field-input" type="number" step="0.01" />
+
+            <label class="field-label" for="newProdStock">Stock</label>
+            <input id="newProdStock" class="field-input" type="number" />
+
+            <button id="addProductBtn" class="btn btn-primary full-width">Add Product</button>
+            <p class="small-muted">
+              New products will automatically appear in POS, Menu, Inventory, and Products lists.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
