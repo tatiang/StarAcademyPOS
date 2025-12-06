@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.13</title>
+    <title>Star Academy POS v1.14</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -58,7 +58,7 @@
         .nav-links li.active { background-color: rgba(255,255,255,0.1); border-left-color: var(--golden-bronze); color: var(--golden-bronze); }
         .nav-links li i { margin-right: 12px; width: 25px; text-align: center; }
         .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;}
-        .sidebar-version { font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px; color: var(--white); }
+        .sidebar-version { font-size: 0.8rem; opacity: 0.5; margin-bottom: 5px; color: var(--white); display: block;}
 
         .top-bar { background-color: var(--stormy-teal); color: var(--white); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
         .current-cashier-display { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; }
@@ -204,7 +204,7 @@
         <div id="loading-msg">Connecting to Database... <i class="fa-solid fa-spinner fa-spin"></i></div>
         <div class="login-grid hidden" id="login-buttons"></div>
     </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.13</div>
+    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.14</div>
 </div>
 
 <div class="app-wrapper">
@@ -221,7 +221,7 @@
             <li onclick="app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.13</div>
+            <div class="sidebar-version">v1.14</div>
             <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -325,7 +325,7 @@
             <div class="manager-grid">
                 <div class="manager-box" style="border-top-color: var(--barista-purple)">
                     <h3><i class="fa-solid fa-database"></i> Data Management</h3>
-                    <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for Tatian Greenleaf.</p>
+                    <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for IT Support.</p>
                     <button class="btn-pay btn-card" style="width:100%; margin-bottom:10px" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
                     <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Full JSON Backup</button>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -341,7 +341,7 @@
                     <p>IT Admin has full access to Manager functions.</p>
                     <button class="btn-sm" onclick="app.navigate('manager')">Go to Manager Hub</button>
                     <h3 style="margin-top:20px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.13 (Real-Time)</p>
+                    <p><strong>Version:</strong> v1.14 (Real-Time)</p>
                     <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
@@ -475,7 +475,7 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_v113');
+        const stored = localStorage.getItem('starAcademyPOS_v114');
         if (stored) {
             app.data = JSON.parse(stored);
         } else {
@@ -484,7 +484,7 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v113', JSON.stringify(app.data));
+        localStorage.setItem('starAcademyPOS_v114', JSON.stringify(app.data));
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
@@ -505,13 +505,16 @@ const app = {
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "https://images.unsplash.com/photo-1603394630854-e0b62d294e33?w=200" },
             { id: 14, name: "Tap Water", cat: "Beverages", price: 0.00, stock: 100, img: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200" }
         ];
-        // New Login Profiles for v1.13
+        // v1.14: Updated Roster with Generic Manager/IT and new Students
         app.data.employees = [
             {id: 1, name: "Manager", role: "Manager", img: "images/placeholder.png"},
             {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
             {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"},
             {id: 4, name: "Jordan", role: "Inventory", img: "images/placeholder.png"},
-            {id: 5, name: "IT Admin", role: "IT Admin", img: "images/placeholder.png"}
+            {id: 5, name: "Maya", role: "Cashier", img: "images/placeholder.png"},
+            {id: 6, name: "Noah", role: "Barista", img: "images/placeholder.png"},
+            {id: 7, name: "Zoe", role: "Floater", img: "images/placeholder.png"},
+            {id: 8, name: "IT Support", role: "IT Admin", img: "images/placeholder.png"}
         ];
         app.data.orderCounter = 1001;
         app.data.orders = [];
@@ -537,7 +540,7 @@ const app = {
         if(confirm("⚠ DANGER: This will wipe LOCAL storage completely. If you are offline, you lose everything.")) {
             app.requestPin((pin) => {
                 if(pin === "9753") {
-                    localStorage.removeItem('starAcademyPOS_v113');
+                    localStorage.removeItem('starAcademyPOS_v114');
                     location.reload();
                 } else alert("Incorrect PIN");
             });
@@ -799,7 +802,6 @@ const app = {
 
     // --- OTHER VIEWS ---
     renderInventory: () => {
-        // Smart Inventory: If Manager/IT, show full edits. Else, restricted.
         const role = app.getRole();
         const isManager = (role === 'Manager' || role === 'IT Admin');
         
@@ -852,7 +854,16 @@ const app = {
     openEmployeeModal: (isEdit = false) => { document.getElementById('emp-modal-title').innerText = isEdit ? "Edit Employee" : "Add Employee"; if(!isEdit) { app.data.editingId = null; document.getElementById('emp-name').value = ""; document.getElementById('emp-img-url').value = ""; } document.getElementById('modal-employee').classList.add('open'); },
     editEmployee: (id) => { const e = app.data.employees.find(x => x.id === id); app.data.editingId = id; document.getElementById('emp-name').value = e.name; document.getElementById('emp-role').value = e.role; document.getElementById('emp-img-url').value = e.img; app.openEmployeeModal(true); },
     saveEmployee: () => { const n = document.getElementById('emp-name').value; if(!n) return; const r = document.getElementById('emp-role').value; const i = document.getElementById('emp-img-url').value || 'images/placeholder.png'; if(app.data.editingId) { const e = app.data.employees.find(x => x.id === app.data.editingId); e.name=n; e.role=r; e.img=i; } else { app.data.employees.push({id:Date.now(), name:n, role:r, img:i}); } app.saveData(); app.closeModal('modal-employee'); app.renderEmployeesManager(); app.renderLogin(); },
-    deleteEmployee: (id) => { if(confirm("Remove?")) { const pin=prompt("PIN (1234):"); if(pin==="1234") { app.data.employees=app.data.employees.filter(e=>e.id!==id); app.saveData(); app.renderEmployeesManager(); app.renderLogin(); } } },
+    deleteEmployee: (id) => { 
+        if(confirm("Remove?")) { 
+            app.requestPin((pin) => {
+                if(pin==="1234") { 
+                    app.data.employees=app.data.employees.filter(e=>e.id!==id); 
+                    app.saveData(); app.renderEmployeesManager(); app.renderLogin(); 
+                } else alert("Incorrect PIN");
+            });
+        } 
+    },
     
     closeModal: (id) => document.getElementById(id).classList.remove('open')
 };
