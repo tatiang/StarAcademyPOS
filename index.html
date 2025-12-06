@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Star Academy POS v1.09</title>
+    <title>Star Academy POS v1.10 (Real-Time)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -21,7 +21,6 @@
             --success: #27ae60; 
             --barista-purple: #8e44ad;
             --clock-orange: #f39c12;
-            --it-slate: #2c3e50;
             --sidebar-width: 260px;
         }
 
@@ -35,9 +34,7 @@
             #modal-receipt .modal-content { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
             #receipt-content { display: block !important; border: none; padding: 20px; font-family: 'Courier New', Courier, monospace; }
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
         }
-        .print-only { display: none; }
 
         /* LOGIN & LAYOUT */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--space-indigo); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--white); }
@@ -65,7 +62,6 @@
         .current-cashier-display { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; }
         .cashier-avatar { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; border: 2px solid var(--golden-bronze); }
         
-        /* Cloud Status Indicator (Non-Clickable for Students) */
         #cloud-status { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; cursor: default; pointer-events: none; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #ccc; }
         .status-dot.online { background-color: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
@@ -73,13 +69,11 @@
         .status-dot.error { background-color: #e74c3c; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* General Styles */
         .main-content { flex-grow: 1; background-color: var(--bg-app); overflow-y: hidden; position: relative; display: flex; flex-direction: column; }
         .view { display: none; height: 100%; padding: 20px; overflow-y: auto; }
         .view.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Components */
         .pos-layout { display: flex; gap: 20px; height: 100%; }
         .product-section { flex: 2; display: flex; flex-direction: column; overflow: hidden; }
         .category-tabs { display: flex; gap: 10px; padding-bottom: 10px; overflow-x: auto; flex-shrink: 0; }
@@ -189,7 +183,7 @@
     <div class="logo-area" style="border:none;">
         <img src="images/StarAcademyLogo.png" alt="Star Academy" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
         <span class="logo-text" style="display:none; font-size:2rem;">STAR ACADEMY</span>
-        <span class="version-tag" style="color:var(--white); opacity:0.8; font-size:1rem;">v1.09 (Cloud + IT)</span>
+        <span class="version-tag" style="color:var(--white); opacity:0.8; font-size:1rem;">v1.10 (Real-Time)</span>
     </div>
     <div class="login-box">
         <h2>Classroom Café Login</h2>
@@ -203,7 +197,7 @@
         <div class="logo-area">
             <img src="images/StarAcademyLogo_notext.png" alt="Star Academy" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
             <span class="logo-text hidden">STAR ACADEMY</span>
-            <span class="version-tag">v1.09</span>
+            <span class="version-tag">v1.10</span>
         </div>
         <ul class="nav-links">
             <li onclick="app.navigate('pos')" id="nav-pos" class="active"><i class="fa-solid fa-mug-hot"></i> POS</li>
@@ -256,7 +250,7 @@
             </div>
         </section>
 
-        <section id="view-barista" class="view"><h2 style="margin-bottom:20px; color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.loadFromCloud(true)" style="float:right"><i class="fa-solid fa-rotate"></i> Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
+        <section id="view-barista" class="view"><h2 style="margin-bottom:20px; color:var(--space-indigo);">☕ Barista Queue</h2><div class="barista-grid" id="barista-grid"></div></section>
 
         <section id="view-dashboard" class="view">
             <div class="dash-header"><h2>Dashboard</h2><span id="dash-date"></span></div>
@@ -312,10 +306,8 @@
                 <div class="manager-box" style="border-top-color: var(--barista-purple)">
                     <h3><i class="fa-solid fa-database"></i> Data Management</h3>
                     <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for Tatian Greenleaf.</p>
-                    
                     <button class="btn-pay btn-card" style="width:100%; margin-bottom:10px" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
                     <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Full JSON Backup</button>
-                    
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                         <button class="btn-pay btn-gold" onclick="app.exportBugReports()">Export Logs CSV</button>
                         <button class="btn-pay btn-gold" onclick="app.printBugReports()">Print Logs</button>
@@ -328,10 +320,9 @@
                     <h3>Manager Tools Access</h3>
                     <p>IT Admin has full access to Manager functions.</p>
                     <button class="btn-sm" onclick="app.navigate('manager')">Go to Manager Hub</button>
-                    
                     <h3 style="margin-top:20px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.09</p>
-                    <p><strong>DB Connection:</strong> <span id="it-db-status">Unknown</span></p>
+                    <p><strong>Version:</strong> v1.10 (Real-Time)</p>
+                    <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
         </section>
@@ -347,7 +338,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
@@ -363,6 +354,9 @@
     const db = getFirestore(fbApp);
     const docRef = doc(db, "stores", "classroom_cafe_main");
 
+    // Real-Time Listener (onSnapshot)
+    let unsubscribe = null;
+
     window.saveToCloud = async (data, silent = false) => {
         const dot = document.getElementById('status-dot');
         if (!silent) dot.className = 'status-dot syncing';
@@ -375,34 +369,39 @@
         }
     };
 
-    window.loadFromCloud = async (manual = false) => {
+    window.loadFromCloud = (manual = false) => {
         const dot = document.getElementById('status-dot');
         const itStatus = document.getElementById('it-db-status');
         if (manual) dot.className = 'status-dot syncing';
-        try {
-            const snap = await getDoc(docRef);
-            if (snap.exists()) {
-                console.log("Cloud data found");
-                app.data = snap.data();
-                app.refreshUI();
-            }
-            if (manual) setTimeout(() => dot.className = 'status-dot online', 500);
-            if (itStatus) itStatus.innerText = "Connected (Read/Write OK)";
-            const overlay = document.getElementById('login-overlay');
-            if(overlay.style.display !== 'none') {
-                document.getElementById('loading-msg').style.display = 'none';
+
+        // Set up listener if not already active
+        if (!unsubscribe) {
+            unsubscribe = onSnapshot(docRef, (doc) => {
+                if (doc.exists()) {
+                    console.log("Real-time update received!");
+                    app.data = doc.data();
+                    app.refreshUI();
+                    if(document.getElementById('loading-msg')) {
+                        document.getElementById('loading-msg').style.display = 'none';
+                        document.getElementById('login-buttons').classList.remove('hidden');
+                        app.renderLogin();
+                    }
+                    dot.className = 'status-dot online';
+                    if (itStatus) itStatus.innerText = "Connected (Real-Time Listening)";
+                }
+            }, (error) => {
+                console.error("Listen Error", error);
+                dot.className = 'status-dot error';
+                if (itStatus) itStatus.innerText = "Error (Check Console)";
+                // Fallback to local if Cloud fails
+                document.getElementById('loading-msg').innerHTML = "Offline Mode (Local Data Only)";
                 document.getElementById('login-buttons').classList.remove('hidden');
                 app.renderLogin();
-            }
-        } catch (e) {
-            console.error("Load Error", e);
-            if (manual) dot.className = 'status-dot error';
-            if (itStatus) itStatus.innerText = "Error (Check Console)";
-            document.getElementById('loading-msg').innerHTML = "Offline Mode (Local Data Only)";
-            document.getElementById('login-buttons').classList.remove('hidden'); 
-            app.renderLogin();
+            });
         }
     };
+    
+    // Start listening immediately
     window.loadFromCloud();
 </script>
 
@@ -443,7 +442,7 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_v109');
+        const stored = localStorage.getItem('starAcademyPOS_v110');
         if (stored) {
             app.data = JSON.parse(stored);
         } else {
@@ -452,8 +451,8 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v109', JSON.stringify(app.data));
-        if(window.saveToCloud) window.saveToCloud(app.data);
+        localStorage.setItem('starAcademyPOS_v110', JSON.stringify(app.data));
+        if(window.saveToCloud) window.saveToCloud(app.data, true); // Silent save since listener will catch update
     },
 
     seedData: () => {
@@ -502,7 +501,7 @@ const app = {
     nuclearReset: () => {
         if(confirm("⚠ DANGER: This will wipe LOCAL storage completely. If you are offline, you lose everything.")) {
             if(prompt("Confirm IT PIN:") === "9753") {
-                localStorage.removeItem('starAcademyPOS_v109');
+                localStorage.removeItem('starAcademyPOS_v110');
                 location.reload();
             }
         }
