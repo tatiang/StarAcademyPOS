@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.14</title>
+    <title>Star Academy POS v1.15</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -204,7 +204,6 @@
         <div id="loading-msg">Connecting to Database... <i class="fa-solid fa-spinner fa-spin"></i></div>
         <div class="login-grid hidden" id="login-buttons"></div>
     </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.14</div>
 </div>
 
 <div class="app-wrapper">
@@ -221,7 +220,7 @@
             <li onclick="app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.14</div>
+            <div class="sidebar-version">v1.15</div>
             <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -242,6 +241,7 @@
             </div>
         </header>
 
+        <!-- POS -->
         <section id="view-pos" class="view active">
             <div class="pos-layout">
                 <div class="product-section">
@@ -265,8 +265,10 @@
             </div>
         </section>
 
+        <!-- BARISTA -->
         <section id="view-barista" class="view"><h2 style="margin-bottom:20px; color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.loadFromCloud(true)" style="float:right"><i class="fa-solid fa-rotate"></i> Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
 
+        <!-- DASHBOARD -->
         <section id="view-dashboard" class="view">
             <div class="dash-header"><h2>Dashboard</h2><span id="dash-date"></span></div>
             <div class="stat-cards">
@@ -277,13 +279,16 @@
             <div class="recent-orders"><div class="ro-header">Recent Orders</div><table><thead><tr><th>Order #</th><th>Time</th><th>Customer</th><th>Cashier</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashboard-orders-body"></tbody></table></div>
         </section>
 
+        <!-- INVENTORY (SMART) -->
         <section id="view-inventory" class="view">
             <div class="dash-header">
                 <h2>Inventory</h2>
-                <div id="inventory-actions"></div> </div>
+                <div id="inventory-actions"></div> <!-- JS injects buttons here if Manager -->
+            </div>
             <div class="recent-orders"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventory-body"></tbody></table></div>
         </section>
 
+        <!-- TIME -->
         <section id="view-time" class="view">
             <div class="clock-header"><div class="clock-time" id="big-clock">12:00:00 PM</div><div class="clock-date" id="big-date">Monday, January 1</div></div>
             <div class="clock-controls"><select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select><button class="btn-clock" style="background:var(--success)" onclick="app.clockIn()">Clock In</button><button class="btn-clock" style="background:var(--danger)" onclick="app.clockOut()">Clock Out</button></div>
@@ -296,6 +301,7 @@
              <div class="recent-orders" style="margin-top:20px;"><h4>Recent Entries</h4><table><thead><tr><th>Name</th><th>Clock In</th><th>Clock Out</th><th>Hours</th></tr></thead><tbody id="time-entries-body"></tbody></table></div>
         </section>
 
+        <!-- MANAGER HUB -->
         <section id="view-manager" class="view">
             <div class="dash-header"><h2><i class="fa-solid fa-lock"></i> Manager Hub</h2><div class="no-print"><button class="btn-sm" onclick="app.downloadFullBackup()" style="margin-right:10px;">💾 Backup</button><button class="btn-sm" style="margin-right:10px;" onclick="window.loadFromCloud(true)">Sync Check</button><button class="btn-sm" style="background:var(--danger);" onclick="app.navigate('pos')">Exit</button></div></div>
             <div class="manager-box" style="margin-bottom: 20px; border-color: var(--danger); background: #fff5f5;">
@@ -317,6 +323,7 @@
             </div>
         </section>
 
+        <!-- IT HUB -->
         <section id="view-it" class="view">
             <div class="dash-header">
                 <h2 style="color:var(--space-indigo)"><i class="fa-solid fa-microchip"></i> IT Administration</h2>
@@ -341,7 +348,7 @@
                     <p>IT Admin has full access to Manager functions.</p>
                     <button class="btn-sm" onclick="app.navigate('manager')">Go to Manager Hub</button>
                     <h3 style="margin-top:20px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.14 (Real-Time)</p>
+                    <p><strong>Version:</strong> v1.15 (Real-Time)</p>
                     <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
@@ -349,6 +356,7 @@
     </div>
 </div>
 
+<!-- MODALS -->
 <div id="modal-pin" class="modal">
     <div class="modal-content" style="width:300px;">
         <h3>Enter Access PIN</h3>
@@ -371,6 +379,7 @@
 <div id="modal-product" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="prod-modal-title">Add/Edit Product</h3><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div><div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div><div class="form-group"><label>Category</label><select id="prod-cat" class="form-control"><option>Beverages</option><option>Baked Goods</option><option>Snacks</option></select></div><div class="form-group"><label>Price</label><input type="number" id="prod-price" class="form-control" step="0.25"></div><div class="form-group"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div><div class="form-group"><label>Image URL</label><input type="text" id="prod-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="prod-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'prod-img-url')"><button class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">AI Gen</button></div></div><div><label style="font-weight:600; color:var(--space-indigo);">Product Options</label><div id="prod-options-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div><button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button></div></div><div style="display:flex; gap:10px; margin-top: 20px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button></div></div></div>
 <div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Cashier</option><option>Barista</option><option>Inventory</option><option>Manager</option><option>IT Admin</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button></div></div></div>
 
+<!-- FIREBASE SDK -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -475,7 +484,7 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_v114');
+        const stored = localStorage.getItem('starAcademyPOS_v115');
         if (stored) {
             app.data = JSON.parse(stored);
         } else {
@@ -484,7 +493,7 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v114', JSON.stringify(app.data));
+        localStorage.setItem('starAcademyPOS_v115', JSON.stringify(app.data));
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
@@ -495,17 +504,17 @@ const app = {
             { id: 3, name: "Black Tea", cat: "Beverages", price: 3.25, stock: 40, img: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
             { id: 4, name: "Iced Tea", cat: "Beverages", price: 3.75, stock: 35, img: "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=200", options: [{ name: "Ice Level", type: "radio", choices: [{name:"No Ice"}, {name:"Low Ice"}, {name:"Extra Ice"}] }] },
             { id: 5, name: "Hot Chocolate", cat: "Beverages", price: 4.00, stock: 30, img: "https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }, { name: "Topping", type: "toggle", choice: {name:"Whipped Cream"} }] },
-            { id: 6, name: "Hot Cider", cat: "Beverages", price: 3.75, stock: 30, img: "https://images.unsplash.com/photo-1579619563346-63304eb4098c?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
-            { id: 7, name: "Latte", cat: "Beverages", price: 4.50, stock: 40, img: "https://images.unsplash.com/photo-1570968992193-96ab70c74baa?w=200", options: [{ name: "Syrup", type: "select", choices: [{name:"Plain"}, {name:"Vanilla"}, {name:"Hazelnut"}] }, { name: "Temp", type: "toggle", choice: {name:"Not too hot"} }, { name: "Topping", type: "toggle", choice: {name:"Whipped Cream"} }] },
+            { id: 6, name: "Hot Cider", cat: "Beverages", price: 3.75, stock: 30, img: "https://via.placeholder.com/150?text=Cider", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
+            { id: 7, name: "Latte", cat: "Beverages", price: 4.50, stock: 40, img: "https://via.placeholder.com/150?text=Latte", options: [{ name: "Syrup", type: "select", choices: [{name:"Plain"}, {name:"Vanilla"}, {name:"Hazelnut"}] }, { name: "Temp", type: "toggle", choice: {name:"Not too hot"} }, { name: "Topping", type: "toggle", choice: {name:"Whipped Cream"} }] },
             { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "images/muffin.jpg" },
             { id: 9, name: "Chocolate Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=200" },
             { id: 10, name: "Choc Chip Cookie", cat: "Baked Goods", price: 2.50, stock: 30, img: "https://images.unsplash.com/photo-1499636138143-bd630f5cf38a?w=200" },
-            { id: 11, name: "Biscotti", cat: "Baked Goods", price: 2.00, stock: 25, img: "https://images.unsplash.com/photo-1599709252327-023a07a2267b?w=200" },
-            { id: 12, name: "Plain Bagel", cat: "Baked Goods", price: 3.00, stock: 15, img: "https://images.unsplash.com/photo-1585476632646-9b932c029bf7?w=200", options: [{ name: "Prep", type: "toggle", choice: {name:"Toasted"} }, { name: "Add-on", type: "toggle", choice: {name:"Cream Cheese", price: 1.00} }] },
+            { id: 11, name: "Biscotti", cat: "Baked Goods", price: 2.00, stock: 25, img: "https://via.placeholder.com/150?text=Biscotti" },
+            { id: 12, name: "Plain Bagel", cat: "Baked Goods", price: 3.00, stock: 15, img: "https://via.placeholder.com/150?text=Bagel", options: [{ name: "Prep", type: "toggle", choice: {name:"Toasted"} }, { name: "Add-on", type: "toggle", choice: {name:"Cream Cheese", price: 1.00} }] },
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "https://images.unsplash.com/photo-1603394630854-e0b62d294e33?w=200" },
             { id: 14, name: "Tap Water", cat: "Beverages", price: 0.00, stock: 100, img: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200" }
         ];
-        // v1.14: Updated Roster with Generic Manager/IT and new Students
+        // v1.15: Updated Roster
         app.data.employees = [
             {id: 1, name: "Manager", role: "Manager", img: "images/placeholder.png"},
             {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
@@ -540,7 +549,7 @@ const app = {
         if(confirm("⚠ DANGER: This will wipe LOCAL storage completely. If you are offline, you lose everything.")) {
             app.requestPin((pin) => {
                 if(pin === "9753") {
-                    localStorage.removeItem('starAcademyPOS_v114');
+                    localStorage.removeItem('starAcademyPOS_v115');
                     location.reload();
                 } else alert("Incorrect PIN");
             });
