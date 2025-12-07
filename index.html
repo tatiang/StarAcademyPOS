@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.21</title>
+    <title>Star Academy POS v1.23</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -23,6 +23,7 @@
             --success: #27ae60; 
             --barista-purple: #8e44ad;
             --clock-orange: #f39c12;
+            --it-slate: #34495e;
             --sidebar-width: 260px;
         }
 
@@ -38,22 +39,70 @@
             .no-print { display: none !important; }
         }
 
-        /* LOGIN & LAYOUT */
+        /* LOGIN OVERLAY */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--space-indigo); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--white); }
-        .login-box { background: var(--white); padding: 40px; border-radius: 12px; text-align: center; width: 90%; max-width: 800px; color: var(--text-dark); box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-top: 6px solid var(--golden-bronze); position: relative; max-height: 90vh; overflow-y: auto; }
         
-        /* Unified Login Grid */
-        .login-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 25px; margin-top: 30px; margin-bottom: 30px; }
+        .login-box { 
+            background: var(--white); 
+            padding: 40px; 
+            border-radius: 12px; 
+            text-align: center; 
+            width: 90%; 
+            max-width: 850px; 
+            color: var(--text-dark); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            border-top: 8px solid var(--golden-bronze); 
+            position: relative; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
+
+        /* Student Grid */
+        .login-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            gap: 25px; 
+            margin-top: 30px; 
+            margin-bottom: 30px; 
+        }
         .login-btn-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
         .login-btn-wrap:hover { transform: scale(1.05); }
-        .login-btn-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid var(--golden-bronze); margin-bottom: 10px; background: #eee; }
-        .login-btn-name { font-weight: 700; color: var(--space-indigo); font-size: 1.1rem; }
-        
-        /* Admin Section Styling */
-        .admin-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; display: flex; justify-content: center; gap: 30px; }
-        .admin-account .login-btn-img { border-color: var(--space-indigo); border-width: 3px; background-color: #f0f4f8; }
-        .admin-account .login-btn-name { color: #555; }
-        .admin-label { font-size: 0.9rem; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: bold; }
+        .login-btn-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid var(--golden-bronze); margin-bottom: 10px; background: #eee; }
+        .login-btn-name { font-weight: 700; color: var(--space-indigo); font-size: 1.2rem; }
+
+        /* Administration Divider */
+        .admin-divider {
+            display: flex; 
+            align-items: center; 
+            text-align: center; 
+            margin: 30px 0 20px 0; 
+            color: #999; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        .admin-divider::before, .admin-divider::after {
+            content: ''; flex: 1; border-bottom: 1px solid #ddd;
+        }
+        .admin-divider span { padding: 0 15px; }
+
+        /* Admin Buttons */
+        .admin-buttons-row {
+            display: flex; justify-content: center; gap: 20px;
+        }
+        .admin-login-btn {
+            background: #f8f9fa; border: 2px solid #e9ecef;
+            padding: 12px 25px; border-radius: 50px;
+            font-weight: 700; color: var(--space-indigo);
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1rem;
+        }
+        .admin-login-btn:hover {
+            background: var(--space-indigo); color: white; border-color: var(--space-indigo);
+            transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
 
         /* LAYOUT */
         .app-wrapper { display: flex; flex: 1; height: 100%; overflow: hidden; }
@@ -85,7 +134,7 @@
         .view.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Components */
+        /* POS UI */
         .pos-layout { display: flex; gap: 20px; height: 100%; }
         .product-section { flex: 2; display: flex; flex-direction: column; overflow: hidden; }
         .category-tabs { display: flex; gap: 10px; padding-bottom: 10px; overflow-x: auto; flex-shrink: 0; }
@@ -161,12 +210,16 @@
         .active-workers { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         .worker-pill { background: #d4edda; color: #155724; padding: 8px 15px; border-radius: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; border: 1px solid #c3e6cb;}
 
+        /* IT HUB SPECIFIC STYLES */
         .manager-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        .manager-box { background: white; padding: 20px; border-radius: 10px; height: 100%; border-top: 4px solid var(--golden-bronze); }
+        .manager-box { background: white; padding: 20px; border-radius: 10px; height: 100%; border-top: 4px solid var(--golden-bronze); position: relative;}
+        .it-left-panel { border-top-color: #8e44ad; } /* Barista Purple */
+        .it-right-panel { border-top-color: var(--golden-bronze); }
+        
         .bug-form textarea { width: 100%; height: 80px; resize: vertical; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
 
-        /* MODALS (Z-Index increased to 99999 to sit ABOVE Login Overlay) */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 39, 65, 0.9); z-index: 99999; display: none; justify-content: center; align-items: center; }
+        /* MODALS (Z-Index increased to 100000 to sit ABOVE Login Overlay) */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 39, 65, 0.9); z-index: 100000; display: none; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
         .modal-content { background: var(--white); padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         
@@ -211,26 +264,17 @@
         <span class="logo-text" style="display:none; font-size:2rem;">STAR ACADEMY</span>
     </div>
     <div class="login-box">
-        <h2>Classroom Café Login</h2>
+        <h2 style="margin-bottom:10px;">Classroom Café Login</h2>
         <div id="loading-msg">Connecting to Database... <i class="fa-solid fa-spinner fa-spin"></i></div>
         
-        <div class="login-grid hidden" id="login-buttons"></div>
+        <div class="login-grid hidden" id="student-login-grid"></div>
         
-        <div id="admin-login-section" class="hidden">
-            <div class="admin-label">Administration</div>
-            <div class="admin-section">
-                <div class="login-btn-wrap admin-account" onclick="app.login('Manager')">
-                    <img src="images/placeholder.png" class="login-btn-img">
-                    <span class="login-btn-name">Manager</span>
-                </div>
-                <div class="login-btn-wrap admin-account" onclick="app.login('IT Support')">
-                    <img src="images/placeholder.png" class="login-btn-img" style="border-color:var(--danger)">
-                    <span class="login-btn-name">IT Support</span>
-                </div>
+        <div id="admin-divider" class="admin-divider hidden"><span>Administration</span></div>
+        
+        <div id="admin-login-buttons" class="admin-buttons-row hidden">
             </div>
-        </div>
     </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.21</div>
+    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.23</div>
 </div>
 
 <div class="app-wrapper">
@@ -245,9 +289,12 @@
             <li onclick="app.navigate('dashboard')" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
             <li onclick="app.navigate('inventory')" id="nav-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
             <li onclick="app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
+            
+            <li onclick="app.navigate('manager')" id="nav-manager" class="hidden"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
+            <li onclick="app.navigate('it')" id="nav-it" class="hidden"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.21</div>
+            <div class="sidebar-version">v1.23</div>
             <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -323,7 +370,7 @@
         </section>
 
         <section id="view-manager" class="view">
-            <div class="dash-header"><h2><i class="fa-solid fa-lock"></i> Manager Hub</h2><div class="no-print"><button class="btn-sm" onclick="app.downloadFullBackup()" style="margin-right:10px;">💾 Backup</button><button class="btn-sm" style="margin-right:10px;" onclick="window.loadFromCloud(true)">Sync Check</button><button class="btn-sm" style="background:var(--danger);" onclick="app.navigate('pos')">Exit</button></div></div>
+            <div class="dash-header"><h2><i class="fa-solid fa-lock"></i> Manager Hub</h2><div class="no-print"><button class="btn-sm" onclick="app.downloadFullBackup()" style="margin-right:10px;">💾 Backup</button><button class="btn-sm" style="margin-right:10px;" onclick="window.loadFromCloud(true)">Sync Check</button></div></div>
             <div class="manager-box" style="margin-bottom: 20px; border-color: var(--danger); background: #fff5f5;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div><h3 style="color:var(--danger); margin-bottom:5px;">⚠ "Go Live" - Day 1 Reset</h3><p style="font-size:0.9rem; color:#555;">Clear all practice data (Orders, Time Logs) but keep Employees and Menu.</p></div>
@@ -349,25 +396,30 @@
                 <button class="btn-sm" style="background:var(--danger);" onclick="app.navigate('pos')">Exit</button>
             </div>
             <div class="manager-grid">
-                <div class="manager-box" style="border-top-color: var(--barista-purple)">
+                <div class="manager-box it-left-panel">
                     <h3><i class="fa-solid fa-database"></i> Data Management</h3>
                     <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for IT Support.</p>
+                    
                     <button class="btn-pay btn-card" style="width:100%; margin-bottom:10px" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
                     <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Full JSON Backup</button>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
                         <button class="btn-pay btn-gold" onclick="app.exportBugReports()">Export Logs CSV</button>
                         <button class="btn-pay btn-gold" onclick="app.printBugReports()">Print Logs</button>
                     </div>
+                    
                     <hr style="margin:20px 0;">
-                    <h4 style="color:var(--danger)">Danger Zone</h4>
-                    <button class="btn-pay" style="background:var(--danger); width:100%" onclick="app.nuclearReset()">☢️ WIPE LOCAL STORAGE</button>
+                    <h4 style="color:var(--danger); font-weight: bold;">Danger Zone</h4>
+                    <button class="btn-pay" style="background:var(--danger); width:100%" onclick="app.nuclearReset()"><i class="fa-solid fa-radiation"></i> WIPE LOCAL STORAGE</button>
                 </div>
-                <div class="manager-box">
+                
+                <div class="manager-box it-right-panel">
                     <h3>Manager Tools Access</h3>
                     <p>IT Admin has full access to Manager functions.</p>
-                    <button class="btn-sm" onclick="app.navigate('manager')">Go to Manager Hub</button>
-                    <h3 style="margin-top:20px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.21 (Real-Time)</p>
+                    <button class="btn-sm" style="font-size:1rem; padding:10px 20px; background: var(--stormy-teal);" onclick="app.navigate('manager')">Go to Manager Hub</button>
+                    
+                    <h3 style="margin-top:30px;">System Status</h3>
+                    <p><strong>Version:</strong> v1.23 (Real-Time)</p>
                     <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
@@ -435,40 +487,29 @@
         if (manual) dot.className = 'status-dot syncing';
 
         if (!unsubscribe) {
-            // Anti-hang safety timeout: If Firebase doesn't respond in 3s, force UI to show
-            const safetyTimeout = setTimeout(() => {
-                if(document.getElementById('loading-msg') && document.getElementById('loading-msg').style.display !== 'none') {
-                    console.warn("Cloud timeout - forcing local load");
-                    document.getElementById('loading-msg').style.display = 'none';
-                    document.getElementById('login-buttons').classList.remove('hidden');
-                    document.getElementById('admin-login-section').classList.remove('hidden');
-                    app.renderLogin();
-                }
-            }, 3000);
-
             unsubscribe = onSnapshot(docRef, (doc) => {
-                clearTimeout(safetyTimeout); // Clear safety timer
                 if (doc.exists()) {
                     console.log("Real-time update received!");
                     app.data = doc.data();
                     app.refreshUI();
                     if(document.getElementById('loading-msg')) {
                         document.getElementById('loading-msg').style.display = 'none';
-                        document.getElementById('login-buttons').classList.remove('hidden');
-                        document.getElementById('admin-login-section').classList.remove('hidden');
+                        document.getElementById('student-login-grid').classList.remove('hidden');
+                        document.getElementById('admin-divider').classList.remove('hidden');
+                        document.getElementById('admin-login-buttons').classList.remove('hidden');
                         app.renderLogin();
                     }
                     dot.className = 'status-dot online';
                     if (itStatus) itStatus.innerText = "Connected (Real-Time Listening)";
                 }
             }, (error) => {
-                clearTimeout(safetyTimeout);
                 console.error("Listen Error", error);
                 dot.className = 'status-dot error';
                 if (itStatus) itStatus.innerText = "Error (Check Console)";
                 document.getElementById('loading-msg').innerHTML = "Offline Mode (Local Data Only)";
-                document.getElementById('login-buttons').classList.remove('hidden');
-                document.getElementById('admin-login-section').classList.remove('hidden');
+                document.getElementById('student-login-grid').classList.remove('hidden');
+                document.getElementById('admin-divider').classList.remove('hidden');
+                document.getElementById('admin-login-buttons').classList.remove('hidden');
                 app.renderLogin();
             });
         }
@@ -508,6 +549,9 @@ const app = {
     refreshUI: () => {
         document.getElementById('order-number').innerText = app.data.orderCounter;
         app.renderLogin();
+        // Update Sidebar Logic
+        app.updateSidebar();
+        
         const active = document.querySelector('.view.active').id;
         if(active === 'view-pos') app.renderPOS();
         if(active === 'view-barista') app.renderBarista();
@@ -516,7 +560,7 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_v121');
+        const stored = localStorage.getItem('starAcademyPOS_v123');
         if (stored) {
             app.data = JSON.parse(stored);
         } else {
@@ -525,7 +569,7 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v121', JSON.stringify(app.data));
+        localStorage.setItem('starAcademyPOS_v123', JSON.stringify(app.data));
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
@@ -546,7 +590,8 @@ const app = {
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "https://images.unsplash.com/photo-1603394630854-e0b62d294e33?w=200" },
             { id: 14, name: "Tap Water", cat: "Beverages", price: 0.00, stock: 100, img: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200" }
         ];
-        // v1.21: Complete Roster
+        
+        // v1.23: Final Roster with correct Students (No Tamara, Managers hardcoded in UI)
         app.data.employees = [
             {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
             {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"},
@@ -560,6 +605,24 @@ const app = {
         app.data.timeEntries = [];
         app.data.bugReports = [];
         app.saveData();
+    },
+
+    // --- SIDEBAR VISIBILITY ---
+    updateSidebar: () => {
+        const manLink = document.getElementById('nav-manager');
+        const itLink = document.getElementById('nav-it');
+        
+        if (manLink) manLink.classList.add('hidden');
+        if (itLink) itLink.classList.add('hidden');
+
+        const emp = app.data.employees.find(e => e.name === app.data.currentCashier);
+        // Handle hardcoded admins who aren't in employee list
+        if (app.data.currentCashier === 'Manager') {
+            if (manLink) manLink.classList.remove('hidden');
+        } else if (app.data.currentCashier === 'IT Support') {
+            if (itLink) itLink.classList.remove('hidden');
+            if (manLink) manLink.classList.remove('hidden'); // IT sees Manager too
+        }
     },
 
     // --- GO LIVE RESET ---
@@ -579,7 +642,7 @@ const app = {
         if(confirm("⚠ DANGER: This will wipe LOCAL storage completely. If you are offline, you lose everything.")) {
             app.requestPin((pin) => {
                 if(pin === "9753") {
-                    localStorage.removeItem('starAcademyPOS_v121');
+                    localStorage.removeItem('starAcademyPOS_v123');
                     location.reload();
                 } else alert("Incorrect PIN");
             });
@@ -588,54 +651,72 @@ const app = {
 
     // --- AUTH ---
     renderLogin: () => {
-        const c = document.getElementById('login-buttons');
-        // Render ONLY students in the main grid
-        const students = app.data.employees.filter(e => e.role !== 'Manager' && e.role !== 'IT Admin');
-        c.innerHTML = students.map(e => `
+        // Render Students
+        const c = document.getElementById('student-login-grid');
+        c.innerHTML = app.data.employees.map(e => `
             <div class="login-btn-wrap" onclick="app.login('${e.name}')">
                 <img src="${e.img}" class="login-btn-img" onerror="this.src='images/placeholder.png'">
                 <span class="login-btn-name">${e.name}</span>
             </div>
         `).join('');
+        
+        // Render Admin Buttons
+        const adminContainer = document.getElementById('admin-login-buttons');
+        adminContainer.innerHTML = `
+            <button class="admin-login-btn" onclick="app.login('Manager')">
+                <i class="fa-solid fa-user-tie"></i> Manager
+            </button>
+            <button class="admin-login-btn" onclick="app.login('IT Support')">
+                <i class="fa-solid fa-microchip"></i> IT Support
+            </button>
+        `;
     },
     login: (name) => {
-        // 1. Define special accounts explicitly so they work even if DB is empty
-        const specialAccounts = {
-            'Manager': { role: 'Manager', img: 'images/placeholder.png' },
-            'IT Support': { role: 'IT Admin', img: 'images/placeholder.png' }
-        };
-
-        // 2. Look up user
-        let emp = app.data.employees.find(e => e.name === name);
-        // If not in DB, check if it's a special hardcoded account
-        if (!emp && specialAccounts[name]) {
-            emp = { name: name, ...specialAccounts[name] };
+        // Special Handling for Manager and IT Support Buttons
+        if (name === 'Manager') {
+             app.requestPin((pin) => {
+                if (pin === "1234") {
+                    app.completeLogin("Manager", "Manager");
+                } else {
+                    document.getElementById('pin-error').innerText = "Incorrect PIN";
+                }
+            });
+            return;
         }
-
-        if (!emp) {
-            console.error("User not found:", name);
+        if (name === 'IT Support') {
+             app.requestPin((pin) => {
+                if (pin === "9753") {
+                    app.completeLogin("IT Support", "IT Admin");
+                } else {
+                    document.getElementById('pin-error').innerText = "Incorrect PIN";
+                }
+            });
             return;
         }
 
-        // 3. Define success callback
-        const completeLogin = () => {
-            app.data.currentCashier = name;
-            const imgUrl = emp.img || 'images/placeholder.png';
-            document.getElementById('header-cashier').innerHTML = `<img src="${imgUrl}" class="cashier-avatar" onerror="this.src='images/placeholder.png'"> ${name}`;
-            document.getElementById('login-overlay').style.display = 'none';
-            if (emp.role === 'Manager' || emp.role === 'IT Admin') app.navigate('manager');
-            else app.navigate('pos');
-        };
-
-        // 4. Check permissions
-        if (emp.role === 'Manager' || emp.role === 'IT Admin') {
-            const requiredPin = (emp.role === 'IT Admin') ? '9753' : '1234';
-            app.requestPin((enteredPin) => {
-                if (enteredPin === requiredPin) completeLogin();
-                else alert("Incorrect PIN");
-            });
+        // Student Login
+        const emp = app.data.employees.find(e => e.name === name);
+        if (emp) {
+            app.completeLogin(emp.name, emp.role);
+        }
+    },
+    completeLogin: (name, role) => {
+        app.data.currentCashier = name;
+        // Find image or use default
+        let imgUrl = 'images/placeholder.png';
+        const emp = app.data.employees.find(e => e.name === name);
+        if (emp) imgUrl = emp.img;
+        
+        document.getElementById('header-cashier').innerHTML = `<img src="${imgUrl}" class="cashier-avatar" onerror="this.src='images/placeholder.png'"> ${name}`;
+        document.getElementById('login-overlay').style.display = 'none';
+        app.updateSidebar();
+        
+        // Direct managers to dashboard, students to POS
+        if (role === 'Manager' || role === 'IT Admin') {
+            if (role === 'IT Admin') app.navigate('it');
+            else app.navigate('manager');
         } else {
-            completeLogin();
+            app.navigate('pos');
         }
     },
     logout: () => {
@@ -669,6 +750,10 @@ const app = {
         document.querySelectorAll('.nav-links li').forEach(e => e.classList.remove('active'));
         const navItem = document.getElementById(`nav-${viewId}`);
         if(navItem) navItem.classList.add('active');
+        // Admin nav handling
+        if(viewId==='manager') { const l=document.getElementById('nav-manager'); if(l) l.classList.add('active'); }
+        if(viewId==='it') { const l=document.getElementById('nav-it'); if(l) l.classList.add('active'); }
+
         document.getElementById(`view-${viewId}`).classList.add('active');
         
         if(viewId === 'pos') app.renderPOS();
@@ -896,6 +981,8 @@ const app = {
     },
     getRole: () => {
         const emp = app.data.employees.find(e => e.name === app.data.currentCashier);
+        if (app.data.currentCashier === 'Manager') return 'Manager';
+        if (app.data.currentCashier === 'IT Support') return 'IT Admin';
         return emp ? emp.role : 'Student';
     },
     inventoryEditClick: (id) => {
