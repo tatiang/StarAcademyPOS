@@ -1,0 +1,12 @@
+v1.29
+
+Login screen looks correct
+  • No more connecting to database delays
+Didn't save any of the previous AI-generated item images I had saved in an earlier version
+  • Do these get stored in Firestore Database? 
+    • Seems to work okay now...?
+When adding or changing an item image, especially when generating AI image, it should show a status such as a green/yellow light or "generating..." so you know it's working on it
+  • Add a download button or an upload to GitHub button so I can save generated images
+  • If not GitHub then maybe Cloudinary?
+
+
