@@ -1,5 +1,5 @@
 v1.29 (now the "definitive" version for Gemini)
-
+######
 Login screen looks correct
   • No more connecting to database delays
 Didn't save any of the previous AI-generated item images I had saved in an earlier version
@@ -22,3 +22,7 @@ IT Hub screen
   • Embed TESTING_NOTES from Github's /TESTING_NOTES file
   • Expandable list of current features, known bugs, potential future improvements
 
+
+v1.31
+######
+When I go to https://tatiang.github.io/StarAcademyPOS/index_v1.31.html, it just shows the initial screen with "ADMINISTRATION" but no login buttons.
