@@ -17,4 +17,6 @@ Manager Hub screen
   • Add ability to add/edit/delete employees
   • Other recommended functionality for this screen?
 Can error messages (such as clocking in/out without selecting a student's name) have a different dialog title than "tatiang.github.io says"?
+All times should be in HH:MM format
+
 
