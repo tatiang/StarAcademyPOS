@@ -1,4 +1,4 @@
-v1.29
+v1.29 (now the "definitive" version for Gemini)
 
 Login screen looks correct
   • No more connecting to database delays
@@ -18,5 +18,7 @@ Manager Hub screen
   • Other recommended functionality for this screen?
 Can error messages (such as clocking in/out without selecting a student's name) have a different dialog title than "tatiang.github.io says"?
 All times should be in HH:MM format
-
+IT Hub screen
+  • Embed TESTING_NOTES from Github's /TESTING_NOTES file
+  • Expandable list of current features, known bugs, potential future improvements
 
