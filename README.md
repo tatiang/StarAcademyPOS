@@ -1,1 +1,3 @@
 https://tatiang.github.io/StarAcademyPOS is the public url for index.html in this folder.
+
+https://tatiang.github.io/StarAcademyPOS/index_v1.29.html is the public url (pattern) for a specific version in this folder.
