@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.23</title>
+    <title>Star Academy POS v1.26</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -23,7 +23,6 @@
             --success: #27ae60; 
             --barista-purple: #8e44ad;
             --clock-orange: #f39c12;
-            --it-slate: #34495e;
             --sidebar-width: 260px;
         }
 
@@ -39,7 +38,7 @@
             .no-print { display: none !important; }
         }
 
-        /* LOGIN OVERLAY */
+        /* LOGIN OVERLAY (Z-Index 9000) */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--space-indigo); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--white); }
         
         .login-box { 
@@ -87,22 +86,10 @@
         }
         .admin-divider span { padding: 0 15px; }
 
-        /* Admin Buttons */
-        .admin-buttons-row {
-            display: flex; justify-content: center; gap: 20px;
-        }
-        .admin-login-btn {
-            background: #f8f9fa; border: 2px solid #e9ecef;
-            padding: 12px 25px; border-radius: 50px;
-            font-weight: 700; color: var(--space-indigo);
-            cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; gap: 10px;
-            font-size: 1rem;
-        }
-        .admin-login-btn:hover {
-            background: var(--space-indigo); color: white; border-color: var(--space-indigo);
-            transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+        /* Admin Styling */
+        .login-btn-wrap.admin-account .login-btn-img { border-color: var(--space-indigo); border-width: 5px; background-color: #f0f4f8; }
+        .login-btn-wrap.admin-account .login-btn-name { color: #555; }
+        .login-btn-wrap.role-it .login-btn-img { border-color: var(--danger); }
 
         /* LAYOUT */
         .app-wrapper { display: flex; flex: 1; height: 100%; overflow: hidden; }
@@ -115,6 +102,12 @@
         .nav-links li:hover { background-color: rgba(255,255,255,0.05); }
         .nav-links li.active { background-color: rgba(255,255,255,0.1); border-left-color: var(--golden-bronze); color: var(--golden-bronze); }
         .nav-links li i { margin-right: 12px; width: 25px; text-align: center; }
+        
+        /* Admin Links */
+        .nav-admin-link { border-left-color: transparent !important; color: #aab7c4; }
+        .nav-admin-link.active { color: var(--golden-bronze); border-left-color: var(--golden-bronze) !important; }
+        .nav-admin-link:hover { color: white; }
+
         .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;}
         .sidebar-version { font-size: 0.8rem; opacity: 0.5; margin-bottom: 5px; color: var(--white); display: block;}
 
@@ -134,7 +127,7 @@
         .view.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* POS UI */
+        /* Components */
         .pos-layout { display: flex; gap: 20px; height: 100%; }
         .product-section { flex: 2; display: flex; flex-direction: column; overflow: hidden; }
         .category-tabs { display: flex; gap: 10px; padding-bottom: 10px; overflow-x: auto; flex-shrink: 0; }
@@ -210,12 +203,8 @@
         .active-workers { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         .worker-pill { background: #d4edda; color: #155724; padding: 8px 15px; border-radius: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; border: 1px solid #c3e6cb;}
 
-        /* IT HUB SPECIFIC STYLES */
         .manager-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        .manager-box { background: white; padding: 20px; border-radius: 10px; height: 100%; border-top: 4px solid var(--golden-bronze); position: relative;}
-        .it-left-panel { border-top-color: #8e44ad; } /* Barista Purple */
-        .it-right-panel { border-top-color: var(--golden-bronze); }
-        
+        .manager-box { background: white; padding: 20px; border-radius: 10px; height: 100%; border-top: 4px solid var(--golden-bronze); }
         .bug-form textarea { width: 100%; height: 80px; resize: vertical; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
 
         /* MODALS (Z-Index increased to 100000 to sit ABOVE Login Overlay) */
@@ -264,17 +253,17 @@
         <span class="logo-text" style="display:none; font-size:2rem;">STAR ACADEMY</span>
     </div>
     <div class="login-box">
-        <h2 style="margin-bottom:10px;">Classroom Café Login</h2>
+        <h2>Classroom Café Login</h2>
         <div id="loading-msg">Connecting to Database... <i class="fa-solid fa-spinner fa-spin"></i></div>
         
         <div class="login-grid hidden" id="student-login-grid"></div>
         
         <div id="admin-divider" class="admin-divider hidden"><span>Administration</span></div>
         
-        <div id="admin-login-buttons" class="admin-buttons-row hidden">
+        <div id="admin-login-buttons" class="login-grid hidden">
             </div>
     </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.23</div>
+    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.26</div>
 </div>
 
 <div class="app-wrapper">
@@ -290,11 +279,11 @@
             <li onclick="app.navigate('inventory')" id="nav-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
             <li onclick="app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
             
-            <li onclick="app.navigate('manager')" id="nav-manager" class="hidden"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
-            <li onclick="app.navigate('it')" id="nav-it" class="hidden"><i class="fa-solid fa-microchip"></i> IT Hub</li>
+            <li onclick="app.navigate('manager')" id="nav-manager" class="nav-admin-link hidden"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
+            <li onclick="app.navigate('it')" id="nav-it" class="nav-admin-link hidden"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.23</div>
+            <div class="sidebar-version">v1.26</div>
             <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -370,7 +359,7 @@
         </section>
 
         <section id="view-manager" class="view">
-            <div class="dash-header"><h2><i class="fa-solid fa-lock"></i> Manager Hub</h2><div class="no-print"><button class="btn-sm" onclick="app.downloadFullBackup()" style="margin-right:10px;">💾 Backup</button><button class="btn-sm" style="margin-right:10px;" onclick="window.loadFromCloud(true)">Sync Check</button></div></div>
+            <div class="dash-header"><h2><i class="fa-solid fa-lock"></i> Manager Hub</h2><div class="no-print"><button class="btn-sm" onclick="app.downloadFullBackup()" style="margin-right:10px;">💾 Backup</button><button class="btn-sm" style="margin-right:10px;" onclick="window.loadFromCloud(true)">Sync Check</button><button class="btn-sm" style="background:var(--danger);" onclick="app.navigate('pos')">Exit</button></div></div>
             <div class="manager-box" style="margin-bottom: 20px; border-color: var(--danger); background: #fff5f5;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div><h3 style="color:var(--danger); margin-bottom:5px;">⚠ "Go Live" - Day 1 Reset</h3><p style="font-size:0.9rem; color:#555;">Clear all practice data (Orders, Time Logs) but keep Employees and Menu.</p></div>
@@ -396,30 +385,25 @@
                 <button class="btn-sm" style="background:var(--danger);" onclick="app.navigate('pos')">Exit</button>
             </div>
             <div class="manager-grid">
-                <div class="manager-box it-left-panel">
+                <div class="manager-box" style="border-top-color: var(--barista-purple)">
                     <h3><i class="fa-solid fa-database"></i> Data Management</h3>
                     <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for IT Support.</p>
-                    
                     <button class="btn-pay btn-card" style="width:100%; margin-bottom:10px" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
                     <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Full JSON Backup</button>
-                    
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                         <button class="btn-pay btn-gold" onclick="app.exportBugReports()">Export Logs CSV</button>
                         <button class="btn-pay btn-gold" onclick="app.printBugReports()">Print Logs</button>
                     </div>
-                    
                     <hr style="margin:20px 0;">
-                    <h4 style="color:var(--danger); font-weight: bold;">Danger Zone</h4>
-                    <button class="btn-pay" style="background:var(--danger); width:100%" onclick="app.nuclearReset()"><i class="fa-solid fa-radiation"></i> WIPE LOCAL STORAGE</button>
+                    <h4 style="color:var(--danger)">Danger Zone</h4>
+                    <button class="btn-pay" style="background:var(--danger); width:100%" onclick="app.nuclearReset()">☢️ WIPE LOCAL STORAGE</button>
                 </div>
-                
-                <div class="manager-box it-right-panel">
+                <div class="manager-box">
                     <h3>Manager Tools Access</h3>
                     <p>IT Admin has full access to Manager functions.</p>
-                    <button class="btn-sm" style="font-size:1rem; padding:10px 20px; background: var(--stormy-teal);" onclick="app.navigate('manager')">Go to Manager Hub</button>
-                    
-                    <h3 style="margin-top:30px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.23 (Real-Time)</p>
+                    <button class="btn-sm" onclick="app.navigate('manager')">Go to Manager Hub</button>
+                    <h3 style="margin-top:20px;">System Status</h3>
+                    <p><strong>Version:</strong> v1.26 (Instant Sync)</p>
                     <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
@@ -487,7 +471,20 @@
         if (manual) dot.className = 'status-dot syncing';
 
         if (!unsubscribe) {
+            // Anti-hang safety timeout: If Firebase doesn't respond in 3s, force UI to show
+            const safetyTimeout = setTimeout(() => {
+                if(document.getElementById('loading-msg') && document.getElementById('loading-msg').style.display !== 'none') {
+                    console.warn("Cloud timeout - forcing local load");
+                    document.getElementById('loading-msg').style.display = 'none';
+                    document.getElementById('student-login-grid').classList.remove('hidden');
+                    document.getElementById('admin-divider').classList.remove('hidden');
+                    document.getElementById('admin-login-buttons').classList.remove('hidden');
+                    app.renderLogin();
+                }
+            }, 3000);
+
             unsubscribe = onSnapshot(docRef, (doc) => {
+                clearTimeout(safetyTimeout);
                 if (doc.exists()) {
                     console.log("Real-time update received!");
                     app.data = doc.data();
@@ -503,6 +500,7 @@
                     if (itStatus) itStatus.innerText = "Connected (Real-Time Listening)";
                 }
             }, (error) => {
+                clearTimeout(safetyTimeout);
                 console.error("Listen Error", error);
                 dot.className = 'status-dot error';
                 if (itStatus) itStatus.innerText = "Error (Check Console)";
@@ -560,7 +558,7 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_v123');
+        const stored = localStorage.getItem('starAcademyPOS_v126');
         if (stored) {
             app.data = JSON.parse(stored);
         } else {
@@ -569,7 +567,7 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v123', JSON.stringify(app.data));
+        localStorage.setItem('starAcademyPOS_v126', JSON.stringify(app.data));
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
@@ -591,7 +589,6 @@ const app = {
             { id: 14, name: "Tap Water", cat: "Beverages", price: 0.00, stock: 100, img: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200" }
         ];
         
-        // v1.23: Final Roster with correct Students (No Tamara, Managers hardcoded in UI)
         app.data.employees = [
             {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
             {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"},
@@ -615,13 +612,12 @@ const app = {
         if (manLink) manLink.classList.add('hidden');
         if (itLink) itLink.classList.add('hidden');
 
-        const emp = app.data.employees.find(e => e.name === app.data.currentCashier);
-        // Handle hardcoded admins who aren't in employee list
+        // Handle hardcoded admins
         if (app.data.currentCashier === 'Manager') {
             if (manLink) manLink.classList.remove('hidden');
         } else if (app.data.currentCashier === 'IT Support') {
             if (itLink) itLink.classList.remove('hidden');
-            if (manLink) manLink.classList.remove('hidden'); // IT sees Manager too
+            if (manLink) manLink.classList.remove('hidden'); 
         }
     },
 
@@ -642,7 +638,7 @@ const app = {
         if(confirm("⚠ DANGER: This will wipe LOCAL storage completely. If you are offline, you lose everything.")) {
             app.requestPin((pin) => {
                 if(pin === "9753") {
-                    localStorage.removeItem('starAcademyPOS_v123');
+                    localStorage.removeItem('starAcademyPOS_v126');
                     location.reload();
                 } else alert("Incorrect PIN");
             });
@@ -651,7 +647,7 @@ const app = {
 
     // --- AUTH ---
     renderLogin: () => {
-        // Render Students
+        // Render Students Only
         const c = document.getElementById('student-login-grid');
         c.innerHTML = app.data.employees.map(e => `
             <div class="login-btn-wrap" onclick="app.login('${e.name}')">
@@ -659,16 +655,18 @@ const app = {
                 <span class="login-btn-name">${e.name}</span>
             </div>
         `).join('');
-        
-        // Render Admin Buttons
+
+        // Render Admins
         const adminContainer = document.getElementById('admin-login-buttons');
         adminContainer.innerHTML = `
-            <button class="admin-login-btn" onclick="app.login('Manager')">
-                <i class="fa-solid fa-user-tie"></i> Manager
-            </button>
-            <button class="admin-login-btn" onclick="app.login('IT Support')">
-                <i class="fa-solid fa-microchip"></i> IT Support
-            </button>
+            <div class="login-btn-wrap admin-account" onclick="app.login('Manager')">
+                <img src="images/placeholder.png" class="login-btn-img">
+                <span class="login-btn-name">Manager</span>
+            </div>
+            <div class="login-btn-wrap admin-account role-it" onclick="app.login('IT Support')">
+                <img src="images/placeholder.png" class="login-btn-img">
+                <span class="login-btn-name">IT Support</span>
+            </div>
         `;
     },
     login: (name) => {
@@ -702,7 +700,7 @@ const app = {
     },
     completeLogin: (name, role) => {
         app.data.currentCashier = name;
-        // Find image or use default
+        // Find image
         let imgUrl = 'images/placeholder.png';
         const emp = app.data.employees.find(e => e.name === name);
         if (emp) imgUrl = emp.img;
@@ -712,12 +710,9 @@ const app = {
         app.updateSidebar();
         
         // Direct managers to dashboard, students to POS
-        if (role === 'Manager' || role === 'IT Admin') {
-            if (role === 'IT Admin') app.navigate('it');
-            else app.navigate('manager');
-        } else {
-            app.navigate('pos');
-        }
+        if (role === 'Manager') app.navigate('manager');
+        else if (role === 'IT Admin') app.navigate('it');
+        else app.navigate('pos');
     },
     logout: () => {
         app.data.currentCashier = null;
@@ -749,8 +744,9 @@ const app = {
         document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(e => e.classList.remove('active'));
         const navItem = document.getElementById(`nav-${viewId}`);
+        // Handle Sidebar Links (Admin ones might be hidden, so check if element exists)
         if(navItem) navItem.classList.add('active');
-        // Admin nav handling
+        // Handle Admin links explicitly if needed
         if(viewId==='manager') { const l=document.getElementById('nav-manager'); if(l) l.classList.add('active'); }
         if(viewId==='it') { const l=document.getElementById('nav-it'); if(l) l.classList.add('active'); }
 
@@ -784,7 +780,7 @@ const app = {
     },
     generateAIImage: (nameId, targetId) => {
         const query = document.getElementById(nameId).value || 'coffee';
-        const url = `https://loremflickr.com/200/200/${encodeURIComponent(query)}/all`; 
+        const url = `https://image.pollinations.ai/prompt/delicious ${encodeURIComponent(query)} food photography, professional lighting, photorealistic, 4k?width=300&height=300&nologo=true`; 
         document.getElementById(targetId).value = url;
     },
 
@@ -1005,7 +1001,7 @@ const app = {
     renderProductOptionsUI: () => { const c = document.getElementById('prod-options-list'); c.innerHTML = ''; if(!app.data.tempOptionsList.length) { c.innerHTML='<p style="color:#777">No options.</p>'; return; } app.data.tempOptionsList.forEach((g,i) => { c.innerHTML += `<div><b>${g.name} (${g.type})</b> <button class="btn-sm btn-danger-sm" onclick="app.removeProductOptionGroup(${i})">x</button></div>`; }); },
     addProductOptionUI: () => { const n = prompt("Name:"); if(!n) return; const t = prompt("Type (select/radio/toggle):"); if(['select','radio','toggle'].includes(t)) { app.data.tempOptionsList.push({name:n, type:t, choices:[]}); app.renderProductOptionsUI(); } },
     removeProductOptionGroup: (i) => { app.data.tempOptionsList.splice(i,1); app.renderProductOptionsUI(); },
-    saveProduct: () => { /* Save logic */ app.saveData(); app.closeModal('modal-product'); app.renderProductsManager(); if(document.querySelector('#view-inventory').classList.contains('active')) app.renderInventory(); },
+    saveProduct: () => { /* Save logic */ const name = document.getElementById('prod-name').value; const price = parseFloat(document.getElementById('prod-price').value); const stock = parseInt(document.getElementById('prod-stock').value); const img = document.getElementById('prod-img-url').value; const cat = document.getElementById('prod-cat').value; if (!name || isNaN(price)) return alert("Name/Price required."); const pData = {name, price, stock, img, cat, options: app.data.tempOptionsList}; if(app.data.editingId) { const p = app.data.products.find(x => x.id === app.data.editingId); Object.assign(p, pData); } else { app.data.products.push({id:Date.now(), ...pData}); } app.saveData(); app.closeModal('modal-product'); app.refreshUI(); },
     deleteProduct: (id) => { if(confirm("Delete?")) { app.data.products = app.data.products.filter(p => p.id !== id); app.saveData(); app.renderProductsManager(); if(document.querySelector('#view-inventory').classList.contains('active')) app.renderInventory(); } },
     renderEmployeesManager: () => { document.getElementById('employees-body').innerHTML = app.data.employees.map(e => `<tr><td><img src="${e.img}" class="emp-thumb"></td><td>${e.name}</td><td>${e.role}</td><td><button class="btn-sm" onclick="app.editEmployee(${e.id})">Edit</button> <button class="btn-sm btn-danger-sm" onclick="app.deleteEmployee(${e.id})">X</button></td></tr>`).join(''); },
     openEmployeeModal: (isEdit = false) => { document.getElementById('emp-modal-title').innerText = isEdit ? "Edit Employee" : "Add Employee"; if(!isEdit) { app.data.editingId = null; document.getElementById('emp-name').value = ""; document.getElementById('emp-img-url').value = ""; } document.getElementById('modal-employee').classList.add('open'); },
