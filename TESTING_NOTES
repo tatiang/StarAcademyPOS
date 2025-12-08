@@ -8,5 +8,6 @@ Didn't save any of the previous AI-generated item images I had saved in an earli
 When adding or changing an item image, especially when generating AI image, it should show a status such as a green/yellow light or "generating..." so you know it's working on it
   • Add a download button or an upload to GitHub button so I can save generated images
   • If not GitHub then maybe Cloudinary?
-
+Inventory screen
+  • Add small thumbnail image for each item
 
