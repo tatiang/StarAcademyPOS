@@ -150,13 +150,6 @@
             <div class="manager-grid">
                 <div class="manager-box it-left-panel">
                     <h3><i class="fa-solid fa-database"></i> Data Management</h3>
-                    <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for IT Support.</p>
-                    <button class="btn-pay btn-card" style="width:100%; margin-bottom:10px" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
-                    <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Full JSON Backup</button>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
-                        <button class="btn-pay btn-gold" onclick="app.exportBugReports()">Export Logs CSV</button>
-                        <button class="btn-pay btn-gold" onclick="app.printBugReports()">Print Logs</button>
-                    </div>
                     
                     <div class="github-notes-box">
                         <h4>📄 Latest Testing Notes</h4>
@@ -166,12 +159,18 @@
 
                     <div class="expandable-section">
                         <details>
-                            <summary>Current Features (v1.31)</summary>
+                            <summary>Current Features (v1.30)</summary>
                             <ul>
                                 <li>Real-Time Firestore Sync</li>
-                                <li>Offline-First Login</li>
-                                <li>Instant AI Image Generation</li>
+                                <li>Offline-First Login (No waiting)</li>
+                                <li>AI Image Generation</li>
                                 <li>Manager/IT Hubs</li>
+                            </ul>
+                        </details>
+                        <details>
+                            <summary>Known Bugs</summary>
+                            <ul>
+                                <li>Printing requires pop-up permission.</li>
                             </ul>
                         </details>
                         <details>
@@ -183,16 +182,21 @@
                         </details>
                     </div>
 
+                    <button class="btn-pay btn-card" style="width:100%; margin:10px 0" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
+                    <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Backup JSON</button>
+                    
                     <hr style="margin:20px 0;">
                     <h4 style="color:var(--danger); font-weight: bold;">Danger Zone</h4>
                     <button class="btn-pay" style="background:var(--danger); width:100%" onclick="app.nuclearReset()"><i class="fa-solid fa-radiation"></i> WIPE LOCAL STORAGE</button>
                 </div>
+                
                 <div class="manager-box it-right-panel">
                     <h3>Manager Tools Access</h3>
                     <p>IT Admin has full access to Manager functions.</p>
                     <button class="btn-sm" style="font-size:1rem; padding:10px 20px; background: var(--stormy-teal);" onclick="app.navigate('manager')">Go to Manager Hub</button>
+                    
                     <h3 style="margin-top:30px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.31 (Offline First)</p>
+                    <p><strong>Version:</strong> v1.31</p>
                     <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
