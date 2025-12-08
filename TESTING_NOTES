@@ -10,4 +10,11 @@ When adding or changing an item image, especially when generating AI image, it s
   • If not GitHub then maybe Cloudinary?
 Inventory screen
   • Add small thumbnail image for each item
+  • Items should be sortable by each header
+  • Categories should have emojis or symbols
+Manager Hub screen
+  • Add ability to report bug or feature suggestion
+  • Add ability to add/edit/delete employees
+  • Other recommended functionality for this screen?
+Can error messages (such as clocking in/out without selecting a student's name) have a different dialog title than "tatiang.github.io says"?
 
