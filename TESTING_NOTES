@@ -2,6 +2,9 @@ v1.29 (now the "definitive" version for Gemini)
 ######
 Login screen looks correct
   • No more connecting to database delays
+POS screen
+  • It should sync image urls from Firestore. Right now, it seems like it's not saving them in the app but I do see them in Firestore. It just doesn't retrieve them.
+
 Didn't save any of the previous AI-generated item images I had saved in an earlier version
   • Do these get stored in Firestore Database? 
     • Seems to work okay now...?
@@ -21,6 +24,7 @@ All times should be in HH:MM format
 IT Hub screen
   • Embed TESTING_NOTES from Github's /TESTING_NOTES file
   • Expandable list of current features, known bugs, potential future improvements
+
 
 
 v1.31
