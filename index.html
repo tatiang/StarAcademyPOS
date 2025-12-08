@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.28 #2</title>
+    <title>Star Academy POS v1.29</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="css/style_v1.29.css">
 </head>
 <body>
 
@@ -19,15 +21,16 @@
     </div>
     <div class="login-box">
         <h2>Classroom Café Login</h2>
-        <div id="loading-msg">Connecting to Database... <i class="fa-solid fa-spinner fa-spin"></i></div>
+        <div id="loading-msg" style="color:#888; font-size:0.9rem; margin-bottom:10px; height:20px;"></div>
         
-        <div class="login-grid hidden" id="student-login-grid"></div>
+        <div class="login-grid" id="student-login-grid"></div>
         
-        <div id="admin-divider" class="admin-divider hidden"><span>Administration</span></div>
+        <div id="admin-divider" class="admin-divider"><span>Administration</span></div>
         
-        <div id="admin-login-buttons" class="login-grid hidden"></div>
+        <div id="admin-login-buttons" class="admin-buttons-row">
+            </div>
     </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.28 #2 (Modular Fixed)</div>
+    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.29</div>
 </div>
 
 <div class="app-wrapper">
@@ -47,7 +50,7 @@
             <li onclick="app.navigate('it')" id="nav-it" class="nav-admin-link hidden"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.28</div>
+            <div class="sidebar-version">v1.29</div>
             <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -92,9 +95,35 @@
         </section>
 
         <section id="view-barista" class="view"><h2 style="margin-bottom:20px; color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.loadFromCloud(true)" style="float:right"><i class="fa-solid fa-rotate"></i> Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
-        <section id="view-dashboard" class="view"><div class="dash-header"><h2>Dashboard</h2><span id="dash-date"></span></div><div class="stat-cards"><div class="stat-card"><i class="fa-solid fa-dollar-sign stat-icon"></i><div class="stat-data"><h3>Revenue</h3><p id="stat-revenue">$0.00</p></div></div><div class="stat-card"><i class="fa-solid fa-receipt stat-icon"></i><div class="stat-data"><h3>Orders</h3><p id="stat-orders">0</p></div></div><div class="stat-card"><i class="fa-solid fa-box-open stat-icon" style="color:var(--danger)"></i><div class="stat-data"><h3>Low Stock</h3><p id="stat-low">0</p></div></div></div><div class="recent-orders"><div class="ro-header">Recent Orders</div><table><thead><tr><th>Order #</th><th>Time</th><th>Customer</th><th>Cashier</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashboard-orders-body"></tbody></table></div></section>
-        <section id="view-inventory" class="view"><div class="dash-header"><h2>Inventory</h2><div id="inventory-actions"></div></div><div class="recent-orders"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventory-body"></tbody></table></div></section>
-        <section id="view-time" class="view"><div class="clock-header"><div class="clock-time" id="big-clock">12:00 PM</div><div class="clock-date" id="big-date">Monday, January 1</div></div><div class="clock-controls"><select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select><button class="btn-clock" style="background:var(--success)" onclick="app.clockIn()">Clock In</button><button class="btn-clock" style="background:var(--danger)" onclick="app.clockOut()">Clock Out</button></div><div class="stat-cards"><div class="stat-card"><i class="fa-solid fa-users stat-icon"></i><div class="stat-data"><h3>Active</h3><p id="time-active-count">0</p></div></div><div class="stat-card"><i class="fa-solid fa-clock stat-icon" style="color:var(--clock-orange)"></i><div class="stat-data"><h3>Hours (Week)</h3><p id="time-hours-week">0.0</p></div></div><div class="stat-card"><i class="fa-regular fa-calendar stat-icon" style="color:#8e44ad"></i><div class="stat-data"><h3>Hours (Month)</h3><p id="time-hours-month">0.0</p></div></div></div><div class="recent-orders" style="margin-top:20px;"><h4>Currently Working</h4><div class="active-workers" id="active-workers-list"></div></div><div class="recent-orders" style="margin-top:20px;"><h4>Recent Entries</h4><table><thead><tr><th>Name</th><th>Clock In</th><th>Clock Out</th><th>Hours</th></tr></thead><tbody id="time-entries-body"></tbody></table></div></section>
+
+        <section id="view-dashboard" class="view">
+            <div class="dash-header"><h2>Dashboard</h2><span id="dash-date"></span></div>
+            <div class="stat-cards">
+                <div class="stat-card"><i class="fa-solid fa-dollar-sign stat-icon"></i><div class="stat-data"><h3>Revenue</h3><p id="stat-revenue">$0.00</p></div></div>
+                <div class="stat-card"><i class="fa-solid fa-receipt stat-icon"></i><div class="stat-data"><h3>Orders</h3><p id="stat-orders">0</p></div></div>
+                <div class="stat-card"><i class="fa-solid fa-box-open stat-icon" style="color:var(--danger)"></i><div class="stat-data"><h3>Low Stock</h3><p id="stat-low">0</p></div></div>
+            </div>
+            <div class="recent-orders"><div class="ro-header">Recent Orders</div><table><thead><tr><th>Order #</th><th>Time</th><th>Customer</th><th>Cashier</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashboard-orders-body"></tbody></table></div>
+        </section>
+
+        <section id="view-inventory" class="view">
+            <div class="dash-header">
+                <h2>Inventory</h2>
+                <div id="inventory-actions"></div> </div>
+            <div class="recent-orders"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventory-body"></tbody></table></div>
+        </section>
+
+        <section id="view-time" class="view">
+            <div class="clock-header"><div class="clock-time" id="big-clock">12:00 PM</div><div class="clock-date" id="big-date">Monday, January 1</div></div>
+            <div class="clock-controls"><select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select><button class="btn-clock" style="background:var(--success)" onclick="app.clockIn()">Clock In</button><button class="btn-clock" style="background:var(--danger)" onclick="app.clockOut()">Clock Out</button></div>
+            <div class="stat-cards">
+                <div class="stat-card"><i class="fa-solid fa-users stat-icon"></i><div class="stat-data"><h3>Active</h3><p id="time-active-count">0</p></div></div>
+                <div class="stat-card"><i class="fa-solid fa-clock stat-icon" style="color:var(--clock-orange)"></i><div class="stat-data"><h3>Hours (Week)</h3><p id="time-hours-week">0.0</p></div></div>
+                <div class="stat-card"><i class="fa-regular fa-calendar stat-icon" style="color:#8e44ad"></i><div class="stat-data"><h3>Hours (Month)</h3><p id="time-hours-month">0.0</p></div></div>
+            </div>
+            <div class="recent-orders" style="margin-top:20px;"><h4>Currently Working</h4><div class="active-workers" id="active-workers-list"></div></div>
+             <div class="recent-orders" style="margin-top:20px;"><h4>Recent Entries</h4><table><thead><tr><th>Name</th><th>Clock In</th><th>Clock Out</th><th>Hours</th></tr></thead><tbody id="time-entries-body"></tbody></table></div>
+        </section>
 
         <section id="view-manager" class="view">
             <div class="dash-header"><h2><i class="fa-solid fa-lock"></i> Manager Hub</h2><div class="no-print"><button class="btn-sm" onclick="app.downloadFullBackup()" style="margin-right:10px;">💾 Backup</button><button class="btn-sm" style="margin-right:10px;" onclick="window.loadFromCloud(true)">Sync Check</button></div></div>
@@ -140,8 +169,8 @@
                     <p>IT Admin has full access to Manager functions.</p>
                     <button class="btn-sm" style="font-size:1rem; padding:10px 20px; background: var(--stormy-teal);" onclick="app.navigate('manager')">Go to Manager Hub</button>
                     <h3 style="margin-top:30px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.28 (Modular)</p>
-                    <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
+                    <p><strong>Version:</strong> v1.29 (Modular & Offline)</p>
+                    <p><strong>DB Connection:</strong> <span id="it-db-status">Checking...</span></p>
                 </div>
             </div>
         </section>
@@ -156,8 +185,8 @@
 <div id="modal-product" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="prod-modal-title">Add/Edit Product</h3><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div><div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div><div class="form-group"><label>Category</label><select id="prod-cat" class="form-control"><option>Beverages</option><option>Baked Goods</option><option>Snacks</option></select></div><div class="form-group"><label>Price</label><input type="number" id="prod-price" class="form-control" step="0.25"></div><div class="form-group"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div><div class="form-group"><label>Image Preview</label><div class="img-preview-box"><img id="prod-img-preview" src="" alt="Preview"></div><label style="font-size:0.8rem">Image URL (Hidden)</label><input type="text" id="prod-img-url" class="form-control" style="font-size:0.8rem; color:#888;"><div class="upload-options"><input type="file" id="prod-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'prod-img-url')"><button class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">AI Gen</button></div></div></div><div><label style="font-weight:600; color:var(--space-indigo);">Product Options</label><div id="prod-options-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div><button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button></div></div><div style="display:flex; gap:10px; margin-top: 20px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button></div></div></div>
 <div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Cashier</option><option>Barista</option><option>Inventory</option><option>Manager</option><option>IT Admin</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button></div></div></div>
 
-<script type="module" src="js/firebase-init.js"></script>
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/firebase-init_v1.29.js"></script>
+<script type="module" src="js/app_v1.29.js"></script>
 
 </body>
 </html>
