@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.29</title>
+    <title>Star Academy POS v1.34</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style_v1.29.css">
+    <link rel="stylesheet" href="css/style_v1.34.css">
 </head>
 <body>
 
@@ -21,7 +21,9 @@
     </div>
     <div class="login-box">
         <h2>Classroom Café Login</h2>
-        <div id="loading-msg" style="color:#888; font-size:0.9rem; margin-bottom:10px; height:20px;"></div>
+        <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; height:20px;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting to cloud...
+        </div>
         
         <div class="login-grid" id="student-login-grid"></div>
         
@@ -30,7 +32,7 @@
         <div id="admin-login-buttons" class="admin-buttons-row">
             </div>
     </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.29</div>
+    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.34</div>
 </div>
 
 <div class="app-wrapper">
@@ -50,7 +52,7 @@
             <li onclick="app.navigate('it')" id="nav-it" class="nav-admin-link hidden"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.29</div>
+            <div class="sidebar-version">v1.34</div>
             <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -95,7 +97,7 @@
         </section>
 
         <section id="view-barista" class="view"><h2 style="margin-bottom:20px; color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.loadFromCloud(true)" style="float:right"><i class="fa-solid fa-rotate"></i> Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
-
+        
         <section id="view-dashboard" class="view">
             <div class="dash-header"><h2>Dashboard</h2><span id="dash-date"></span></div>
             <div class="stat-cards">
@@ -106,12 +108,7 @@
             <div class="recent-orders"><div class="ro-header">Recent Orders</div><table><thead><tr><th>Order #</th><th>Time</th><th>Customer</th><th>Cashier</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashboard-orders-body"></tbody></table></div>
         </section>
 
-        <section id="view-inventory" class="view">
-            <div class="dash-header">
-                <h2>Inventory</h2>
-                <div id="inventory-actions"></div> </div>
-            <div class="recent-orders"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventory-body"></tbody></table></div>
-        </section>
+        <section id="view-inventory" class="view"><div class="dash-header"><h2>Inventory</h2><div id="inventory-actions"></div></div><div class="recent-orders"><table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventory-body"></tbody></table></div></section>
 
         <section id="view-time" class="view">
             <div class="clock-header"><div class="clock-time" id="big-clock">12:00 PM</div><div class="clock-date" id="big-date">Monday, January 1</div></div>
@@ -153,31 +150,71 @@
             <div class="manager-grid">
                 <div class="manager-box it-left-panel">
                     <h3><i class="fa-solid fa-database"></i> Data Management</h3>
-                    <p style="font-size:0.9rem; margin-bottom:15px">Advanced controls for IT Support.</p>
-                    <button class="btn-pay btn-card" style="width:100%; margin-bottom:10px" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
-                    <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Full JSON Backup</button>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
-                        <button class="btn-pay btn-gold" onclick="app.exportBugReports()">Export Logs CSV</button>
-                        <button class="btn-pay btn-gold" onclick="app.printBugReports()">Print Logs</button>
+                    
+                    <div class="github-notes-box">
+                        <h4>📄 Latest Testing Notes</h4>
+                        <pre id="github-notes-content">Loading...</pre>
+                        <button class="btn-sm" onclick="app.fetchTestingNotes()">Refresh Notes</button>
                     </div>
+
+                    <div class="expandable-section">
+                        <details>
+                            <summary>Current Features (v1.30)</summary>
+                            <ul>
+                                <li>Real-Time Firestore Sync</li>
+                                <li>Offline-First Login (No waiting)</li>
+                                <li>AI Image Generation</li>
+                                <li>Manager/IT Hubs</li>
+                            </ul>
+                        </details>
+                        <details>
+                            <summary>Known Bugs</summary>
+                            <ul>
+                                <li>Printing requires pop-up permission.</li>
+                            </ul>
+                        </details>
+                        <details>
+                            <summary>Roadmap</summary>
+                            <ul>
+                                <li>KDS Timer Colors</li>
+                                <li>Loyalty Points Redemption</li>
+                            </ul>
+                        </details>
+                    </div>
+
+                    <button class="btn-pay btn-card" style="width:100%; margin:10px 0" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
+                    <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#555" onclick="app.downloadFullBackup()">Download Backup JSON</button>
+                    
                     <hr style="margin:20px 0;">
                     <h4 style="color:var(--danger); font-weight: bold;">Danger Zone</h4>
                     <button class="btn-pay" style="background:var(--danger); width:100%" onclick="app.nuclearReset()"><i class="fa-solid fa-radiation"></i> WIPE LOCAL STORAGE</button>
                 </div>
+                
                 <div class="manager-box it-right-panel">
                     <h3>Manager Tools Access</h3>
                     <p>IT Admin has full access to Manager functions.</p>
                     <button class="btn-sm" style="font-size:1rem; padding:10px 20px; background: var(--stormy-teal);" onclick="app.navigate('manager')">Go to Manager Hub</button>
+                    
                     <h3 style="margin-top:30px;">System Status</h3>
-                    <p><strong>Version:</strong> v1.29 (Modular & Offline)</p>
-                    <p><strong>DB Connection:</strong> <span id="it-db-status">Checking...</span></p>
+                    <p><strong>Version:</strong> v1.34</p>
+                    <p><strong>DB Connection:</strong> <span id="it-db-status">Active</span></p>
                 </div>
             </div>
         </section>
     </div>
 </div>
 
+<div id="modal-alert" class="modal" style="z-index: 200000;">
+    <div class="modal-content" style="width:350px; text-align:center; padding:30px;">
+        <i class="fa-solid fa-circle-exclamation" style="font-size:3rem; color:var(--golden-bronze); margin-bottom:15px;"></i>
+        <h3 id="alert-title" style="color:var(--space-indigo); margin-bottom:10px;">Action Required</h3>
+        <p id="alert-message" style="margin-bottom:25px; font-size:1.1rem; color:#555;"></p>
+        <button class="btn-pay btn-card" style="width:100%" onclick="document.getElementById('modal-alert').classList.remove('open')">OK, Got it</button>
+    </div>
+</div>
+
 <div id="modal-pin" class="modal"><div class="modal-content" style="width:300px;"><h3>Enter Access PIN</h3><div id="pin-display"></div><div id="pin-pad-grid"><button class="pin-btn" onclick="app.pinInput('1')">1</button><button class="pin-btn" onclick="app.pinInput('2')">2</button><button class="pin-btn" onclick="app.pinInput('3')">3</button><button class="pin-btn" onclick="app.pinInput('4')">4</button><button class="pin-btn" onclick="app.pinInput('5')">5</button><button class="pin-btn" onclick="app.pinInput('6')">6</button><button class="pin-btn" onclick="app.pinInput('7')">7</button><button class="pin-btn" onclick="app.pinInput('8')">8</button><button class="pin-btn" onclick="app.pinInput('9')">9</button><button class="pin-btn" onclick="app.pinClear()" style="color:var(--danger)">C</button><button class="pin-btn" onclick="app.pinInput('0')">0</button><button class="pin-btn" onclick="app.pinSubmit()" style="background:var(--success); color:white;">OK</button></div><div id="pin-error" class="pin-msg"></div><button class="btn-sm" style="margin-top:20px; width:100%;" onclick="app.closeModal('modal-pin')">Cancel</button></div></div>
+
 <div id="modal-options" class="modal"><div class="modal-content"><h3 id="opt-modal-title">Customize Item</h3><div id="opt-dynamic-container"></div><div class="opt-group-title">Custom Note</div><input type="text" id="opt-custom-note" class="custom-note-input" placeholder="e.g. Allergy info..."><div style="margin-top:20px; display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-options')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.confirmOptions()">Add to Order</button></div></div></div>
 <div id="modal-cash" class="modal"><div class="modal-content"><h3>Cash Payment</h3><p>Total Due: <strong id="cash-modal-total" style="font-size:1.2rem">$0.00</strong></p><div style="margin:15px 0;"><label>Amount Tendered:</label><div id="calc-display" class="calc-display">$0.00</div></div><div id="change-result" class="change-result">Change Due: <span id="change-amt">$0.00</span></div><div class="calc-grid"><button class="calc-btn" onclick="app.calcInput(1)">1</button><button class="calc-btn" onclick="app.calcInput(2)">2</button><button class="calc-btn" onclick="app.calcInput(3)">3</button><button class="calc-btn" onclick="app.calcInput(4)">4</button><button class="calc-btn" onclick="app.calcInput(5)">5</button><button class="calc-btn" onclick="app.calcInput(6)">6</button><button class="calc-btn" onclick="app.calcInput(7)">7</button><button class="calc-btn" onclick="app.calcInput(8)">8</button><button class="calc-btn" onclick="app.calcInput(9)">9</button><button class="calc-btn" onclick="app.calcInput('.')">.</button><button class="calc-btn" onclick="app.calcInput(0)">0</button><button class="calc-btn" style="color:var(--danger)" onclick="app.calcClear()">C</button></div><div class="calc-grid" style="grid-template-columns: 1fr 1fr 1fr;"><button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcExact()">Exact</button><button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcNext(5)">$5</button><button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcNext(10)">$10</button></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-cash')">Cancel</button><button class="btn-pay btn-cash" style="flex:1" onclick="app.finalizeCash()">Finalize</button></div></div></div>
 <div id="modal-receipt" class="modal"><div class="modal-content"><h3 class="no-print" style="text-align:center; color:var(--space-indigo); padding-top:20px;">Order Complete!</h3><div class="receipt-paper" id="receipt-content"></div><div class="no-print" style="display:flex; gap:10px; padding:20px;"><button class="btn-pay btn-train" style="flex:1" onclick="window.print()">Print</button><button class="btn-pay btn-card" style="flex:1" onclick="app.closeReceiptAndReset()">Close</button></div></div></div>
@@ -185,8 +222,8 @@
 <div id="modal-product" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="prod-modal-title">Add/Edit Product</h3><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div><div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div><div class="form-group"><label>Category</label><select id="prod-cat" class="form-control"><option>Beverages</option><option>Baked Goods</option><option>Snacks</option></select></div><div class="form-group"><label>Price</label><input type="number" id="prod-price" class="form-control" step="0.25"></div><div class="form-group"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div><div class="form-group"><label>Image Preview</label><div class="img-preview-box"><img id="prod-img-preview" src="" alt="Preview"></div><label style="font-size:0.8rem">Image URL (Hidden)</label><input type="text" id="prod-img-url" class="form-control" style="font-size:0.8rem; color:#888;"><div class="upload-options"><input type="file" id="prod-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'prod-img-url')"><button class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">AI Gen</button></div></div></div><div><label style="font-weight:600; color:var(--space-indigo);">Product Options</label><div id="prod-options-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div><button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button></div></div><div style="display:flex; gap:10px; margin-top: 20px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button></div></div></div>
 <div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Cashier</option><option>Barista</option><option>Inventory</option><option>Manager</option><option>IT Admin</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button></div></div></div>
 
-<script type="module" src="js/firebase-init_v1.29.js"></script>
-<script type="module" src="js/app_v1.29.js"></script>
+<script type="module" src="js/firebase-init_v1.34.js"></script>
+<script type="module" src="js/app_v1.34.js"></script>
 
 </body>
 </html>
