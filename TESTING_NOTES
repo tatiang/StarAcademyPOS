@@ -18,15 +18,17 @@ Inventory screen
 Manager Hub screen
   • Add ability to report bug or feature suggestion
   • Add ability to add/edit/delete employees
-  • Other recommended functionality for this screen?
+  • Other recommended functionality for this screen
 Can error messages (such as clocking in/out without selecting a student's name) have a different dialog title than "tatiang.github.io says"?
+  • This appears to be fixed in v1.34
 All times should be in HH:MM format
+  • This appears to be fixed in v1.34
 IT Hub screen
   • Embed TESTING_NOTES from Github's /TESTING_NOTES file
+    • This appears to be included in v1.34
   • Expandable list of current features, known bugs, potential future improvements
+    • This appears to be included in v1.34
 
-
-
-v1.31
+v1.34
 ######
-When I go to https://tatiang.github.io/StarAcademyPOS/index_v1.31.html, it just shows the initial screen with "ADMINISTRATION" but no login buttons.
+New baseline; similar to v1.29
