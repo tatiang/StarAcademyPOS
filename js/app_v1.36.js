@@ -14,7 +14,7 @@ const playTone = (freq, type, duration) => {
 
 const app = {
     data: {
-        currentCashier: null, cart: [], products: [], orders: [], employees: [], timeEntries: [], bugReports: [], orderCounter: 1001, taxRate: 0.0925, tempProduct: null, tempOptions: {}, tempCashEntry: "", editingId: null, inventorySort: { field: 'name', dir: 'asc' }, 
+        currentCashier: null, cart: [], products: [], orders: [], employees: [], timeEntries: [], bugReports: [], orderCounter: 1001, taxRate: 0.0925, tempProduct: null, tempOptions: {}, tempCashEntry: "", editingId: null, inventorySort: { field: "name", dir: "asc" }, 
     },
     pinBuffer: "",
     pinCallback: null,
@@ -225,38 +225,10 @@ const app = {
             reader.readAsDataURL(input.files[0]);
         }
     },
-    
-    
-    downloadProdImage: () => {
-        const preview = document.getElementById('prod-img-preview');
-        if (!preview || !preview.src) {
-            app.showAlert("No image to download yet.");
-            return;
-        }
 
-        const url = preview.src;
-        const nameInput = document.getElementById('prod-name');
-        const baseName = (nameInput && nameInput.value ? nameInput.value : 'product')
-            .trim()
-            .replace(/\s+/g, '_')
-            .toLowerCase();
-
-        const link = document.createElement('a');
-        link.href = url;
-
-        if ('download' in HTMLAnchorElement.prototype) {
-            link.download = `${baseName || 'product'}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else {
-            window.open(url, '_blank');
-        }
-    },
-
-generateAIImage: (nameId, targetId) => {
-        const nameEl = document.getElementById(nameId);
-        const query = (nameEl ? nameEl.value : '') || 'coffee';
+    generateAIImage: (nameId, targetId) => {
+        const nameInput = document.getElementById(nameId);
+        const query = (nameInput && nameInput.value) ? nameInput.value : 'coffee';
         const seed = Math.floor(Math.random() * 9999);
         const url = `https://image.pollinations.ai/prompt/delicious ${encodeURIComponent(query)} food photography, professional lighting, photorealistic, 4k?width=300&height=300&nologo=true&seed=${seed}`;
 
@@ -290,35 +262,34 @@ generateAIImage: (nameId, targetId) => {
         img.src = url;
     },
 
-
-    renderManagerHub: () => { app.renderBugReports(); app.renderProductsManager(); app.renderEmployeesManager(); },
-
-    
-    submitBugReport: () => {
-        const typeEl = document.getElementById('bug-type');
-        const detailsEl = document.getElementById('bug-details');
-        if (!typeEl || !detailsEl) return;
-
-        const type = typeEl.value;
-        const details = detailsEl.value.trim();
-        if (!details) return app.showAlert("Please enter some details.");
-
-        if (!Array.isArray(app.data.bugReports)) app.data.bugReports = [];
-
-        app.data.bugReports.push({
-            id: Date.now(),
-            date: new Date().toISOString(),
-            type,
-            details,
-            reportedBy: app.data.currentCashier || "Unknown"
-        });
-
-        detailsEl.value = "";
-        app.saveData();
-        app.renderBugReports();
-        app.showAlert("Thanks! Your log was saved.");
+    downloadProdImage: () => {
+        const preview = document.getElementById('prod-img-preview');
+        if (!preview || !preview.src) {
+            app.showAlert("No image to download yet.");
+            return;
+        }
+        const a = document.createElement('a');
+        a.href = preview.src;
+        const nameField = document.getElementById('prod-name');
+        const baseName = (nameField && nameField.value ? nameField.value : 'product').replace(/\s+/g, '_');
+        a.download = `${baseName}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     },
 
+    renderManagerHub: () => { app.renderBugReports(); app.renderProductsManager(); app.renderEmployeesManager(); },
+    renderBugReports: () => {
+        const tbody = document.getElementById('bug-log-body');
+        const logs = [...app.data.bugReports].reverse();
+        tbody.innerHTML = logs.length ? logs.slice(0,5).map(l => `<tr><td style="font-size:0.8rem; white-space:nowrap;">${new Date(l.date).toLocaleDateString()} ${new Date(l.date).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}</td><td><b>${l.type}</b></td><td>${l.details}</td></tr>`).join('') : '<tr><td colspan="3">No logs.</td></tr>';
+    },
+    submitBugReport: () => {
+        const type = document.getElementById('bug-type').value; const details = document.getElementById('bug-details').value;
+        if(!details) return app.showAlert("Details required.");
+        app.data.bugReports.push({id: Date.now(), date: new Date().toISOString(), type, details});
+        document.getElementById('bug-details').value = ""; app.saveData(); app.renderBugReports(); app.showAlert("Log saved.");
+    },
     exportBugReports: () => {
         let csv = "Date,Type,Details\n"; app.data.bugReports.forEach(l => { csv += `"${l.date}","${l.type}","${l.details.replace(/"/g, '""')}"\n`; });
         const blob = new Blob([csv], { type: 'text/csv' }); const url = window.URL.createObjectURL(blob);
@@ -472,81 +443,64 @@ generateAIImage: (nameId, targetId) => {
     showReceiptById: (id) => { app.showReceipt(app.data.orders.find(o => o.id === id)); },
 
     
-    
-    categoryIcon: (cat) => {
-        const map = {
-            'Beverages': '☕️',
-            'Baked Goods': '🧁',
-            'Snacks': '🍪',
-            'Cold Drinks': '🥤'
-        };
-        return (map[cat] || '📦') + ' ' + (cat || '');
-    },
-
-    sortInventory: (field) => {
-        const sort = app.data.inventorySort || (app.data.inventorySort = { field: 'name', dir: 'asc' });
-        if (sort.field === field) {
-            sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
-        } else {
-            sort.field = field;
-            sort.dir = 'asc';
-        }
-        app.renderInventory();
-    },
-
-renderInventory: () => {
+    renderInventory: () => {
         const role = app.getRole();
         const isManager = (role === 'Manager' || role === 'IT Admin');
         let headerHtml = '<h2>Inventory</h2>';
         if (isManager) headerHtml += '<button class="btn-sm" onclick="app.openProductModal()">+ Add Item</button>';
-        const headerEl = document.querySelector('#view-inventory .dash-header');
-        if (headerEl) headerEl.innerHTML = headerHtml;
+        document.querySelector('#view-inventory .dash-header').innerHTML = headerHtml;
 
-        const sort = app.data.inventorySort || { field: 'name', dir: 'asc' };
-        const products = [...(app.data.products || [])].sort((a, b) => {
+        const sort = app.data.inventorySort || { field: "name", dir: "asc" };
+        const products = [...app.data.products];
+
+        products.sort((a, b) => {
             let va, vb;
             switch (sort.field) {
-                case 'cat':
-                    va = a.cat || ''; vb = b.cat || '';
-                    return sort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-                case 'stock':
-                    va = a.stock || 0; vb = b.stock || 0;
-                    return sort.dir === 'asc' ? va - vb : vb - va;
-                case 'price':
-                    va = a.price || 0; vb = b.price || 0;
-                    return sort.dir === 'asc' ? va - vb : vb - va;
-                case 'name':
+                case "cat":
+                    va = a.cat || "";
+                    vb = b.cat || "";
+                    return sort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+                case "stock":
+                    va = a.stock || 0;
+                    vb = b.stock || 0;
+                    return sort.dir === "asc" ? va - vb : vb - va;
+                case "price":
+                    va = a.price || 0;
+                    vb = b.price || 0;
+                    return sort.dir === "asc" ? va - vb : vb - va;
+                case "name":
                 default:
-                    va = a.name || ''; vb = b.name || '';
-                    return sort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+                    va = a.name || "";
+                    vb = b.name || "";
+                    return sort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
             }
         });
 
-        ['name', 'cat', 'stock', 'price'].forEach(field => {
+        ["name", "cat", "stock", "price"].forEach(field => {
             const el = document.getElementById(`inv-sort-${field}`);
             if (!el) return;
-            el.classList.remove('active', 'asc', 'desc');
+            el.classList.remove("active", "asc", "desc");
             if (field === sort.field) {
-                el.classList.add('active');
-                el.classList.add(sort.dir === 'asc' ? 'asc' : 'desc');
+                el.classList.add("active");
+                el.classList.add(sort.dir === "asc" ? "asc" : "desc");
             }
         });
 
-        const tbody = document.getElementById('inventory-body');
-        if (!tbody) return;
-        tbody.innerHTML = products.map(p => `
+        document.getElementById('inventory-body').innerHTML = products.map(p => `
             <tr>
                 <td>
                     <img src="${p.img || 'images/placeholder.png'}"
-                         class="inv-thumb"
-                         onerror="this.src='images/placeholder.png'">
+                        class="inv-thumb"
+                        onerror="this.src='images/placeholder.png'">
                 </td>
                 <td>${p.name}</td>
                 <td>${app.categoryIcon(p.cat)}</td>
                 <td><b>${p.stock}</b></td>
                 <td>$${p.price.toFixed(2)}</td>
                 <td>
-                    <span class="status-badge ${p.stock<10?'stock-low':'stock-ok'}">${p.stock<10?'Low':'OK'}</span>
+                    <span class="status-badge ${p.stock < 10 ? 'stock-low' : 'stock-ok'}">
+                        ${p.stock < 10 ? 'Low' : 'OK'}
+                    </span>
                 </td>
                 <td>
                     <button class="btn-sm" onclick="app.inventoryEditClick(${p.id})">Edit</button>
@@ -554,7 +508,29 @@ renderInventory: () => {
                 </td>
             </tr>`).join('');
     },
-
+    categoryIcon: (cat) => {
+        const map = {
+            "Beverages": "☕️",
+            "Baked Goods": "🧁",
+            "Snacks": "🍪",
+            "Cold Drinks": "🥤"
+        };
+        if (!cat) return "📦";
+        return (map[cat] || "📦") + " " + cat;
+    },
+    sortInventory: (field) => {
+        if (!app.data.inventorySort) {
+            app.data.inventorySort = { field: "name", dir: "asc" };
+        }
+        const sort = app.data.inventorySort;
+        if (sort.field === field) {
+            sort.dir = sort.dir === "asc" ? "desc" : "asc";
+        } else {
+            sort.field = field;
+            sort.dir = "asc";
+        }
+        app.renderInventory();
+    },
     getRole: () => {
         const emp = app.data.employees.find(e => e.name === app.data.currentCashier);
         if (app.data.currentCashier === 'Manager') return 'Manager';
@@ -599,140 +575,23 @@ renderInventory: () => {
         if(document.querySelector('#view-inventory').classList.contains('active')) app.renderInventory();
     },
     deleteProduct: (id) => { if(confirm("Delete?")) { app.data.products = app.data.products.filter(p => p.id !== id); app.saveData(); app.renderProductsManager(); if(document.querySelector('#view-inventory').classList.contains('active')) app.renderInventory(); } },
-    
-    
-    renderEmployeesManager: () => {
-        const tbody = document.getElementById('employees-body');
-        if (!tbody) return;
-        const rows = app.data.employees || [];
-        tbody.innerHTML = rows.length ? rows.map(e => `
-            <tr>
-                <td>
-                    ${e.img || e.avatar ? `<img src="${e.img || e.avatar}" alt="${e.name}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : '<span style="opacity:0.6;">—</span>'}
-                </td>
-                <td>${e.name}</td>
-                <td>${e.role || 'Student'}</td>
-                <td>
-                    <button class="btn-sm" onclick="app.editEmployee(${e.id})">Edit</button>
-                    <button class="btn-sm btn-danger-sm" onclick="app.deleteEmployee(${e.id})">Delete</button>
-                </td>
-            </tr>
-        `).join('') : '<tr><td colspan="4">No team members yet.</td></tr>';
+    renderEmployeesManager: () => { document.getElementById('employees-body').innerHTML = app.data.employees.map(e => `<tr><td><img src="${e.img}" class="emp-thumb"></td><td>${e.name}</td><td>${e.role}</td><td><button class="btn-sm" onclick="app.editEmployee(${e.id})">Edit</button> <button class="btn-sm btn-danger-sm" onclick="app.deleteEmployee(${e.id})">X</button></td></tr>`).join(''); },
+    openEmployeeModal: (isEdit = false) => { document.getElementById('emp-modal-title').innerText = isEdit ? "Edit Employee" : "Add Employee"; if(!isEdit) { app.data.editingId = null; document.getElementById('emp-name').value = ""; document.getElementById('emp-img-url').value = ""; } document.getElementById('modal-employee').classList.add('open'); },
+    editEmployee: (id) => { const e = app.data.employees.find(x => x.id === id); app.data.editingId = id; document.getElementById('emp-name').value = e.name; document.getElementById('emp-role').value = e.role; document.getElementById('emp-img-url').value = e.img; app.openEmployeeModal(true); },
+    saveEmployee: () => { const n = document.getElementById('emp-name').value; if(!n) return; const r = document.getElementById('emp-role').value; const i = document.getElementById('emp-img-url').value || 'images/placeholder.png'; if(app.data.editingId) { const e = app.data.employees.find(x => x.id === app.data.editingId); e.name=n; e.role=r; e.img=i; } else { app.data.employees.push({id:Date.now(), name:n, role:r, img:i}); } app.saveData(); app.closeModal('modal-employee'); app.renderEmployeesManager(); app.renderLogin(); },
+    deleteEmployee: (id) => { 
+        if(confirm("Remove?")) { 
+            app.requestPin((pin) => {
+                if(pin==="1234") { 
+                    app.data.employees=app.data.employees.filter(e=>e.id!==id); 
+                    app.saveData(); app.renderEmployeesManager(); app.renderLogin(); 
+                } else app.showAlert("Incorrect PIN");
+            });
+        } 
     },
-
-
     
     closeModal: (id) => document.getElementById(id).classList.remove('open'),
-    
-    
-    goLiveReset: () => {
-        app.requestPin((pin) => {
-            if (pin !== "1234") {
-                app.showAlert("Incorrect Manager PIN.");
-                return;
-            }
-            if (!confirm("Clear orders & time logs but keep employees and menu?")) return;
-
-            app.data.orders = [];
-            app.data.timeEntries = [];
-            app.data.orderCounter = 1001;
-            app.saveData();
-            app.refreshUI();
-            app.showAlert("Live data cleared for a fresh start.");
-        });
-    },
-
-exportOrdersCSV: () => {
-        const rows = app.data.orders || [];
-        if (!rows.length) return app.showAlert("No orders to export yet.");
-
-        let csv = "Order #,Date/Time,Customer,Cashier,Payment,Subtotal,Tax,Total,Status\n";
-        rows.forEach(o => {
-            const dt = new Date(o.timestamp || o.time || Date.now()).toLocaleString();
-            csv += [
-                o.orderNumber || "",
-                `"${dt}"`,
-                `"${o.customer || ""}"`,
-                `"${o.cashier || ""}"`,
-                `"${o.paymentType || ""}"`,
-                (o.subtotal || 0).toFixed(2),
-                (o.tax || 0).toFixed(2),
-                (o.total || 0).toFixed(2),
-                `"${o.status || ""}"`
-            ].join(",") + "\n";
-        });
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "orders_export.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    },
-
-    exportTimeEntriesCSV: () => {
-        const rows = app.data.timeEntries || [];
-        if (!rows.length) return app.showAlert("No time entries to export yet.");
-
-        let csv = "Name,Role,Action,Time\n";
-        rows.forEach(t => {
-            const dt = new Date(t.time || Date.now()).toLocaleString();
-            csv += [
-                `"${t.name || ""}"`,
-                `"${t.role || ""}"`,
-                `"${t.action || ""}"`,
-                `"${dt}"`
-            ].join(",") + "\n";
-        });
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "time_log_export.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    },
-
-    printLowStock: () => {
-        const low = (app.data.products || []).filter(p => (p.stock || 0) < 10);
-        if (!low.length) return app.showAlert("No low-stock items right now.");
-
-        let html = `
-          <html><head>
-            <title>Low Stock Items</title>
-            <style>
-              body { font-family: 'Open Sans', sans-serif; padding: 20px; }
-              h1 { margin-bottom: 10px; }
-              table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-              th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-              th { background: #f5f5f5; }
-            </style>
-          </head><body>
-            <h1>Low Stock Items</h1>
-            <table>
-              <thead><tr><th>Name</th><th>Category</th><th>Stock</th></tr></thead>
-              <tbody>
-                ${low.map(p => `<tr><td>${p.name}</td><td>${p.cat}</td><td>${p.stock}</td></tr>`).join("")}
-              </tbody>
-            </table>
-          </body></html>
-        `;
-
-        const w = window.open("", "_blank");
-        if (!w) return;
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-        w.focus();
-        w.print();
-    },
-navigate: (view) => {
+    navigate: (view) => {
         // Generic view navigation handler
         const viewId = `view-${view}`;
         // Update nav active state
