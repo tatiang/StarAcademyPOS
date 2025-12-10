@@ -1,7 +1,10 @@
 v1.29 (now the "definitive" version for Gemini)
-
+######
 Login screen looks correct
   • No more connecting to database delays
+POS screen
+  • It should sync image urls from Firestore. Right now, it seems like it's not saving them in the app but I do see them in Firestore. It just doesn't retrieve them.
+
 Didn't save any of the previous AI-generated item images I had saved in an earlier version
   • Do these get stored in Firestore Database? 
     • Seems to work okay now...?
@@ -15,10 +18,26 @@ Inventory screen
 Manager Hub screen
   • Add ability to report bug or feature suggestion
   • Add ability to add/edit/delete employees
-  • Other recommended functionality for this screen?
+  • Other recommended functionality for this screen
 Can error messages (such as clocking in/out without selecting a student's name) have a different dialog title than "tatiang.github.io says"?
+  • This appears to be fixed in v1.34
 All times should be in HH:MM format
+  • This appears to be fixed in v1.34
 IT Hub screen
   • Embed TESTING_NOTES from Github's /TESTING_NOTES file
+    • This appears to be included in v1.34
   • Expandable list of current features, known bugs, potential future improvements
+    • This appears to be included in v1.34
 
+v1.34
+######
+New baseline; similar to v1.29
+
+v1.35
+######
+IT Hub screen content should adjust to window width
+If you click Download for an AI-generated image, it opens the image in the same tab. It should download or open in a new tab. 
+
+MISC
+#####
+Add tabbed views to IT Hub

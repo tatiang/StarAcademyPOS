@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Star Academy POS v1.33</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome (optional for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- App Styles -->
+    <link rel="stylesheet" href="style_v1.33.css">
+</head>
+<body>
+
+<div class="app-root">
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-logo">
+            <img src="images/StarAcademyLogo.png" alt="Star Academy Logo">
+        </div>
+
+        <div class="login-card">
+            <div class="login-card-inner">
+                <h1 class="login-title">Star Academy Cafe POS</h1>
+                <p class="login-subtitle">Tap your name to sign in</p>
+
+                <div class="login-students">
+                    <div class="login-student">
+                        <div class="student-avatar">
+                            <img src="images/placeholder.png" alt="Alex">
+                        </div>
+                        <div class="student-name">Alex G.</div>
+                    </div>
+
+                    <div class="login-student">
+                        <div class="student-avatar">
+                            <img src="images/placeholder.png" alt="Brianna">
+                        </div>
+                        <div class="student-name">Brianna S.</div>
+                    </div>
+
+                    <div class="login-student">
+                        <div class="student-avatar">
+                            <img src="images/placeholder.png" alt="Jordan">
+                        </div>
+                        <div class="student-name">Jordan P.</div>
+                    </div>
+
+                    <div class="login-student">
+                        <div class="student-avatar">
+                            <img src="images/placeholder.png" alt="Maya">
+                        </div>
+                        <div class="student-name">Maya R.</div>
+                    </div>
+
+                    <div class="login-student">
+                        <div class="student-avatar">
+                            <img src="images/placeholder.png" alt="Noah">
+                        </div>
+                        <div class="student-name">Noah C.</div>
+                    </div>
+
+                    <div class="login-student">
+                        <div class="student-avatar">
+                            <img src="images/placeholder.png" alt="Zoe">
+                        </div>
+                        <div class="student-name">Zoe L.</div>
+                    </div>
+                </div>
+
+                <div class="login-divider">
+                    <span>Administration</span>
+                </div>
+
+                <div class="login-admin-buttons">
+                    <button class="admin-pill">
+                        <i class="fa-solid fa-user-tie"></i>
+                        Manager
+                    </button>
+                    <button class="admin-pill">
+                        <i class="fa-solid fa-microchip"></i>
+                        IT Support
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END LOGIN OVERLAY -->
+
+    <!-- APP LAYOUT -->
+    <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-mark">
+                    <img src="images/StarAcademyLogo.png" alt="Star Academy Logo">
+                </div>
+                <div class="sidebar-logo-text">
+                    Star Academy POS
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-link active">
+                    <i class="fa-solid fa-cash-register"></i>
+                    POS
+                </button>
+                <button class="nav-link">
+                    <i class="fa-solid fa-mug-hot"></i>
+                    Barista
+                </button>
+                <button class="nav-link">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Dashboard
+                </button>
+                <button class="nav-link">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    Inventory
+                </button>
+                <button class="nav-link">
+                    <i class="fa-solid fa-user-clock"></i>
+                    Time Clock
+                </button>
+                <button class="nav-link">
+                    <i class="fa-solid fa-user-gear"></i>
+                    Manager Hub
+                </button>
+                <button class="nav-link">
+                    <i class="fa-solid fa-microchip"></i>
+                    IT Hub
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="app-version">v1.33</span>
+                <button class="btn-signout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- TOP HEADER -->
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="current-cashier">
+                        <div class="cashier-avatar">
+                            <img src="images/placeholder.png" alt="Cashier">
+                        </div>
+                        <div class="cashier-text">
+                            <div class="cashier-label">Current Cashier</div>
+                            <div class="cashier-name">Not Logged In</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="cloud-status pill pill-offline">
+                        <i class="fa-solid fa-cloud"></i>
+                        Offline
+                    </div>
+                    <div class="digital-clock">
+                        09:41
+                    </div>
+                </div>
+            </header>
+
+            <!-- VIEWS CONTAINER -->
+            <section class="view-container">
+
+                <!-- POS VIEW -->
+                <section class="view view-pos view-active">
+                    <div class="pos-layout">
+
+                        <!-- LEFT: PRODUCTS -->
+                        <div class="pos-products">
+                            <div class="category-tabs">
+                                <button class="cat-tab cat-tab-active">All Items</button>
+                                <button class="cat-tab">Beverages</button>
+                                <button class="cat-tab">Baked Goods</button>
+                                <button class="cat-tab">Snacks</button>
+                            </div>
+
+                            <div class="product-grid">
+                                <article class="product-card">
+                                    <div class="product-image" style="background-image: url('images/coffee.jpg');"></div>
+                                    <div class="product-body">
+                                        <h3 class="product-name">Drip Coffee</h3>
+                                        <p class="product-price">$3.50</p>
+                                    </div>
+                                </article>
+
+                                <article class="product-card">
+                                    <div class="product-image" style="background-image: url('images/IcedTea.jpg');"></div>
+                                    <div class="product-body">
+                                        <h3 class="product-name">Iced Tea</h3>
+                                        <p class="product-price">$3.75</p>
+                                    </div>
+                                </article>
+
+                                <article class="product-card">
+                                    <div class="product-image" style="background-image: url('images/muffin.jpg');"></div>
+                                    <div class="product-body">
+                                        <h3 class="product-name">Blueberry Muffin</h3>
+                                        <p class="product-price">$3.75</p>
+                                    </div>
+                                </article>
+
+                                <article class="product-card">
+                                    <div class="product-image" style="background-image: url('images/placeholder.png');"></div>
+                                    <div class="product-body">
+                                        <h3 class="product-name">Hot Chocolate</h3>
+                                        <p class="product-price">$4.00</p>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: CART -->
+                        <aside class="pos-cart">
+                            <header class="cart-header">
+                                <h2>Current Order</h2>
+                                <div class="order-number">Order #1001</div>
+                            </header>
+
+                            <div class="customer-name-row">
+                                <label for="customer-name">Customer Name</label>
+                                <input id="customer-name" type="text" placeholder="Type customer name...">
+                            </div>
+
+                            <div class="cart-items">
+                                <div class="cart-item">
+                                    <div class="cart-item-main">
+                                        <div class="cart-item-name">
+                                            1x Drip Coffee
+                                        </div>
+                                        <div class="cart-item-notes">
+                                            Not too hot, + Cream
+                                        </div>
+                                    </div>
+                                    <div class="cart-item-controls">
+                                        <button class="qty-btn">-</button>
+                                        <span class="qty-value">1</span>
+                                        <button class="qty-btn">+</button>
+                                        <button class="remove-btn">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="cart-item">
+                                    <div class="cart-item-main">
+                                        <div class="cart-item-name">
+                                            1x Iced Tea
+                                        </div>
+                                        <div class="cart-item-notes">
+                                            Low Ice
+                                        </div>
+                                    </div>
+                                    <div class="cart-item-controls">
+                                        <button class="qty-btn">-</button>
+                                        <span class="qty-value">1</span>
+                                        <button class="qty-btn">+</button>
+                                        <button class="remove-btn">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="cart-totals">
+                                <div class="cart-row">
+                                    <span>Subtotal</span>
+                                    <span>$7.25</span>
+                                </div>
+                                <div class="cart-row">
+                                    <span>Tax (9.25%)</span>
+                                    <span>$0.67</span>
+                                </div>
+                                <div class="cart-row cart-row-total">
+                                    <span>Total</span>
+                                    <span>$7.92</span>
+                                </div>
+                            </div>
+
+                            <div class="cart-actions">
+                                <button class="btn btn-cash">CASH</button>
+                                <button class="btn btn-card">CARD</button>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+                <!-- END POS VIEW -->
+
+                <!-- BARISTA VIEW -->
+                <section class="view view-barista">
+                    <div class="view-header-barista">
+                        <h2>Barista / KDS</h2>
+                        <p>Tap “Mark Ready” when drinks are finished.</p>
+                    </div>
+                    <div class="barista-grid">
+                        <article class="order-card">
+                            <header class="order-card-header">
+                                <div class="order-id">Order #1001</div>
+                                <div class="order-customer">
+                                    <i class="fa-solid fa-user"></i>
+                                    Sam
+                                </div>
+                            </header>
+                            <div class="order-card-body">
+                                <div class="order-item">
+                                    <div class="order-item-name">1x Drip Coffee</div>
+                                    <div class="order-item-notes">
+                                        <span class="mod-chip mod-highlight">Not too hot</span>
+                                    </div>
+                                </div>
+                                <div class="order-item">
+                                    <div class="order-item-name">1x Iced Tea</div>
+                                    <div class="order-item-notes">
+                                        <span class="mod-chip mod-highlight">Low Ice</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <footer class="order-card-footer">
+                                <button class="btn btn-ready">
+                                    <i class="fa-solid fa-check"></i>
+                                    Mark Ready
+                                </button>
+                            </footer>
+                        </article>
+
+                        <article class="order-card">
+                            <header class="order-card-header">
+                                <div class="order-id">Order #1002</div>
+                                <div class="order-customer">
+                                    <i class="fa-solid fa-user"></i>
+                                    Taylor
+                                </div>
+                            </header>
+                            <div class="order-card-body">
+                                <div class="order-item">
+                                    <div class="order-item-name">1x Hot Chocolate</div>
+                                    <div class="order-item-notes">
+                                        <span class="mod-chip mod-highlight">Not too hot</span>
+                                        <span class="mod-chip">+ Whipped Cream</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <footer class="order-card-footer">
+                                <button class="btn btn-ready">
+                                    <i class="fa-solid fa-check"></i>
+                                    Mark Ready
+                                </button>
+                            </footer>
+                        </article>
+                    </div>
+                </section>
+                <!-- END BARISTA VIEW -->
+
+                <!-- MANAGER / IT Hubs -->
+                <section class="view view-manager">
+                    <div class="manager-grid">
+                        <!-- LEFT PANEL -->
+                        <div class="manager-panel">
+                            <div class="panel-header panel-header-indigo">
+                                <h3>Manager Overview</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div class="stat-row">
+                                    <div class="stat-label">Total Revenue (Today)</div>
+                                    <div class="stat-value">$124.50</div>
+                                </div>
+                                <div class="stat-row">
+                                    <div class="stat-label">Orders</div>
+                                    <div class="stat-value">28</div>
+                                </div>
+                                <div class="stat-row">
+                                    <div class="stat-label">Low Stock Items</div>
+                                    <div class="stat-value">3</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT PANEL -->
+                        <div class="manager-panel">
+                            <div class="panel-header panel-header-purple">
+                                <h3>Recent Orders</h3>
+                            </div>
+                            <div class="panel-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Time</th>
+                                            <th>Customer</th>
+                                            <th>Cashier</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1001</td>
+                                            <td>9:12 AM</td>
+                                            <td>Sam</td>
+                                            <td>Alex</td>
+                                            <td>$7.92</td>
+                                            <td>Completed</td>
+                                        </tr>
+                                        <tr>
+                                            <td>1002</td>
+                                            <td>9:20 AM</td>
+                                            <td>Taylor</td>
+                                            <td>Maya</td>
+                                            <td>$4.00</td>
+                                            <td>Pending</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- IT HUB PANEL -->
+                        <div class="manager-panel manager-panel-full">
+                            <div class="panel-header panel-header-indigo">
+                                <h3>IT Hub</h3>
+                            </div>
+                            <div class="panel-body it-panel-body">
+                                <div class="it-row">
+                                    <div class="it-status-pill">
+                                        <i class="fa-solid fa-circle-notch"></i>
+                                        Listening for Firestore updates…
+                                    </div>
+                                </div>
+
+                                <div class="it-row">
+                                    <div class="danger-zone">
+                                        <h4>Danger Zone</h4>
+                                        <p>Use only with teacher permission.</p>
+                                        <button class="btn btn-danger">
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
+                                            Wipe Local Storage
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="it-row">
+                                    <h4>GitHub Notes</h4>
+                                    <pre class="code-block">
+# TESTING_NOTES
+- v1.31 – Added Firestore sync.
+- v1.32 – Fixed login overlay bug.
+- v1.33 – Visual refresh & layout polish.
+                                    </pre>
+                                </div>
+
+                                <div class="it-row">
+                                    <details class="details-block">
+                                        <summary>Roadmap</summary>
+                                        <ul>
+                                            <li>Training Mode for practice transactions</li>
+                                            <li>Per-student summary exports</li>
+                                            <li>Improved accessibility hints</li>
+                                        </ul>
+                                    </details>
+
+                                    <details class="details-block">
+                                        <summary>Known Bugs</summary>
+                                        <ul>
+                                            <li>Occasional image load failures on slow Wi-Fi.</li>
+                                            <li>Clock drift on older iPads (visual only).</li>
+                                        </ul>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- END MANAGER / IT VIEW -->
+
+            </section>
+        </main>
+    </div>
+</div>
+
+<!-- PIN PAD MODAL -->
+<div class="modal-overlay" id="modal-pin">
+    <div class="modal">
+        <h2 class="modal-title">Enter PIN</h2>
+        <div class="pin-display">••••</div>
+        <div class="pin-keypad">
+            <button class="pin-key">1</button>
+            <button class="pin-key">2</button>
+            <button class="pin-key">3</button>
+            <button class="pin-key">4</button>
+            <button class="pin-key">5</button>
+            <button class="pin-key">6</button>
+            <button class="pin-key">7</button>
+            <button class="pin-key">8</button>
+            <button class="pin-key">9</button>
+            <button class="pin-key pin-key-alt">C</button>
+            <button class="pin-key">0</button>
+            <button class="pin-key pin-key-ok">OK</button>
+        </div>
+        <button class="modal-close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+</div>
+
+</body>
+</html>
