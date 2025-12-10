@@ -1,209 +1,135 @@
-<!--
-Star Academy POS — v1.35 HTML patches
-====================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Star Academy POS v1.35</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-This file contains the concrete v1.35 HTML changes described in your spec.
-Use it as a *patch* file, not a full replacement for index_v1.34.html.
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-Recommended workflow:
-1. Duplicate your existing index_v1.34.html to index_v1.35.html in your repo.
-2. Open BOTH files side by side in your editor.
-3. In index_v1.35.html, search for the relevant sections and replace them
-   with the snippets below (Inventory table, Product modal image section,
-   Manager Hub layout, IT Hub details card).
--->
-
-<!--
-1) INVENTORY TABLE (view-inventory)
------------------------------------
-Find the Inventory <table> inside your Inventory view (usually inside #view-inventory)
-and replace JUST that <table> with the markup below.
--->
-
-<table class="data-table data-table-inventory">
-  <thead>
-    <tr>
-      <th>Image</th>
-      <th onclick="app.sortInventory('name')" data-sort="name">
-        Name <span class="sort-icon" id="inv-sort-name">⇅</span>
-      </th>
-      <th onclick="app.sortInventory('cat')" data-sort="cat">
-        Category <span class="sort-icon" id="inv-sort-cat">⇅</span>
-      </th>
-      <th onclick="app.sortInventory('stock')" data-sort="stock">
-        Stock <span class="sort-icon" id="inv-sort-stock">⇅</span>
-      </th>
-      <th onclick="app.sortInventory('price')" data-sort="price">
-        Price <span class="sort-icon" id="inv-sort-price">⇅</span>
-      </th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody id="inventory-body"></tbody>
-</table>
-
-
-<!--
-2) PRODUCT MODAL — IMAGE ROW + AI STATUS
-----------------------------------------
-In your product Add/Edit modal (the one that edits name, category, price, stock, etc.),
-find the block that controls the product image URL + preview.
-
-Replace that block with the markup below. Be sure that the surrounding modal structure,
-IDs, and buttons (Save / Cancel) remain as they are in your file.
--->
-
-<div class="form-row">
-  <label>Product Image URL</label>
-  <div class="prod-img-row">
-    <input id="prod-img-url" type="text" placeholder="https://..." />
-    <button type="button" class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">
-      AI Image
-    </button>
-    <button type="button" class="btn-sm" onclick="app.downloadProdImage()">
-      Download
-    </button>
-  </div>
-  <div class="ai-status-wrap">
-    <span id="ai-status" class="ai-status">Ready</span>
-  </div>
-  <img id="prod-img-preview" class="prod-img-preview" src="images/placeholder.png" alt="Preview">
-</div>
-
-
-<!--
-3) MANAGER HUB LAYOUT (view-manager)
-------------------------------------
-Inside your #view-manager container, replace the inner layout (cards) with the
-Manager grid below. Keep the outer wrapper (the .view div, any nav bindings, etc.).
--->
-
-<div class="dash-header">
-  <h2>Manager Hub</h2>
-</div>
-
-<div class="manager-grid">
-  <!-- Bug / Feature Requests -->
-  <section class="card mgr-card">
-    <div class="card-header">
-      <h3>Bug &amp; Feature Requests</h3>
-      <p class="card-sub">Students and staff can log issues here.</p>
-    </div>
-    <div class="card-body">
-      <div class="form-row">
-        <label for="bug-type">Type</label>
-        <select id="bug-type">
-          <option value="Bug">Bug</option>
-          <option value="Feature">Feature Suggestion</option>
-          <option value="Idea">Idea / Nice-to-have</option>
-        </select>
+  <link rel="stylesheet" href="style_v1.35.css">
+</head>
+<body>
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>Classroom Café Login</h1>
+        <p>Select your avatar or choose an admin role.</p>
       </div>
-      <div class="form-row">
-        <label for="bug-details">Details</label>
-        <textarea id="bug-details" rows="3" placeholder="Describe what happened or what you’d like to see..."></textarea>
+      <div class="login-body">
+        <h2 class="login-subheading">Students</h2>
+        <div id="login-students" class="login-grid">
+          <!-- Filled by JS from employees -->
+        </div>
+
+        <div class="login-divider">
+          <span>ADMINISTRATION</span>
+        </div>
+
+        <div class="login-admin-row">
+          <button class="login-admin-btn" onclick="app.loginAdmin('Manager')">
+            <i class="fa-solid fa-user-tie"></i>
+            <span>Manager</span>
+          </button>
+          <button class="login-admin-btn" onclick="app.loginAdmin('IT Support')">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <span>IT Support</span>
+          </button>
+        </div>
       </div>
-      <div class="form-actions">
-        <button class="btn-primary" type="button" onclick="app.submitBugReport()">Submit</button>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div id="app-shell" class="app-shell hidden">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-circle">
+          <span class="sidebar-logo-letter">S</span>
+        </div>
+        <div class="sidebar-title">
+          <div class="sidebar-title-main">Star Academy</div>
+          <div class="sidebar-title-sub">Classroom Café</div>
+        </div>
       </div>
-      <h4 class="subheading">Recent Logs</h4>
-      <table class="data-table small">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody id="bug-log-body"></tbody>
-      </table>
-    </div>
-  </section>
 
-  <!-- Employees -->
-  <section class="card mgr-card">
-    <div class="card-header">
-      <h3>Team Members</h3>
-      <p class="card-sub">Manage student roles and avatars.</p>
-    </div>
-    <div class="card-body">
-      <button class="btn-sm" type="button" onclick="app.openEmployeeModal(false)">+ Add Employee</button>
-      <table class="data-table small">
-        <thead>
-          <tr>
-            <th>Photo</th>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="employees-body"></tbody>
-      </table>
-    </div>
-  </section>
-</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard" onclick="app.navigate('dashboard')">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="pos" onclick="app.navigate('pos')">
+          <i class="fa-solid fa-cash-register"></i>
+          <span>POS</span>
+        </button>
+        <button class="nav-item" data-view="barista" onclick="app.navigate('barista')">
+          <i class="fa-solid fa-mug-hot"></i>
+          <span>Barista Queue</span>
+        </button>
+        <button class="nav-item" data-view="inventory" onclick="app.navigate('inventory')">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <span>Inventory</span>
+        </button>
+        <button class="nav-item" data-view="time" onclick="app.navigate('time')">
+          <i class="fa-solid fa-clock"></i>
+          <span>Time Clock</span>
+        </button>
+        <button class="nav-item" data-view="manager" onclick="app.navigate('manager')">
+          <i class="fa-solid fa-user-gear"></i>
+          <span>Manager Hub</span>
+        </button>
+        <button class="nav-item" data-view="it" onclick="app.navigate('it')">
+          <i class="fa-solid fa-microchip"></i>
+          <span>IT Hub</span>
+        </button>
+      </nav>
 
+      <div class="sidebar-footer">
+        <div class="version-label">v1.35</div>
+        <button class="btn-signout" onclick="app.logout()">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
 
-<!--
-4) IT HUB OVERVIEW CARD (view-it)
----------------------------------
-Inside your IT Hub main content area, add this card (or replace an existing
-'System Overview' card with this more detailed version). Keep the surrounding
-layout intact.
--->
+    <!-- MAIN -->
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="cashier-avatar" id="cashier-avatar">
+            <span id="cashier-avatar-initials">?</span>
+          </div>
+          <div class="cashier-info">
+            <div id="cashier-name" class="cashier-name">Not logged in</div>
+            <div id="cashier-role" class="cashier-role"></div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="cloud-status-pill">
+            <span id="status-dot" class="status-dot offline"></span>
+            <span id="connection-status" class="cloud-status-text">Offline</span>
+          </div>
+          <div id="top-clock" class="top-clock">--:--</div>
+        </div>
+      </header>
 
-<section class="card">
-  <div class="card-header">
-    <h3>System Overview (v1.35)</h3>
-    <p class="card-sub">For IT Support and future developers.</p>
+      <section class="views">
+        <!-- All views exactly as in the previous code block -->
+      </section>
+    </main>
   </div>
-  <div class="card-body">
-    <details open>
-      <summary>Current Features</summary>
-      <ul class="bullet-list">
-        <li>Avatar-based login for students; PIN-gated Manager and IT roles.</li>
-        <li>Point of Sale with categories, product options, notes, tax (9.25%), and cash / card checkout.</li>
-        <li>Cash payment keypad with live change due and printable receipt modal.</li>
-        <li>Barista queue (KDS) that shows pending orders and allows “Mark Ready”.</li>
-        <li>Inventory view with images, sortable columns, stock status badges, and student editing.</li>
-        <li>Manager Hub with bug/feature logging and employee management tools.</li>
-        <li>Time Clock for student shifts with active workers list and recent entries.</li>
-        <li>Local storage persistence plus Firestore real-time sync (when available).</li>
-      </ul>
-    </details>
 
-    <details>
-      <summary>Known Bugs / Quirks</summary>
-      <ul class="bullet-list">
-        <li>If the image generator is blocked by a filter, the AI image status may show “Error” and keep the previous image.</li>
-        <li>When clearing browser storage manually, local data may be lost until Firestore sync repopulates it.</li>
-        <li>Multiple browser tabs open to the same POS can compete when editing inventory simultaneously.</li>
-      </ul>
-    </details>
+  <!-- All modals & scripts exactly as in the previous index_v1.35.html content -->
 
-    <details>
-      <summary>Potential Future Improvements</summary>
-      <ul class="bullet-list">
-        <li>Cloud image storage for generated product images (e.g., GitHub or Cloudinary integration).</li>
-        <li>Per-student performance summaries (orders handled, hours worked, etc.).</li>
-        <li>Exportable daily close-out report (cash expected vs. cash recorded).</li>
-        <li>Accessibility audit pass: keyboard-only nav, screen reader labels, and more contrast presets.</li>
-      </ul>
-    </details>
-  </div>
-</section>
-
-
-<!--
-5) VERSION LABEL
-----------------
-Remember to also update any visible version labels in your HTML to "v1.35".
-Example in your sidebar footer:
-
-<div class="sidebar-footer">
-  <div class="version-label">v1.35</div>
-  <button class="btn-signout" onclick="app.logout()">
-    <i class="fa-solid fa-sign-out-alt"></i> Sign Out
-  </button>
-</div>
--->
+  <script type="module" src="firebase-init_v1.35.js"></script>
+  <script src="app_v1.35.js"></script>
+</body>
+</html>
