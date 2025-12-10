@@ -36,6 +36,7 @@ New baseline; similar to v1.29
 v1.35
 ######
 IT Hub screen content should adjust to window width
+If you click Download for an AI-generated image, it opens the image in the same tab. It should download or open in a new tab. 
 
 MISC
 #####
