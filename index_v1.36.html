@@ -108,36 +108,28 @@
             <div class="recent-orders"><div class="ro-header">Recent Orders</div><table><thead><tr><th>Order #</th><th>Time</th><th>Customer</th><th>Cashier</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashboard-orders-body"></tbody></table></div>
         </section>
 
-        <section id="view-inventory" class="view">
-    <div class="dash-header">
-        <h2>Inventory</h2>
-        <div id="inventory-actions"></div>
-    </div>
-    <div class="recent-orders">
-        <table class="data-table data-table-inventory">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th onclick="app.sortInventory('name')" data-sort="name">
-                        Name <span class="sort-icon" id="inv-sort-name">⇅</span>
-                    </th>
-                    <th onclick="app.sortInventory('cat')" data-sort="cat">
-                        Category <span class="sort-icon" id="inv-sort-cat">⇅</span>
-                    </th>
-                    <th onclick="app.sortInventory('stock')" data-sort="stock">
-                        Stock <span class="sort-icon" id="inv-sort-stock">⇅</span>
-                    </th>
-                    <th onclick="app.sortInventory('price')" data-sort="price">
-                        Price <span class="sort-icon" id="inv-sort-price">⇅</span>
-                    </th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="inventory-body"></tbody>
-        </table>
-    </div>
-</section>
+        <section id="view-inventory" class="view"><div class="dash-header"><h2>Inventory</h2><div id="inventory-actions"></div></div><div class="recent-orders"><table class="data-table data-table-inventory">
+  <thead>
+    <tr>
+      <th>Image</th>
+      <th onclick="app.sortInventory('name')" data-sort="name">
+        Product <span class="sort-icon" id="inv-sort-name">⇅</span>
+      </th>
+      <th onclick="app.sortInventory('cat')" data-sort="cat">
+        Category <span class="sort-icon" id="inv-sort-cat">⇅</span>
+      </th>
+      <th onclick="app.sortInventory('stock')" data-sort="stock">
+        Stock <span class="sort-icon" id="inv-sort-stock">⇅</span>
+      </th>
+      <th onclick="app.sortInventory('price')" data-sort="price">
+        Price <span class="sort-icon" id="inv-sort-price">⇅</span>
+      </th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="inventory-body"></tbody>
+</table></div></section>
 
         <section id="view-time" class="view">
             <div class="clock-header"><div class="clock-time" id="big-clock">12:00 PM</div><div class="clock-date" id="big-date">Monday, January 1</div></div>
@@ -167,20 +159,7 @@
                 </div>
                 <div style="display:flex; flex-direction:column; gap:20px;">
                     <div class="manager-box"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><h3>Products</h3><button class="btn-sm" onclick="app.openProductModal()">+ Add</button></div><div class="recent-orders" style="padding:0; box-shadow:none;"><table><thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Act</th></tr></thead><tbody id="products-manager-body"></tbody></table></div></div>
-                    <div class="manager-box"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><h3>Employees</h3><button class="btn-sm" onclick="app.openEmployeeModal()">+ Add</button></div><div class="recent-orders" style="padding:0; box-shadow:none;"><table><thead><tr><th>Pic</th><th>Name</th><th>Role</th><th>Act</th></tr></thead><tbody id="employees-body"></tbody></table>
-                    <div class="manager-box">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <h3>Quick Manager Tools</h3>
-                        </div>
-                        <div class="manager-quick-tools">
-                            <button class="btn-sm" onclick="app.exportOrdersCSV()">Export Orders CSV</button>
-                            <button class="btn-sm" onclick="app.exportTimeEntriesCSV()">Export Time Log CSV</button>
-                            <button class="btn-sm" onclick="app.printLowStockReport()">Print Low Stock Report</button>
-                        </div>
-                        <p style="font-size:0.8rem; color:#666; margin-top:10px;">
-                            Use these tools at the end of a shift or day to review sales and inventory.
-                        </p>
-                    </div></div></div>
+                    <div class="manager-box"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><h3>Employees</h3><button class="btn-sm" onclick="app.openEmployeeModal()">+ Add</button></div><div class="recent-orders" style="padding:0; box-shadow:none;"><table><thead><tr><th>Pic</th><th>Name</th><th>Role</th><th>Act</th></tr></thead><tbody id="employees-body"></tbody></table></div></div>
                 </div>
             </div>
         </section>
@@ -200,28 +179,36 @@
                     </div>
 
                     <div class="expandable-section">
-                        <details>
-                            <summary>Current Features (v1.30)</summary>
-                            <ul>
-                                <li>Real-Time Firestore Sync</li>
-                                <li>Offline-First Login (No waiting)</li>
-                                <li>AI Image Generation</li>
-                                <li>Manager/IT Hubs</li>
-                            </ul>
-                        </details>
-                        <details>
-                            <summary>Known Bugs</summary>
-                            <ul>
-                                <li>Printing requires pop-up permission.</li>
-                            </ul>
-                        </details>
-                        <details>
-                            <summary>Roadmap</summary>
-                            <ul>
-                                <li>KDS Timer Colors</li>
-                                <li>Loyalty Points Redemption</li>
-                            </ul>
-                        </details>
+                        <details open>
+    <summary>Current Features</summary>
+    <ul class="bullet-list">
+        <li>Avatar-based login for students; PIN-gated Manager and IT roles.</li>
+        <li>Point of Sale with categories, product options, notes, tax (9.25%), and cash / card checkout.</li>
+        <li>Cash payment keypad with live change due and printable receipt modal.</li>
+        <li>Barista queue (KDS) that shows pending orders and allows “Mark Ready”.</li>
+        <li>Inventory view with images, sortable columns, stock status badges, and student editing.</li>
+        <li>Manager Hub with bug/feature logging and employee management tools.</li>
+        <li>Time Clock for student shifts with active workers list and recent entries.</li>
+        <li>Local storage persistence plus Firestore real-time sync (when available).</li>
+    </ul>
+</details>
+<details>
+    <summary>Known Bugs / Quirks</summary>
+    <ul class="bullet-list">
+        <li>If the image generator is blocked by a filter, the AI image status may show “Error” and keep the previous image.</li>
+        <li>When clearing browser storage manually, local data may be lost until Firestore sync repopulates it.</li>
+        <li>Multiple browser tabs open to the same POS can compete when editing inventory simultaneously.</li>
+    </ul>
+</details>
+<details>
+    <summary>Potential Future Improvements</summary>
+    <ul class="bullet-list">
+        <li>Cloud image storage for generated product images (e.g., GitHub or Cloudinary integration).</li>
+        <li>Per-student performance summaries (orders handled, hours worked, etc.).</li>
+        <li>Exportable daily close-out report (cash expected vs. cash recorded).</li>
+        <li>Accessibility audit pass: keyboard-only nav, screen reader labels, and more contrast presets.</li>
+    </ul>
+</details>
                     </div>
 
                     <button class="btn-pay btn-card" style="width:100%; margin:10px 0" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
@@ -261,23 +248,7 @@
 <div id="modal-cash" class="modal"><div class="modal-content"><h3>Cash Payment</h3><p>Total Due: <strong id="cash-modal-total" style="font-size:1.2rem">$0.00</strong></p><div style="margin:15px 0;"><label>Amount Tendered:</label><div id="calc-display" class="calc-display">$0.00</div></div><div id="change-result" class="change-result">Change Due: <span id="change-amt">$0.00</span></div><div class="calc-grid"><button class="calc-btn" onclick="app.calcInput(1)">1</button><button class="calc-btn" onclick="app.calcInput(2)">2</button><button class="calc-btn" onclick="app.calcInput(3)">3</button><button class="calc-btn" onclick="app.calcInput(4)">4</button><button class="calc-btn" onclick="app.calcInput(5)">5</button><button class="calc-btn" onclick="app.calcInput(6)">6</button><button class="calc-btn" onclick="app.calcInput(7)">7</button><button class="calc-btn" onclick="app.calcInput(8)">8</button><button class="calc-btn" onclick="app.calcInput(9)">9</button><button class="calc-btn" onclick="app.calcInput('.')">.</button><button class="calc-btn" onclick="app.calcInput(0)">0</button><button class="calc-btn" style="color:var(--danger)" onclick="app.calcClear()">C</button></div><div class="calc-grid" style="grid-template-columns: 1fr 1fr 1fr;"><button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcExact()">Exact</button><button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcNext(5)">$5</button><button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcNext(10)">$10</button></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-cash')">Cancel</button><button class="btn-pay btn-cash" style="flex:1" onclick="app.finalizeCash()">Finalize</button></div></div></div>
 <div id="modal-receipt" class="modal"><div class="modal-content"><h3 class="no-print" style="text-align:center; color:var(--space-indigo); padding-top:20px;">Order Complete!</h3><div class="receipt-paper" id="receipt-content"></div><div class="no-print" style="display:flex; gap:10px; padding:20px;"><button class="btn-pay btn-train" style="flex:1" onclick="window.print()">Print</button><button class="btn-pay btn-card" style="flex:1" onclick="app.closeReceiptAndReset()">Close</button></div></div></div>
 <div id="modal-edit-inventory" class="modal"><div class="modal-content"><h3>Edit Inventory</h3><div class="form-group"><label id="edit-inv-name">Product Name</label></div><div class="form-group"><label>Current Stock</label><input type="number" id="edit-inv-stock" class="form-control"></div><div class="form-group"><label>Price ($)</label><input type="number" id="edit-inv-price" class="form-control" step="0.25"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-edit-inventory')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveInventory()">Save</button></div></div></div>
-<div id="modal-product" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="prod-modal-title">Add/Edit Product</h3><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div><div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div><div class="form-group"><label>Category</label><select id="prod-cat" class="form-control"><option>Beverages</option><option>Baked Goods</option><option>Snacks</option></select></div><div class="form-group"><label>Price</label><input type="number" id="prod-price" class="form-control" step="0.25"></div><div class="form-group"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div><div class="form-group"><label>Image Preview</label>
-<div class="img-preview-box">
-    <img id="prod-img-preview" src="" alt="Preview">
-</div>
-<label style="font-size:0.8rem">Image URL</label>
-<div class="prod-img-row">
-    <input type="text" id="prod-img-url" class="form-control" style="font-size:0.8rem; color:#888;">
-    <button type="button" class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">AI Image</button>
-    <button type="button" class="btn-sm" onclick="app.downloadProdImage()">Download</button>
-</div>
-<div class="ai-status-wrap">
-    <span id="ai-status" class="ai-status">Ready</span>
-</div>
-<div class="upload-options">
-    <input type="file" id="prod-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'prod-img-url')">
-</div>
-</div></div><div><label style="font-weight:600; color:var(--space-indigo);">Product Options</label><div id="prod-options-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div><button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button></div></div><div style="display:flex; gap:10px; margin-top: 20px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button></div></div></div>
+<div id="modal-product" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="prod-modal-title">Add/Edit Product</h3><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div><div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div><div class="form-group"><label>Category</label><select id="prod-cat" class="form-control"><option>Beverages</option><option>Baked Goods</option><option>Snacks</option></select></div><div class="form-group"><label>Price</label><input type="number" id="prod-price" class="form-control" step="0.25"></div><div class="form-group"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div><div class="form-group"><label>Image Preview</label><div class="img-preview-box"><div class="ai-status-wrap"><span id="ai-status" class="ai-status">Ready</span></div><img id="prod-img-preview" class="prod-img-preview" src="" alt="Preview"></div><label style="font-size:0.8rem">Image URL (Hidden)</label><input type="text" id="prod-img-url" class="form-control" style="font-size:0.8rem; color:#888;"><div class="upload-options"><input type="file" id="prod-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'prod-img-url')"><button class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">AI Image</button> <button class="btn-sm" type="button" onclick="app.downloadProdImage()">Download</button></div></div></div><div><label style="font-weight:600; color:var(--space-indigo);">Product Options</label><div id="prod-options-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div><button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button></div></div><div style="display:flex; gap:10px; margin-top: 20px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button></div></div></div>
 <div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Cashier</option><option>Barista</option><option>Inventory</option><option>Manager</option><option>IT Admin</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button></div></div></div>
 
 <script type="module" src="js/firebase-init_v1.36.js"></script>
