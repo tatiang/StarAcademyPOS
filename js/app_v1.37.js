@@ -399,7 +399,7 @@ const app = {
         const lines = low.map(p => `• ${p.name} (${p.cat || 'Uncategorized'}): ${p.stock ?? 0}`).join('\n');
         app.showAlert('Low Stock Report:\n\n' + lines);
     },
-,
+
     printBugReports: () => { window.print(); },
     downloadFullBackup: () => {
         const dataStr = JSON.stringify(app.data); const blob = new Blob([dataStr], {type: "application/json"}); const url = URL.createObjectURL(blob);
