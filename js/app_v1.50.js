@@ -1,5 +1,3 @@
-import { firebaseConfig } from './firebase-init_v1.50.js';
-
 // --- AUDIO SYSTEM ---
 const playTone = (freq, type, duration) => {
     try {
@@ -16,30 +14,17 @@ const playTone = (freq, type, duration) => {
 
 const app = {
     data: {
-        currentCashier: null,
-        cart: [],
-        products: [],
-        orders: [],
-        employees: [],
-        roles: [], // Added for v1.50
-        timeEntries: [],
-        bugReports: [],
-        orderCounter: 1001,
-        taxRate: 0.0925,
-        tempProduct: null,
-        tempOptions: {},
-        tempCashEntry: "",
-        editingId: null,
-        inventorySort: { field: "name", dir: "asc" },
+        currentCashier: null, cart: [], products: [], orders: [], employees: [], timeEntries: [], bugReports: [], orderCounter: 1001, taxRate: 0.0925, tempProduct: null, tempOptions: {}, tempCashEntry: "", editingId: null, inventorySort: { field: "name", dir: "asc" },
+        roles: ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin', 'Floater'] // Default Roles (v1.50)
     },
     pinBuffer: "",
     pinCallback: null,
 
     init: () => {
-        app.loadLocalData();
+        app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
-        if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
-        app.renderLogin();
+        document.getElementById('order-number').innerText = app.data.orderCounter;
+        app.renderLogin(); // Immediate render
     },
 
     refreshUI: () => {
@@ -53,20 +38,18 @@ const app = {
             if(active.id === 'view-barista') app.renderBarista();
             if(active.id === 'view-dashboard') app.renderDashboard();
             if(active.id === 'view-inventory') app.renderInventory();
-            if(active.id === 'view-time') app.renderTimeClock();
-            if(active.id === 'view-manager') app.renderManager();
-            if(active.id === 'view-it') app.renderIT();
+            if(active.id === 'view-manager') app.renderManagerHub(); // Added explicit manager render
+            if(active.id === 'view-it') app.renderITHub(); // Added explicit IT render
         }
     },
 
     loadLocalData: () => {
-        // Updated key for v1.50
-        const stored = localStorage.getItem('starAcademyPOS_v150');
+        const stored = localStorage.getItem('starAcademyPOS_v131');
         if (stored) {
             app.data = JSON.parse(stored);
-            // v1.50 Migration: Ensure roles exist if upgrading from old data
-            if (!app.data.roles || app.data.roles.length === 0) {
-                app.data.roles = ["Cashier", "Barista", "Inventory", "Manager", "IT Admin", "Floater"];
+            // v1.50 Fix: Ensure roles array exists if loading from older data
+            if (!app.data.roles) {
+                app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin', 'Floater'];
             }
         } else {
             app.seedData();
@@ -74,25 +57,36 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v150', JSON.stringify(app.data));
-        // Simulate cloud sync hook
+        localStorage.setItem('starAcademyPOS_v131', JSON.stringify(app.data));
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
     seedData: () => {
-        app.data.roles = ["Cashier", "Barista", "Inventory", "Manager", "IT Admin", "Floater"]; // v1.50
+        app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin', 'Floater'];
         app.data.products = [
             { id: 1, name: "Coffee", cat: "Beverages", price: 3.50, stock: 50, img: "images/coffee.jpg", options: [{ name: "Add-ins", type: "select", choices: [{name:"+ Half & Half"}, {name:"+ Extra Room"}, {name:"(No Caf) Decaf"}] }] },
-            { id: 2, name: "Herbal Tea", cat: "Beverages", price: 3.25, stock: 40, img: "", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
-            { id: 3, name: "Latte", cat: "Beverages", price: 4.50, stock: 40, img: "", options: [{ name: "Syrup", type: "select", choices: [{name:"Plain"}, {name:"+ Vanilla"}, {name:"+ Hazelnut"}] }] },
-            { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "" },
-            { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
+            { id: 2, name: "Herbal Tea", cat: "Beverages", price: 3.25, stock: 40, img: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
+            { id: 3, name: "Black Tea", cat: "Beverages", price: 3.25, stock: 40, img: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
+            { id: 4, name: "Iced Tea", cat: "Beverages", price: 3.75, stock: 35, img: "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=200", options: [{ name: "Ice Level", type: "radio", choices: [{name:"(No Ice)"}, {name:"(Low Ice)"}, {name:"+ Extra Ice"}] }] },
+            { id: 5, name: "Hot Chocolate", cat: "Beverages", price: 4.00, stock: 30, img: "https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }, { name: "Topping", type: "toggle", choice: {name:"+ Whipped Cream"} }] },
+            { id: 6, name: "Hot Cider", cat: "Beverages", price: 3.75, stock: 30, img: "https://images.unsplash.com/photo-1579619563346-63304eb4098c?w=200", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
+            { id: 7, name: "Latte", cat: "Beverages", price: 4.50, stock: 40, img: "https://via.placeholder.com/150?text=Latte", options: [{ name: "Syrup", type: "select", choices: [{name:"Plain"}, {name:"+ Vanilla"}, {name:"+ Hazelnut"}] }, { name: "Temp", type: "toggle", choice: {name:"Not too hot"} }, { name: "Topping", type: "toggle", choice: {name:"+ Whipped Cream"} }] },
+            { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "images/muffin.jpg" },
+            { id: 9, name: "Chocolate Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=200" },
+            { id: 10, name: "Choc Chip Cookie", cat: "Baked Goods", price: 2.50, stock: 30, img: "https://images.unsplash.com/photo-1499636138143-bd630f5cf38a?w=200" },
+            { id: 11, name: "Biscotti", cat: "Baked Goods", price: 2.00, stock: 25, img: "https://via.placeholder.com/150?text=Biscotti" },
+            { id: 12, name: "Plain Bagel", cat: "Baked Goods", price: 3.00, stock: 15, img: "https://via.placeholder.com/150?text=Bagel", options: [{ name: "Prep", type: "toggle", choice: {name:"Toasted"} }, { name: "Add-on", type: "toggle", choice: {name:"+ Cream Cheese", price: 1.00} }] },
+            { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "https://images.unsplash.com/photo-1603394630854-e0b62d294e33?w=200" },
+            { id: 14, name: "Tap Water", cat: "Beverages", price: 0.00, stock: 100, img: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200" }
         ];
         
         app.data.employees = [
-            {id: 1, name: "Manager", role: "Manager", img: "images/placeholder.png"}, // Hidden in grid
             {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
-            {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"}
+            {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"},
+            {id: 4, name: "Jordan", role: "Inventory", img: "images/placeholder.png"},
+            {id: 5, name: "Maya", role: "Cashier", img: "images/placeholder.png"},
+            {id: 6, name: "Noah", role: "Barista", img: "images/placeholder.png"},
+            {id: 7, name: "Zoe", role: "Floater", img: "images/placeholder.png"}
         ];
         app.data.orderCounter = 1001;
         app.data.orders = [];
@@ -106,31 +100,12 @@ const app = {
         const itLink = document.getElementById('nav-it');
         if (manLink) manLink.classList.add('hidden');
         if (itLink) itLink.classList.add('hidden');
-        
-        const currentUser = app.data.employees.find(e => e.name === app.data.currentCashier);
-        const role = currentUser ? currentUser.role : app.data.currentCashier;
-
-        if (role === 'Manager') {
+        if (app.data.currentCashier === 'Manager') {
             if (manLink) manLink.classList.remove('hidden');
-        } else if (role === 'IT Admin' || role === 'IT Support') {
+        } else if (app.data.currentCashier === 'IT Support') {
             if (itLink) itLink.classList.remove('hidden');
             if (manLink) manLink.classList.remove('hidden'); 
         }
-    },
-
-    navigate: (viewId) => {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-        document.getElementById('view-' + viewId).classList.add('active');
-        const navLink = document.getElementById('nav-' + viewId);
-        if(navLink) navLink.classList.add('active');
-        app.refreshUI();
-    },
-
-    logout: () => {
-        app.data.currentCashier = null;
-        document.getElementById('login-overlay').style.display = "flex";
-        app.renderLogin();
     },
 
     renderLogin: () => {
@@ -180,454 +155,598 @@ const app = {
 
     completeLogin: (name, role) => {
         app.data.currentCashier = name;
-        document.getElementById('login-overlay').style.display = "none";
-        document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> ${name} (${role})`;
+        let imgUrl = 'images/placeholder.png';
+        const emp = app.data.employees.find(e => e.name === name);
+        if (emp) imgUrl = emp.img;
+        
+        document.getElementById('header-cashier').innerHTML = `<img src="${imgUrl}" class="cashier-avatar" onerror="this.src='images/placeholder.png'"> ${name}`;
+        document.getElementById('login-overlay').style.display = 'none';
         app.updateSidebar();
-        app.navigate('pos');
-    },
-
-    // --- POS & CART ---
-    renderPOS: () => {
-        const catContainer = document.getElementById('pos-categories');
-        const grid = document.getElementById('pos-grid');
-        // Simple distinct categories
-        const cats = [...new Set(app.data.products.map(p => p.cat))];
         
-        catContainer.innerHTML = cats.map(c => `<div class="cat-tab" onclick="app.filterPos('${c}')">${c}</div>`).join('') + `<div class="cat-tab" onclick="app.filterPos('All')">All</div>`;
-        
-        app.filterPos('All'); // Initial render
-        app.renderCart();
+        if (role === 'Manager') app.navigate('manager');
+        else if (role === 'IT Admin') app.navigate('it');
+        else app.navigate('pos');
     },
 
-    filterPos: (cat) => {
-        const grid = document.getElementById('pos-grid');
-        const items = cat === 'All' ? app.data.products : app.data.products.filter(p => p.cat === cat);
-        grid.innerHTML = items.map(p => `
-            <div class="product-card" onclick="app.addToCart(${p.id})">
-                <div style="height:100px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999;">${p.name.substring(0,2)}</div>
-                <div class="prod-info">
-                    <div class="prod-name">${p.name}</div>
-                    <div class="prod-price">$${p.price.toFixed(2)}</div>
-                    <div class="prod-stock">Stock: ${p.stock}</div>
-                </div>
-            </div>
-        `).join('');
+    logout: () => {
+        app.data.currentCashier = null;
+        document.getElementById('login-overlay').style.display = 'flex';
     },
 
-    addToCart: (id) => {
-        const prod = app.data.products.find(p => p.id === id);
-        if(!prod) return;
-        if(prod.stock <= 0) { app.showAlert("Out of Stock", "Cannot add item."); return; }
-        
-        app.data.cart.push({ ...prod, cartId: Date.now(), optionsSelected: [] });
-        app.renderCart();
-        playTone(600, 'sine', 0.1);
+    requestPin: (callback) => {
+        app.pinBuffer = "";
+        app.pinCallback = callback;
+        document.getElementById('pin-display').innerText = "";
+        document.getElementById('pin-error').innerText = "";
+        document.getElementById('modal-pin').classList.add('open');
     },
 
-    renderCart: () => {
-        const list = document.getElementById('cart-list');
-        if(app.data.cart.length === 0) {
-            list.innerHTML = `<div style="padding:20px; text-align:center; color:#999;">Cart is empty</div>`;
-            document.getElementById('pos-subtotal').innerText = "$0.00";
-            document.getElementById('pos-tax').innerText = "$0.00";
-            document.getElementById('pos-total').innerText = "$0.00";
-            return;
-        }
-
-        list.innerHTML = app.data.cart.map((item, index) => `
-            <div class="cart-item">
-                <div class="cart-item-details">
-                    <strong>${item.name}</strong> - $${item.price.toFixed(2)}
-                </div>
-                <button class="btn-sm" onclick="app.removeFromCart(${index})" style="color:var(--danger)">X</button>
-            </div>
-        `).join('');
-
-        const sub = app.data.cart.reduce((sum, i) => sum + i.price, 0);
-        const tax = sub * app.data.taxRate;
-        document.getElementById('pos-subtotal').innerText = "$" + sub.toFixed(2);
-        document.getElementById('pos-tax').innerText = "$" + tax.toFixed(2);
-        document.getElementById('pos-total').innerText = "$" + (sub + tax).toFixed(2);
+    pinInput: (num) => {
+        app.pinBuffer += num;
+        document.getElementById('pin-display').innerText = "*".repeat(app.pinBuffer.length);
+    },
+    pinClear: () => {
+        app.pinBuffer = "";
+        document.getElementById('pin-display').innerText = "";
+    },
+    pinSubmit: () => {
+        document.getElementById('modal-pin').classList.remove('open');
+        if (app.pinCallback) app.pinCallback(app.pinBuffer);
     },
 
-    removeFromCart: (index) => {
-        app.data.cart.splice(index, 1);
-        app.renderCart();
-    },
-
-    validateAndPay: (method) => {
-        if(app.data.cart.length === 0) return;
-        if(method === 'Cash') {
-            const total = parseFloat(document.getElementById('pos-total').innerText.replace('$',''));
-            document.getElementById('cash-modal-total').innerText = "$" + total.toFixed(2);
-            app.tempCashEntry = "";
-            document.getElementById('calc-display').innerText = "$0.00";
-            document.getElementById('change-result').style.opacity = 0;
-            document.getElementById('modal-cash').classList.add('open');
-        } else {
-            // Card simulation
-            app.finalizeOrder(method, 0);
-        }
-    },
-
-    finalizeCash: () => {
-        const tendered = parseFloat(app.tempCashEntry);
-        const total = parseFloat(document.getElementById('cash-modal-total').innerText.replace('$',''));
-        if(tendered < total) { app.showAlert("Insufficient Funds", "Amount tendered is less than total."); return; }
-        app.finalizeOrder('Cash', tendered - total);
-        app.closeModal('modal-cash');
-    },
-
-    finalizeOrder: (method, change) => {
-        const total = parseFloat(document.getElementById('pos-total').innerText.replace('$',''));
-        const order = {
-            id: app.data.orderCounter++,
-            date: new Date().toISOString(),
-            items: [...app.data.cart],
-            total: total,
-            method: method,
-            cashier: app.data.currentCashier,
-            customer: document.getElementById('customer-name').value || "Walk-in",
-            status: "Pending" // For barista view
-        };
-        
-        // Deduct Stock
-        app.data.cart.forEach(cItem => {
-            const p = app.data.products.find(prod => prod.id === cItem.id);
-            if(p) p.stock--;
-        });
-
-        app.data.orders.unshift(order);
-        app.data.cart = [];
-        document.getElementById('customer-name').value = "";
-        app.saveData();
-        app.renderCart(); // Clear cart UI
-        
-        // Show Receipt
-        const rCont = document.getElementById('receipt-content');
-        rCont.innerHTML = `
-            <div style="text-align:center; border-bottom:1px dashed #333; padding-bottom:10px; margin-bottom:10px;">
-                <h3>STAR ACADEMY</h3>
-                <p>Order #${order.id}</p>
-                <p>${new Date().toLocaleString()}</p>
-            </div>
-            ${order.items.map(i => `<div>${i.name} - $${i.price.toFixed(2)}</div>`).join('')}
-            <div style="border-top:1px dashed #333; margin-top:10px; padding-top:10px; text-align:right;">
-                <strong>Total: $${order.total.toFixed(2)}</strong><br>
-                <small>${method} Payment</small><br>
-                ${method==='Cash'?`Change: $${change.toFixed(2)}`:''}
-            </div>
-        `;
-        document.getElementById('modal-receipt').classList.add('open');
-    },
-
-    // --- BARISTA ---
-    renderBarista: () => {
-        const grid = document.getElementById('barista-grid');
-        const pending = app.data.orders.filter(o => o.status === "Pending");
-        
-        if(pending.length === 0) { grid.innerHTML = "<p>No pending orders.</p>"; return; }
-        
-        grid.innerHTML = pending.map(o => `
-            <div class="order-card">
-                <div class="order-header">
-                    <span>#${o.id} - ${o.customer}</span>
-                    <span>${new Date(o.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                </div>
-                <div class="order-items">
-                    <ul>${o.items.map(i => `<li>${i.name}</li>`).join('')}</ul>
-                </div>
-                <button class="btn-sm" style="width:100%; margin-top:10px; background:var(--success); color:white;" onclick="app.markReady(${o.id})">Mark Ready</button>
-            </div>
-        `).join('');
-    },
-
-    markReady: (id) => {
-        const o = app.data.orders.find(ord => ord.id === id);
-        if(o) { o.status = "Completed"; app.saveData(); app.renderBarista(); }
-    },
-
-    // --- DASHBOARD ---
-    renderDashboard: () => {
-        document.getElementById('dash-date').innerText = new Date().toLocaleDateString();
-        
-        // Stats
-        const today = new Date().toDateString();
-        const todaysOrders = app.data.orders.filter(o => new Date(o.date).toDateString() === today);
-        const revenue = todaysOrders.reduce((s, o) => s + o.total, 0);
-        
-        document.getElementById('stat-revenue').innerText = "$" + revenue.toFixed(2);
-        document.getElementById('stat-orders').innerText = todaysOrders.length;
-        document.getElementById('stat-low').innerText = app.data.products.filter(p => p.stock < 10).length;
-
-        // Table
-        const tbody = document.getElementById('dashboard-orders-body');
-        tbody.innerHTML = app.data.orders.slice(0, 10).map(o => `
-            <tr>
-                <td>${o.id}</td>
-                <td>${new Date(o.date).toLocaleTimeString()}</td>
-                <td>${o.customer}</td>
-                <td>${o.cashier}</td>
-                <td>$${o.total.toFixed(2)}</td>
-                <td>${o.status}</td>
-                <td><button class="btn-sm" onclick="app.printOrder(${o.id})">Print</button></td>
-            </tr>
-        `).join('');
-    },
-
-    // --- INVENTORY ---
-    renderInventory: () => {
-        const tbody = document.getElementById('inventory-body');
-        tbody.innerHTML = app.data.products.map(p => `
-            <tr>
-                <td><div style="width:40px; height:40px; background:#eee; border-radius:4px;"></div></td>
-                <td>${p.name}</td>
-                <td>${p.cat}</td>
-                <td>${p.stock}</td>
-                <td>$${p.price.toFixed(2)}</td>
-                <td>${p.stock < 10 ? '<span style="color:var(--danger)">Low</span>' : 'OK'}</td>
-                <td><button class="btn-sm" onclick="app.editInventory(${p.id})">Edit</button></td>
-            </tr>
-        `).join('');
-    },
-
-    editInventory: (id) => {
-        const p = app.data.products.find(x => x.id === id);
-        if(p) {
-            document.getElementById('edit-inv-name').innerText = p.name;
-            document.getElementById('edit-inv-stock').value = p.stock;
-            document.getElementById('edit-inv-price').value = p.price;
-            app.data.editingId = id;
-            document.getElementById('modal-edit-inventory').classList.add('open');
-        }
-    },
-
-    saveInventory: () => {
-        const p = app.data.products.find(x => x.id === app.data.editingId);
-        if(p) {
-            p.stock = parseInt(document.getElementById('edit-inv-stock').value);
-            p.price = parseFloat(document.getElementById('edit-inv-price').value);
-            app.saveData();
-            app.closeModal('modal-edit-inventory');
-            app.renderInventory();
-        }
-    },
-
-    // --- TIME CLOCK ---
-    renderTimeClock: () => {
-        const sel = document.getElementById('time-employee-select');
-        sel.innerHTML = '<option value="">Select your name...</option>' + app.data.employees.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
-        
-        // Active List
-        const activeContainer = document.getElementById('active-workers-list');
-        const active = app.data.timeEntries.filter(t => !t.out);
-        if(active.length === 0) activeContainer.innerHTML = "No one is clocked in.";
-        else activeContainer.innerHTML = active.map(t => `<span style="background:var(--success); color:white; padding:5px 10px; border-radius:15px; margin-right:5px;">${t.name}</span>`).join('');
-
-        document.getElementById('time-active-count').innerText = active.length;
-    },
-
-    clockIn: () => {
-        const name = document.getElementById('time-employee-select').value;
-        if(!name) return;
-        if(app.data.timeEntries.find(t => t.name === name && !t.out)) { app.showAlert("Error", "Already clocked in."); return; }
-        
-        app.data.timeEntries.push({ name: name, in: new Date().toISOString(), out: null });
-        app.saveData();
-        app.renderTimeClock();
-        app.showAlert("Success", "Clocked In!");
-    },
-
-    clockOut: () => {
-        const name = document.getElementById('time-employee-select').value;
-        if(!name) return;
-        const entry = app.data.timeEntries.find(t => t.name === name && !t.out);
-        if(!entry) { app.showAlert("Error", "Not clocked in."); return; }
-        
-        entry.out = new Date().toISOString();
-        app.saveData();
-        app.renderTimeClock();
-        app.showAlert("Success", "Clocked Out!");
-    },
-
-    // --- MANAGER & ROLES (v1.50 Features) ---
-    renderManager: () => {
-        const empBody = document.getElementById('employees-body');
-        empBody.innerHTML = app.data.employees.map(e => `
-            <tr>
-                <td><img src="${e.img}" style="width:30px; height:30px; border-radius:50%;" onerror="this.src='images/placeholder.png'"></td>
-                <td>${e.name}</td>
-                <td>${e.role}</td>
-                <td><button class="btn-sm" onclick="app.deleteEmployee(${e.id})" style="color:var(--danger)">X</button></td>
-            </tr>
-        `).join('');
-
-        // --- NEW v1.50: Render Dynamic Roles ---
-        const roleBody = document.getElementById('role-list-body');
-        if (roleBody) {
-            roleBody.innerHTML = app.data.roles.map(r => `
-                <li>
-                    <span>${r}</span>
-                    ${(r !== 'Manager' && r !== 'IT Admin') ? `<button class="btn-sm" style="color:var(--danger); border:none;" onclick="app.deleteRole('${r}')"><i class="fa-solid fa-trash"></i></button>` : '<span style="color:#ccc; font-size:0.8rem;">(Locked)</span>'}
-                </li>
-            `).join('');
-        }
-    },
-
-    // New v1.50 Function
-    addRole: () => {
-        const newRole = prompt("Enter the name of the new Role (e.g., 'Senior Barista'):");
-        if(newRole && newRole.trim() !== "") {
-            if(app.data.roles.includes(newRole)) {
-                app.showAlert("Error", "Role already exists.");
-                return;
-            }
-            app.data.roles.push(newRole);
-            app.saveData();
-            app.renderManager();
-        }
-    },
-
-    // New v1.50 Function
-    deleteRole: (roleName) => {
-        if(confirm(`Are you sure you want to delete the "${roleName}" role?`)) {
-            app.data.roles = app.data.roles.filter(r => r !== roleName);
-            app.saveData();
-            app.renderManager();
-        }
-    },
-
-    openEmployeeModal: () => {
-        document.getElementById('emp-name').value = "";
-        document.getElementById('emp-img-url').value = "";
-        
-        // v1.50: Populate select with dynamic roles
-        const select = document.getElementById('emp-role');
-        select.innerHTML = app.data.roles.map(r => `<option value="${r}">${r}</option>`).join('');
-        
-        document.getElementById('modal-employee').classList.add('open');
-    },
-
-    saveEmployee: () => {
-        const name = document.getElementById('emp-name').value;
-        const role = document.getElementById('emp-role').value;
-        const img = document.getElementById('emp-img-url').value;
-        
-        if(!name) return;
-        app.data.employees.push({
-            id: Date.now(),
-            name, role, img
-        });
-        app.saveData();
-        app.closeModal('modal-employee');
-        app.renderManager();
-    },
-
-    deleteEmployee: (id) => {
-        if(confirm("Delete employee?")) {
-            app.data.employees = app.data.employees.filter(e => e.id !== id);
-            app.saveData();
-            app.renderManager();
-        }
-    },
-
-    // --- IT & SYSTEM (v1.50 Features) ---
-    renderIT: () => {
-        // Basic IT render logic
-        document.getElementById('it-db-status').innerText = (window.firebase) ? "Connected" : "Local Only";
-    },
-
-    // New v1.50 Function
-    resetITPassword: () => {
-        const email = "tatiangreenleaf@gmail.com";
-        const subject = "Star Academy POS - Admin Password Reset";
-        const body = "Please reset the password for the IT Admin account.";
-        
-        // In a real app, this would hit an API. Here we simulate via mailto
-        window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        
-        app.showAlert("Reset Initiated", `Instructions have been prepared for ${email}`);
-    },
-
-    downloadFullBackup: () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(app.data));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "StarAcademy_Backup_v1.50.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    },
-
-    // --- UTILS ---
-    updateClock: () => {
-        const now = new Date();
-        const t = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        if(document.getElementById('live-clock')) document.getElementById('live-clock').innerText = t;
-        if(document.getElementById('big-clock')) document.getElementById('big-clock').innerText = t;
-        if(document.getElementById('big-date')) document.getElementById('big-date').innerText = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-    },
-
-    showAlert: (title, msg) => {
+    // --- Custom Alert ---
+    showAlert: (msg, title = "Alert") => {
         document.getElementById('alert-title').innerText = title;
         document.getElementById('alert-message').innerText = msg;
         document.getElementById('modal-alert').classList.add('open');
     },
 
-    closeModal: (id) => { document.getElementById(id).classList.remove('open'); },
-    closeReceiptAndReset: () => { app.closeModal('modal-receipt'); },
+    // --- IT Hub Fetch ---
+    fetchTestingNotes: async () => {
+        const pre = document.getElementById('github-notes-content');
+        pre.innerText = "Loading...";
+        try {
+            const res = await fetch('https://raw.githubusercontent.com/tatiang/StarAcademyPOS/main/TESTING_NOTES?t=' + new Date().getTime());
+            if(res.ok) {
+                const text = await res.text();
+                pre.innerText = text;
+            } else {
+                pre.innerText = "Could not load notes. Ensure TESTING_NOTES file exists in repo root.";
+            }
+        } catch(e) {
+            pre.innerText = "Error fetching notes: " + e.message;
+        }
+    },
     
-    // PIN Logic
-    requestPin: (cb) => {
-        app.pinBuffer = "";
-        app.pinCallback = cb;
-        document.getElementById('pin-display').innerText = "";
-        document.getElementById('pin-error').innerText = "";
-        document.getElementById('modal-pin').classList.add('open');
-    },
-    pinInput: (num) => {
-        if(app.pinBuffer.length < 4) {
-            app.pinBuffer += num;
-            document.getElementById('pin-display').innerText = "*".repeat(app.pinBuffer.length);
-        }
-    },
-    pinClear: () => { app.pinBuffer = ""; document.getElementById('pin-display').innerText = ""; },
-    pinSubmit: () => {
-        app.closeModal('modal-pin');
-        if(app.pinCallback) app.pinCallback(app.pinBuffer);
+    renderITHub: () => {
+        const pre = document.getElementById('github-notes-content');
+        if(pre.innerText.includes("Loading")) app.fetchTestingNotes();
     },
 
-    // Calculator Logic (Cash Modal)
-    calcInput: (val) => {
-        if(val === '.') {
-            if(!app.tempCashEntry.includes('.')) app.tempCashEntry += val;
-        } else {
-            app.tempCashEntry += val;
+    handleImageUpload: (input, targetId) => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById(targetId).value = e.target.result;
+                document.getElementById('prod-img-preview').src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
         }
-        document.getElementById('calc-display').innerText = "$" + app.tempCashEntry;
+    },
+
+    generateAIImage: (nameId, targetId) => {
+        const nameInput = document.getElementById(nameId);
+        const query = (nameInput && nameInput.value) ? nameInput.value : 'coffee';
+        const seed = Math.floor(Math.random() * 9999);
+        const url = `https://image.pollinations.ai/prompt/delicious ${encodeURIComponent(query)} food photography, professional lighting, photorealistic, 4k?width=300&height=300&nologo=true&seed=${seed}`;
+
+        const statusEl = document.getElementById('ai-status');
+        const preview = document.getElementById('prod-img-preview');
+        const target = document.getElementById(targetId);
+
+        if (statusEl) {
+            statusEl.textContent = 'Generating...';
+            statusEl.classList.remove('ok', 'error');
+            statusEl.classList.add('working');
+        }
+
+        const img = new Image();
+        img.onload = () => {
+            if (target) target.value = url;
+            if (preview) preview.src = url;
+            if (statusEl) {
+                statusEl.textContent = 'Ready';
+                statusEl.classList.remove('working', 'error');
+                statusEl.classList.add('ok');
+            }
+        };
+        img.onerror = () => {
+            if (statusEl) {
+                statusEl.textContent = 'Error loading image';
+                statusEl.classList.remove('working', 'ok');
+                statusEl.classList.add('error');
+            }
+        };
+        img.src = url;
+    },
+
+    downloadProdImage: () => {
+        const preview = document.getElementById('prod-img-preview');
+        if (!preview || !preview.src) {
+            app.showAlert("No image to download yet.");
+            return;
+        }
+        const a = document.createElement('a');
+        a.href = preview.src;
+        const nameField = document.getElementById('prod-name');
+        const baseName = (nameField && nameField.value ? nameField.value : 'product').replace(/\s+/g, '_');
+        a.download = `${baseName}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    },
+
+    // --- MANAGER HUB (Updated v1.50) ---
+    renderManagerHub: () => { 
+        app.renderBugReports(); 
+        app.renderProductsManager(); 
+        app.renderEmployeesManager();
+        app.renderRoles(); // v1.50 Feature
+    },
+    
+    // v1.50 Role Management
+    renderRoles: () => {
+        const roleList = document.getElementById('role-list');
+        if(!roleList) return;
         
-        // Real-time change calc
-        const tendered = parseFloat(app.tempCashEntry);
-        const total = parseFloat(document.getElementById('cash-modal-total').innerText.replace('$',''));
-        if(!isNaN(tendered) && tendered >= total) {
-             const change = tendered - total;
-             document.getElementById('change-amt').innerText = "$" + change.toFixed(2);
-             document.getElementById('change-result').style.opacity = 1;
-        } else {
-             document.getElementById('change-result').style.opacity = 0;
+        roleList.innerHTML = app.data.roles.map(role => {
+            // Prevent deletion of critical roles
+            const isCritical = ['Manager', 'IT Admin'].includes(role);
+            return `
+            <li class="role-item">
+                <span>${role}</span>
+                ${!isCritical ? `<button onclick="app.deleteRole('${role}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+            </li>`;
+        }).join('');
+    },
+
+    addRole: () => {
+        const newRole = prompt("Enter new role name:");
+        if (newRole && !app.data.roles.includes(newRole)) {
+            app.data.roles.push(newRole);
+            app.saveData();
+            app.renderRoles();
+        } else if (newRole) {
+            app.showAlert("Role already exists.");
         }
     },
-    calcClear: () => { app.tempCashEntry = ""; document.getElementById('calc-display').innerText = "$0.00"; document.getElementById('change-result').style.opacity = 0; },
-    calcExact: () => {
-         const total = document.getElementById('cash-modal-total').innerText.replace('$','');
-         app.tempCashEntry = total;
-         document.getElementById('calc-display').innerText = "$" + total;
-    },
-    calcNext: (amt) => {
-         app.tempCashEntry = amt.toString();
-         app.calcInput(''); // trigger update
-    }
-};
 
+    deleteRole: (roleName) => {
+        if (confirm(`Delete role "${roleName}"?`)) {
+            app.data.roles = app.data.roles.filter(r => r !== roleName);
+            app.saveData();
+            app.renderRoles();
+        }
+    },
+
+    // Updated v1.50: Use dynamic roles in dropdown
+    openEmployeeModal: () => {
+        const select = document.getElementById('emp-role');
+        select.innerHTML = app.data.roles.map(r => `<option>${r}</option>`).join('');
+        document.getElementById('modal-employee').classList.add('open');
+    },
+
+    // v1.50 IT Password Reset
+    resetITPassword: () => {
+        if(confirm("Send password reset instructions to tatiangreenleaf@gmail.com?")) {
+            // Try Firebase Auth if available
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().sendPasswordResetEmail('tatiangreenleaf@gmail.com')
+                .then(() => {
+                    app.showAlert("Email Sent", "Reset instructions sent to tatiangreenleaf@gmail.com");
+                })
+                .catch((error) => {
+                    console.error(error);
+                    app.showAlert("Notice", "Simulation: Reset email sent (Firebase Auth not configured for this action).");
+                });
+            } else {
+                // Simulation Fallback
+                app.showAlert("Reset Sent", "Simulation: Password reset email sent to tatiangreenleaf@gmail.com");
+            }
+        }
+    },
+
+    renderBugReports: () => {
+        const tbody = document.getElementById('bug-log-body');
+        const logs = [...app.data.bugReports].reverse();
+        tbody.innerHTML = logs.length ? logs.slice(0,5).map(l => `<tr><td style="font-size:0.8rem; white-space:nowrap;">${new Date(l.date).toLocaleDateString()} ${new Date(l.date).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}</td><td><b>${l.type}</b></td><td>${l.details}</td></tr>`).join('') : '<tr><td colspan="3">No logs.</td></tr>';
+    },
+    submitBugReport: () => {
+        const type = document.getElementById('bug-type').value; const details = document.getElementById('bug-details').value;
+        if(!details) return app.showAlert("Details required.");
+        app.data.bugReports.push({id: Date.now(), date: new Date().toISOString(), type, details});
+        document.getElementById('bug-details').value = ""; app.saveData(); app.renderBugReports(); app.showAlert("Log saved.");
+    },
+    exportBugReports: () => {
+        let csv = "Date,Type,Details\n"; app.data.bugReports.forEach(l => { csv += `"${l.date}","${l.type}","${l.details.replace(/"/g, '""')}"\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' }); const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `StarAcademy_Logs_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+    },
+    printBugReports: () => { window.print(); },
+    downloadFullBackup: () => {
+        const dataStr = JSON.stringify(app.data); const blob = new Blob([dataStr], {type: "application/json"}); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `star_academy_backup_${new Date().toISOString().split('T')[0]}.json`; a.click();
+        app.showAlert("Backup file downloaded.");
+    },
+
+    renderPOS: (cat = 'All') => {
+        const cats = ['All', ...new Set(app.data.products.map(p => p.cat))];
+        document.getElementById('pos-categories').innerHTML = cats.map(c => `<button class="cat-tab ${c === cat ? 'active' : ''}" onclick="app.renderPOS('${c}')">${c}</button>`).join('');
+        document.getElementById('pos-grid').innerHTML = app.data.products.filter(p => cat === 'All' || p.cat === cat).map(p => `
+            <div class="product-card" onclick="app.addToCartClick(${p.id})">
+                <div class="p-image" style="background-image:url('${p.img}')"></div>
+                <div class="p-info"><div class="p-name">${p.name}</div><div class="p-price">$${p.price.toFixed(2)}</div></div>
+            </div>`).join('');
+        app.renderCart();
+    },
+    addToCartClick: (id) => {
+        playTone(600, 'sine', 0.1); 
+        app.data.tempProduct = app.data.products.find(p => p.id === id);
+        document.getElementById('opt-modal-title').innerText = app.data.tempProduct.name;
+        document.getElementById('opt-custom-note').value = "";
+        const container = document.getElementById('opt-dynamic-container'); container.innerHTML = ''; app.data.tempOptions = {};
+        if (app.data.tempProduct.options && app.data.tempProduct.options.length > 0) {
+            app.data.tempProduct.options.forEach((optGroup) => {
+                const groupDiv = document.createElement('div'); groupDiv.innerHTML = `<div class="opt-group-title">${optGroup.name}</div>`;
+                const buttonsDiv = document.createElement('div'); buttonsDiv.className = 'opt-buttons';
+                if (optGroup.type === 'select' || optGroup.type === 'radio') {
+                    optGroup.choices.forEach(choice => {
+                        const btn = document.createElement('button'); btn.className = 'opt-btn';
+                        btn.innerText = choice.name + (choice.price ? ` (+$${choice.price.toFixed(2)})` : '');
+                        btn.onclick = () => { buttonsDiv.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); app.data.tempOptions[optGroup.name] = choice; };
+                        buttonsDiv.appendChild(btn);
+                    });
+                } else if (optGroup.type === 'toggle') {
+                    const btn = document.createElement('button'); btn.className = 'opt-btn';
+                    btn.innerText = optGroup.choice.name + (optGroup.choice.price ? ` (+$${optGroup.choice.price.toFixed(2)})` : '');
+                    btn.onclick = () => { btn.classList.toggle('selected'); if (btn.classList.contains('selected')) { app.data.tempOptions[optGroup.name] = optGroup.choice; } else { delete app.data.tempOptions[optGroup.name]; } };
+                    buttonsDiv.appendChild(btn);
+                }
+                groupDiv.appendChild(buttonsDiv); container.appendChild(groupDiv);
+            });
+        } else { container.innerHTML = '<p style="color:#777; font-style:italic;">No options.</p>'; }
+        document.getElementById('modal-options').classList.add('open');
+    },
+    confirmOptions: () => {
+        const note = document.getElementById('opt-custom-note').value;
+        let optionsString = ""; let addedPrice = 0;
+        for (const key in app.data.tempOptions) { const choice = app.data.tempOptions[key]; if (optionsString) optionsString += ", "; optionsString += choice.name; if (choice.price) addedPrice += choice.price; }
+        const fullNotes = [optionsString, note].filter(Boolean).join('. Note: ');
+        const finalPrice = app.data.tempProduct.price + addedPrice;
+        const exist = app.data.cart.find(i => i.id === app.data.tempProduct.id && i.notes === fullNotes && i.price === finalPrice);
+        if(exist) { exist.qty++; } else { app.data.cart.push({ ...app.data.tempProduct, qty: 1, notes: fullNotes, price: finalPrice, baseId: app.data.tempProduct.id }); }
+        app.closeModal('modal-options'); app.renderCart();
+    },
+    renderCart: () => {
+        const list = document.getElementById('cart-list');
+        list.innerHTML = app.data.cart.length ? app.data.cart.map((i, idx) => `
+            <div class="cart-item">
+                <div class="item-info"><h4>${i.name}</h4><div class="opts">${i.notes || '(Standard)'}</div></div>
+                <div class="qty-control"><button class="btn-qty" onclick="app.adjQty(${idx}, -1)">-</button><span>${i.qty}</span><button class="btn-qty" onclick="app.adjQty(${idx}, 1)">+</button><button class="btn-del" onclick="app.adjQty(${idx}, -999)"><i class="fa-solid fa-trash"></i></button></div>
+            </div>`).join('') : `<div style="padding:20px; text-align:center; color:#999;">Cart is empty</div>`;
+        const sub = app.data.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        document.getElementById('pos-subtotal').innerText = `$${sub.toFixed(2)}`; document.getElementById('pos-tax').innerText = `$${(sub * app.data.taxRate).toFixed(2)}`; document.getElementById('pos-total').innerText = `$${(sub * (1 + app.data.taxRate)).toFixed(2)}`;
+    },
+    adjQty: (i, d) => { app.data.cart[i].qty += d; if(app.data.cart[i].qty <= 0) app.data.cart.splice(i, 1); app.renderCart(); },
+
+    validateAndPay: (type) => {
+        const name = document.getElementById('customer-name').value.trim();
+        if(!name) {
+            app.showAlert("Please enter the Customer Name first.", "Required Field");
+            document.getElementById('customer-name').classList.add('input-error');
+            setTimeout(() => document.getElementById('customer-name').classList.remove('input-error'), 1000);
+            return;
+        }
+        if(type === 'Cash') app.initiateCashPayment();
+        else app.processPayment('Card');
+    },
+    initiateCashPayment: () => {
+        if(!app.data.cart.length) return app.showAlert("Cart is empty");
+        const total = app.data.cart.reduce((s, i) => s + i.price * i.qty, 0) * (1 + app.data.taxRate);
+        document.getElementById('cash-modal-total').innerText = `$${total.toFixed(2)}`;
+        app.data.tempCashEntry = ""; document.getElementById('calc-display').innerText = "$0.00"; document.getElementById('change-result').style.display = 'none';
+        document.getElementById('modal-cash').classList.add('open');
+    },
+    calcInput: (v) => { if(v==='.' && app.data.tempCashEntry.includes('.')) return; app.data.tempCashEntry += v; app.updateCalc(); },
+    calcClear: () => { app.data.tempCashEntry = ""; app.updateCalc(); },
+    calcExact: () => { const t = app.data.cart.reduce((s,i)=>s+i.price*i.qty,0)*(1+app.data.taxRate); app.data.tempCashEntry = t.toFixed(2); app.updateCalc(); },
+    calcNext: (n) => { app.data.tempCashEntry = n.toString(); app.updateCalc(); },
+    updateCalc: () => {
+        const val = parseFloat(app.data.tempCashEntry) || 0; document.getElementById('calc-display').innerText = `$${val.toFixed(2)}`;
+        const total = app.data.cart.reduce((s,i)=>s+i.price*i.qty,0)*(1+app.data.taxRate);
+        const change = val - total;
+        document.getElementById('change-result').style.display = change >= 0 ? 'block' : 'none'; document.getElementById('change-amt').innerText = `$${change.toFixed(2)}`;
+    },
+    finalizeCash: () => {
+        const total = app.data.cart.reduce((s,i)=>s+i.price*i.qty,0)*(1+app.data.taxRate);
+        const tender = parseFloat(app.data.tempCashEntry); if(tender < total - 0.01) return app.showAlert("Insufficient funds.");
+        app.processPayment('Cash', tender, tender-total);
+    },
+    processPayment: (type, tender=0, change=0) => {
+        if(!app.data.cart.length) return;
+        const customerName = document.getElementById('customer-name').value.trim();
+        const sub = app.data.cart.reduce((s,i)=>s+i.price*i.qty,0);
+        const order = {
+            id: app.data.orderCounter++, date: new Date().toISOString(), cashier: app.data.currentCashier, customer: customerName || "Walk-in",
+            items: [...app.data.cart], sub, tax: sub*app.data.taxRate, total: sub*(1+app.data.taxRate), type, tender, change, status: 'Pending'
+        };
+        order.items.forEach(i => { const p = app.data.products.find(x => x.id === (i.baseId || i.id)); if(p) p.stock -= i.qty; });
+        app.data.orders.push(order); app.saveData(); app.closeModal('modal-cash'); app.showReceipt(order);
+        document.getElementById('order-number').innerText = app.data.orderCounter; document.getElementById('customer-name').value = "";
+        playTone(1200, 'square', 0.1); setTimeout(() => playTone(1600, 'square', 0.2), 100);
+    },
+
+    showReceipt: (o) => {
+        const d = new Date(o.date);
+        const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        document.getElementById('receipt-content').innerHTML = `
+            <div class="r-center"><h3>STAR ACADEMY CAFE</h3><p>${d.toLocaleDateString()} ${timeStr}</p><p>Order #: ${o.id}</p><p>Cashier: ${o.cashier}</p><p>Customer: ${o.customer}</p></div>
+            <div class="r-line"></div>
+            ${o.items.map(i => `<div class="r-row"><span>${i.qty}x ${i.name}</span><span>$${(i.price*i.qty).toFixed(2)}</span></div>${i.notes?`<div style="font-size:0.8rem;font-style:italic">- ${i.notes}</div>`:''}`).join('')}
+            <div class="r-line"></div>
+            <div class="r-row"><span>Subtotal</span><span>$${o.sub.toFixed(2)}</span></div><div class="r-row"><span>Tax</span><span>$${o.tax.toFixed(2)}</span></div><div class="r-row r-total"><span>TOTAL</span><span>$${o.total.toFixed(2)}</span></div>
+            ${o.type==='Cash'?`<div class="r-line"></div><div class="r-row"><span>Cash</span><span>$${o.tender.toFixed(2)}</span></div><div class="r-row"><span>Change</span><span>$${o.change.toFixed(2)}</span></div>`: `<div class="r-center" style="margin-top:10px;">Paid: ${o.type}</div>`}
+            <div class="r-center" style="margin-top:20px;">Thank You!</div>
+        `;
+        document.getElementById('modal-receipt').classList.add('open');
+    },
+    closeReceiptAndReset: () => { app.data.cart = []; app.closeModal('modal-receipt'); app.renderCart(); },
+    renderBarista: () => {
+        const pending = app.data.orders.filter(o => o.status === 'Pending').reverse();
+        document.getElementById('barista-grid').innerHTML = pending.length ? pending.map(o => `
+            <div class="order-card"><div class="oc-header"><div class="oc-title"><span>#${o.id}</span><span>${new Date(o.date).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</span></div><div class="oc-customer"><i class="fa-solid fa-user"></i> ${o.customer}</div></div>
+            <div class="oc-body">${o.items.map(i => `<div class="oc-item"><div class="oc-item-name">${i.qty}x ${i.name}</div>${i.notes?`<span class="oc-opts">${i.notes}</span>`:''}</div>`).join('')}</div>
+            <div class="oc-footer"><button class="btn-ready" onclick="app.markReady(${o.id})">Mark Ready</button></div></div>`).join('') : '<p>No orders.</p>';
+    },
+    markReady: (id) => { app.data.orders.find(o => o.id === id).status = 'Completed'; app.saveData(); app.renderBarista(); },
+    renderDashboard: () => {
+        const rev = app.data.orders.reduce((s, o) => s + o.total, 0);
+        document.getElementById('stat-revenue').innerText = `$${rev.toFixed(2)}`;
+        document.getElementById('stat-orders').innerText = app.data.orders.length;
+        document.getElementById('stat-low').innerText = app.data.products.filter(p => p.stock < 10).length;
+        const recent = [...app.data.orders].reverse().slice(0, 10);
+        document.getElementById('dashboard-orders-body').innerHTML = recent.map(o => `<tr><td>#${o.id}</td><td>${new Date(o.date).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</td><td>${o.customer}</td><td>${o.cashier}</td><td>$${o.total.toFixed(2)}</td><td>${o.status}</td><td><button class="btn-sm" onclick="app.showReceiptById(${o.id})">Receipt</button></td></tr>`).join('');
+    },
+    showReceiptById: (id) => { app.showReceipt(app.data.orders.find(o => o.id === id)); },
+
+    renderInventory: () => {
+        const role = app.getRole();
+        const isManager = (role === 'Manager' || role === 'IT Admin');
+        let headerHtml = '<h2>Inventory</h2>';
+        if (isManager) headerHtml += '<button class="btn-sm" onclick="app.openProductModal()">+ Add Item</button>';
+        document.querySelector('#view-inventory .dash-header').innerHTML = headerHtml;
+
+        const sort = app.data.inventorySort || { field: "name", dir: "asc" };
+        const products = [...app.data.products];
+
+        products.sort((a, b) => {
+            let va, vb;
+            switch (sort.field) {
+                case "cat":
+                    va = a.cat || "";
+                    vb = b.cat || "";
+                    return sort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+                case "stock":
+                    va = a.stock || 0;
+                    vb = b.stock || 0;
+                    return sort.dir === "asc" ? va - vb : vb - va;
+                case "price":
+                    va = a.price || 0;
+                    vb = b.price || 0;
+                    return sort.dir === "asc" ? va - vb : vb - va;
+                case "name":
+                default:
+                    va = a.name || "";
+                    vb = b.name || "";
+                    return sort.dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+            }
+        });
+
+        ["name", "cat", "stock", "price"].forEach(field => {
+            const el = document.getElementById(`inv-sort-${field}`);
+            if (!el) return;
+            el.classList.remove("active", "asc", "desc");
+            if (field === sort.field) {
+                el.classList.add("active");
+                el.classList.add(sort.dir === "asc" ? "asc" : "desc");
+            }
+        });
+
+        document.getElementById('inventory-body').innerHTML = products.map(p => `
+            <tr>
+                <td>
+                    <img src="${p.img || 'images/placeholder.png'}" 
+                        class="inv-thumb" 
+                        onerror="this.src='images/placeholder.png'">
+                </td>
+                <td>${p.name}</td>
+                <td>${app.categoryIcon(p.cat)}</td>
+                <td><b>${p.stock}</b></td>
+                <td>$${p.price.toFixed(2)}</td>
+                <td>
+                    <span class="status-badge ${p.stock < 10 ? 'stock-low' : 'stock-ok'}">
+                        ${p.stock < 10 ? 'Low' : 'OK'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn-sm" onclick="app.inventoryEditClick(${p.id})">Edit</button>
+                    ${isManager ? `<button class="btn-sm btn-danger-sm" onclick="app.deleteProduct(${p.id})">X</button>` : ''}
+                </td>
+            </tr>`).join('');
+    },
+    categoryIcon: (cat) => {
+        const map = {
+            "Beverages": "☕️",
+            "Baked Goods": "🧁",
+            "Snacks": "🍪",
+            "Cold Drinks": "🥤"
+        };
+        if (!cat) return "📦";
+        return (map[cat] || "📦") + " " + cat;
+    },
+    sortInventory: (field) => {
+        if (!app.data.inventorySort) {
+            app.data.inventorySort = { field: "name", dir: "asc" };
+        }
+        const sort = app.data.inventorySort;
+        if (sort.field === field) {
+            sort.dir = sort.dir === "asc" ? "desc" : "asc";
+        } else {
+            sort.field = field;
+            sort.dir = "asc";
+        }
+        app.renderInventory();
+    },
+    getRole: () => {
+        const emp = app.data.employees.find(e => e.name === app.data.currentCashier);
+        if (app.data.currentCashier === 'Manager') return 'Manager';
+        if (app.data.currentCashier === 'IT Support') return 'IT Admin';
+        return emp ? emp.role : 'Student';
+    },
+    inventoryEditClick: (id) => {
+        const role = app.getRole();
+        if (role === 'Manager' || role === 'IT Admin') app.editProduct(id);
+        else app.editInventory(id);
+    },
+    editInventory: (id) => { app.data.editingId = id; const p = app.data.products.find(x => x.id === id); document.getElementById('edit-inv-name').innerText = p.name; document.getElementById('edit-inv-stock').value = p.stock; document.getElementById('edit-inv-price').value = p.price; document.getElementById('modal-edit-inventory').classList.add('open'); },
+    
+    // --- V1.50 RESTORED FUNCTIONS ---
+    saveInventory: () => {
+        const id = app.data.editingId;
+        const p = app.data.products.find(x => x.id === id);
+        if (p) {
+            p.stock = parseInt(document.getElementById('edit-inv-stock').value) || 0;
+            p.price = parseFloat(document.getElementById('edit-inv-price').value) || 0;
+            app.saveData();
+            app.renderInventory();
+            app.closeModal('modal-edit-inventory');
+        }
+    },
+    openProductModal: (isEdit = false) => {
+        document.getElementById('prod-modal-title').innerText = isEdit ? "Edit Product" : "Add Product"; 
+        document.getElementById('prod-options-list').innerHTML = ''; 
+        if(!isEdit) { 
+            app.data.editingId = null; document.getElementById('prod-name').value = ""; document.getElementById('prod-price').value = ""; 
+            document.getElementById('prod-stock').value = ""; document.getElementById('prod-img-url').value = ""; 
+            document.getElementById('prod-img-preview').src = ""; app.data.tempOptionsList = []; 
+        } 
+        app.renderProductOptionsUI(); 
+        document.getElementById('modal-product').classList.add('open'); 
+    },
+    editProduct: (id) => { 
+        const p = app.data.products.find(x => x.id === id); 
+        app.data.editingId = id; 
+        document.getElementById('prod-name').value = p.name; document.getElementById('prod-cat').value = p.cat; 
+        document.getElementById('prod-price').value = p.price; document.getElementById('prod-stock').value = p.stock; 
+        document.getElementById('prod-img-url').value = p.img; document.getElementById('prod-img-preview').src = p.img; 
+        app.data.tempOptionsList = p.options ? JSON.parse(JSON.stringify(p.options)) : []; 
+        app.openProductModal(true); 
+    },
+    renderProductOptionsUI: () => { const c = document.getElementById('prod-options-list'); c.innerHTML = ''; if(!app.data.tempOptionsList.length) { c.innerHTML='<p style="color:#777">No options.</p>'; return; } app.data.tempOptionsList.forEach((g,i) => { c.innerHTML += `<div><b>${g.name} (${g.type})</b> <button class="btn-sm btn-danger-sm" onclick="app.removeProductOptionGroup(${i})">x</button></div>`; }); },
+    addProductOptionUI: () => { const n = prompt("Name:"); if(!n) return; const t = prompt("Type (select/radio/toggle):"); if(['select','radio','toggle'].includes(t)) { app.data.tempOptionsList.push({name:n, type:t, choices:[]}); app.renderProductOptionsUI(); } },
+    removeProductOptionGroup: (i) => { app.data.tempOptionsList.splice(i,1); app.renderProductOptionsUI(); },
+    saveProduct: () => { 
+        const name = document.getElementById('prod-name').value;
+        const price = parseFloat(document.getElementById('prod-price').value);
+        const stock = parseInt(document.getElementById('prod-stock').value);
+        const img = document.getElementById('prod-img-url').value;
+        const cat = document.getElementById('prod-cat').value;
+        if (!name || isNaN(price)) return app.showAlert("Name/Price required.");
+        const pData = {name, price, stock, img, cat, options: app.data.tempOptionsList};
+        if(app.data.editingId) {
+            const p = app.data.products.find(x => x.id === app.data.editingId);
+            Object.assign(p, pData);
+        } else {
+            const newId = app.data.products.length ? Math.max(...app.data.products.map(p => p.id)) + 1 : 1;
+            app.data.products.push({ id: newId, ...pData });
+        }
+        app.saveData(); 
+        app.closeModal('modal-product'); 
+        app.renderManagerHub(); // Update grid
+    },
+    deleteProduct: (id) => { if(confirm("Delete?")) { app.data.products = app.data.products.filter(p => p.id !== id); app.saveData(); app.renderManagerHub(); } },
+    renderProductsManager: () => { document.getElementById('products-manager-body').innerHTML = app.data.products.map(p => `<tr><td><img src="${p.img}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;" onerror="this.src='images/placeholder.png'"></td><td>${p.name}</td><td>$${p.price.toFixed(2)}</td><td><button class="btn-sm" onclick="app.editProduct(${p.id})">Edit</button> <button class="btn-sm btn-danger-sm" onclick="app.deleteProduct(${p.id})">X</button></td></tr>`).join(''); },
+    
+    // --- V1.50 EMPLOYEES & ROLES ---
+    renderEmployeesManager: () => { document.getElementById('employees-body').innerHTML = app.data.employees.map(e => `<tr><td><img src="${e.img}" class="emp-thumb"></td><td>${e.name}</td><td>${e.role}</td><td><button class="btn-sm" onclick="app.editEmployee(${e.id})">Edit</button> <button class="btn-sm btn-danger-sm" onclick="app.deleteEmployee(${e.id})">X</button></td></tr>`).join(''); },
+    editEmployee: (id) => { const e = app.data.employees.find(x => x.id === id); app.data.editingId = id; document.getElementById('emp-name').value = e.name; document.getElementById('emp-role').value = e.role; document.getElementById('emp-img-url').value = e.img; app.openEmployeeModal(true); },
+    saveEmployee: () => { const n = document.getElementById('emp-name').value; if(!n) return; const r = document.getElementById('emp-role').value; const i = document.getElementById('emp-img-url').value || 'images/placeholder.png'; if(app.data.editingId) { const e = app.data.employees.find(x => x.id === app.data.editingId); e.name=n; e.role=r; e.img=i; } else { app.data.employees.push({id:Date.now(), name:n, role:r, img:i}); } app.saveData(); app.closeModal('modal-employee'); app.renderManagerHub(); app.renderLogin(); },
+    deleteEmployee: (id) => { 
+        if(confirm("Remove?")) { 
+            app.requestPin((pin) => {
+                if(pin==="1234") { 
+                    app.data.employees=app.data.employees.filter(e=>e.id!==id); 
+                    app.saveData(); app.renderManagerHub(); app.renderLogin(); 
+                } else app.showAlert("Incorrect PIN");
+            });
+        } 
+    },
+    
+    // --- UTILS ---
+    navigate: (viewId) => {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + viewId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+        const navItem = document.getElementById('nav-' + viewId);
+        if (navItem) navItem.classList.add('active');
+        app.refreshUI();
+    },
+    updateClock: () => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const dateStr = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+        const liveClock = document.getElementById('live-clock'); if(liveClock) liveClock.innerText = timeStr;
+        const bigClock = document.getElementById('big-clock'); if(bigClock) bigClock.innerText = timeStr;
+        const bigDate = document.getElementById('big-date'); if(bigDate) bigDate.innerText = dateStr;
+    },
+    renderTimeClock: () => {
+        const select = document.getElementById('time-employee-select');
+        select.innerHTML = '<option value="">Select your name...</option>' + 
+            app.data.employees.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
+        const activeEntries = app.data.timeEntries.filter(t => !t.out);
+        document.getElementById('time-active-count').innerText = activeEntries.length;
+        const list = document.getElementById('active-workers-list');
+        list.innerHTML = activeEntries.length ? activeEntries.map(t => `<div class="worker-pill">${t.name}</div>`).join('') : '<div style="color:#999">No one clocked in.</div>';
+        const recent = [...app.data.timeEntries].reverse().slice(0, 8);
+        document.getElementById('time-entries-body').innerHTML = recent.map(t => {
+            const dur = t.out ? ((new Date(t.out) - new Date(t.in))/36e5).toFixed(2) : 'Active';
+            return `<tr><td>${t.name}</td><td>${new Date(t.in).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</td><td>${t.out ? new Date(t.out).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) : '-'}</td><td>${dur}</td></tr>`;
+        }).join('');
+    },
+    clockIn: () => {
+        const name = document.getElementById('time-employee-select').value;
+        if(!name) return app.showAlert("Select a name first.");
+        if(app.data.timeEntries.find(t => t.name === name && !t.out)) return app.showAlert(`${name} is already clocked in.`);
+        app.data.timeEntries.push({ id: Date.now(), name, in: new Date().toISOString(), out: null });
+        app.saveData();
+        app.renderTimeClock();
+        app.showAlert(`Clocked In: ${name}`);
+    },
+    clockOut: () => {
+        const name = document.getElementById('time-employee-select').value;
+        if(!name) return app.showAlert("Select a name first.");
+        const entry = app.data.timeEntries.find(t => t.name === name && !t.out);
+        if(!entry) return app.showAlert(`${name} is not clocked in.`);
+        entry.out = new Date().toISOString();
+        app.saveData();
+        app.renderTimeClock();
+        app.showAlert(`Clocked Out: ${name}`);
+    },
+    closeModal: (id) => document.getElementById(id).classList.remove('open'),
+    closeReceiptAndReset: () => { app.data.cart = []; app.closeModal('modal-receipt'); app.renderCart(); },
+    nuclearReset: function() { if(confirm("DANGER: Wipe ALL local data?")) { if(confirm("Cannot undo.")) { localStorage.clear(); location.reload(); } } },
+    goLiveReset: function() { if(confirm("Reset operational data (Orders, Time Logs) but keep Setup (Products, Employees)?")) { app.data.orders = []; app.data.timeEntries = []; app.data.bugReports = []; app.data.orderCounter = 1001; app.saveData(); location.reload(); } }
+};
+// Attach app to window for inline onclick handlers
 window.app = app;
-window.onload = app.init;
+app.init();
