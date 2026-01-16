@@ -1,3 +1,9 @@
+### v.157
+—————————
+Renamed firebase-init to firestore_v1.57.js (as requested).
+Fixed Buttons: Added explicit code to attach functions to window so the HTML buttons (onclick="...") can "see" them.
+Fixed Cloud: Verified the initialization code in the Firestore file.
+
 ### v1.53 
 —————————
 Updated employee roles
