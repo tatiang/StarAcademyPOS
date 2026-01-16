@@ -57,10 +57,22 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); co
 .login-btn-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid var(--golden-bronze); margin-bottom: 10px; background: #eee; }
 .login-btn-name { font-weight: 700; color: var(--space-indigo); font-size: 1.1rem; }
 
-/* Admin Styling within Grid */
-.login-btn-wrap.admin-account .login-btn-img { border-color: var(--space-indigo); border-width: 5px; background-color: #f0f4f8; }
-.login-btn-wrap.admin-account .login-btn-name { color: #555; }
-.login-btn-wrap.role-it .login-btn-img { border-color: var(--danger); }
+/* Admin Buttons Row */
+.admin-buttons-row {
+    display: flex; justify-content: center; gap: 20px;
+}
+.admin-login-btn {
+    background: #f8f9fa; border: 2px solid #e9ecef;
+    padding: 12px 30px; border-radius: 50px;
+    font-weight: 700; color: var(--space-indigo);
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1rem;
+}
+.admin-login-btn:hover {
+    background: var(--space-indigo); color: white; border-color: var(--space-indigo);
+    transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
 
 /* Administration Divider */
 .admin-divider {
@@ -196,6 +208,10 @@ td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
 .it-left-panel { border-top-color: #8e44ad; }
 .it-right-panel { border-top-color: var(--golden-bronze); }
 .bug-form textarea { width: 100%; height: 80px; resize: vertical; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+.github-notes-box { background: #f1f1f1; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #ccc; font-family: monospace; }
+.expandable-section details { margin-bottom: 10px; border: 1px solid #eee; border-radius: 5px; background: #fafafa; }
+.expandable-section summary { padding: 10px; cursor: pointer; font-weight: bold; outline: none; }
+.expandable-section ul { list-style: disc; margin: 10px 0 10px 30px; font-size: 0.9rem; }
 
 /* MODALS (Z-Index increased to 100000 to sit ABOVE Login Overlay) */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 39, 65, 0.9); z-index: 100000; display: none; justify-content: center; align-items: center; }
@@ -235,3 +251,139 @@ td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
 .upload-options { display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap;}
 .img-preview-box { width: 100%; height: 150px; border: 1px dashed #ccc; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background: #f9f9f9; overflow: hidden; }
 .img-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+
+/* --- v1.35 Inventory thumbnails & sorting --- */
+.inv-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+
+/* Sortable headers for Inventory */
+.data-table-inventory th {
+    cursor: pointer;
+    user-select: none;
+}
+
+.data-table-inventory th:first-child {
+    cursor: default; /* image column */
+}
+
+.sort-icon {
+    font-size: 0.75rem;
+    margin-left: 4px;
+    opacity: 0.5;
+}
+
+.sort-icon.active {
+    opacity: 1;
+}
+
+.sort-icon.asc::after {
+    content: "↑";
+    margin-left: 2px;
+}
+
+.sort-icon.desc::after {
+    content: "↓";
+    margin-left: 2px;
+}
+
+/* Product image preview + AI status (Manager Hub modal) */
+.prod-img-preview {
+    margin-top: 8px;
+    width: 120px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.ai-status-wrap {
+    margin-top: 4px;
+}
+
+.ai-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #f0f0f0;
+    color: #666;
+}
+
+.ai-status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #bbb;
+}
+
+.ai-status.working {
+    background: #fff9e6;
+    color: #a67c00;
+}
+
+.ai-status.working::before {
+    background: #f1c40f;
+}
+
+.ai-status.ok {
+    background: #e9f9ee;
+    color: #27ae60;
+}
+
+.ai-status.ok::before {
+    background: #27ae60;
+}
+
+.ai-status.error {
+    background: #fdecea;
+    color: #c0392b;
+}
+
+.ai-status.error::before {
+    background: #c0392b;
+}
+
+/* IT Hub bullet-list & details styling for v1.35 */
+.bullet-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+#view-it details {
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e1e1e1;
+    padding: 8px 10px;
+}
+
+#view-it summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#view-it summary::-webkit-details-marker {
+    display: none;
+}
+
+#view-it summary::before {
+    content: "▸";
+    margin-right: 6px;
+    font-size: 0.75rem;
+    display: inline-block;
+    transform: translateY(-1px);
+}
+
+#view-it details[open] summary::before {
+    content: "▾";
+}
