@@ -16,7 +16,10 @@ const playTone = (freq, type, duration) => {
 
 const app = {
     // --- STORAGE KEY ---
-    STORAGE_KEY: "StarAcademy_Test_v1.63", 
+const app = {
+    // OLD: STORAGE_KEY: "StarAcademy_Test_v1.63",
+    // NEW: Uses variable automatically
+    STORAGE_KEY: "StarAcademy_Test_" + APP_VERSION, 
 
     data: {
         currentCashier: null, 
