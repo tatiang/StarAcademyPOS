@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc, collection, addDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-console.log("Firebase Init v1.52 Loaded");
+console.log("Firebase Init v1.53 (Backup Enabled)");
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
@@ -16,7 +16,9 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 const docRef = doc(db, "stores", "classroom_cafe_main");
+const backupCollection = collection(db, "stores_backups");
 
+// --- STANDARD SYNC ---
 let unsubscribe = null;
 
 window.saveToCloud = async (data, silent = false) => {
@@ -48,7 +50,6 @@ window.loadFromCloud = (manual = false) => {
                     window.app.data = doc.data();
                     window.app.refreshUI();
                 }
-                
                 if(connMsg) connMsg.innerHTML = ''; 
                 if(dot) dot.className = 'status-dot online';
                 if (itStatus) itStatus.innerText = "Connected (Real-Time Listening)";
@@ -59,6 +60,47 @@ window.loadFromCloud = (manual = false) => {
             if (itStatus) itStatus.innerText = "Error (Check Console)";
             if(connMsg) connMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> Offline Mode';
         });
+    }
+};
+
+// --- NEW v1.53 BACKUP FUNCTIONS ---
+
+window.createTimestampedBackup = async (data) => {
+    try {
+        const backupData = {
+            ...data,
+            timestamp: new Date().toISOString()
+        };
+        await addDoc(backupCollection, backupData);
+        console.log("✅ Backup created successfully.");
+    } catch (e) {
+        console.error("❌ Backup failed:", e);
+    }
+};
+
+window.fetchBackupList = async () => {
+    try {
+        const snapshot = await getDocs(backupCollection);
+        const backups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return backups;
+    } catch (e) {
+        console.error("Fetch Backups Failed:", e);
+        return [];
+    }
+};
+
+window.restoreFromBackup = async (docId) => {
+    try {
+        const backupRef = doc(db, "stores_backups", docId);
+        const backupSnap = await getDoc(backupRef);
+        if (backupSnap.exists()) {
+            return backupSnap.data();
+        } else {
+            return null;
+        }
+    } catch (e) {
+        console.error("Restore Failed:", e);
+        return null;
     }
 };
 
