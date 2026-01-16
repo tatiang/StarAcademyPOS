@@ -457,7 +457,7 @@ const app = {
     requestPin: (cb) => {
         app.pinBuffer = ""; app.pinCallback = cb;
         document.getElementById('pin-display').innerText = "";
-        document.getElementById('pin-error').innerText = "";
+        // Removed the line causing the error
         document.getElementById('modal-pin').classList.add('open');
     },
     pinInput: (n) => { if(app.pinBuffer.length < 4) app.pinBuffer += n; document.getElementById('pin-display').innerText = "*".repeat(app.pinBuffer.length); },
