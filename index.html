@@ -6,10 +6,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Star Academy POS</title>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -166,7 +164,6 @@
                     <h3>Data Management</h3>
                     <div class="github-notes-box"><h4>📄 Testing Notes</h4><pre id="github-notes-content">Loading...</pre><button class="btn-sm" onclick="window.app.fetchTestingNotes()">Refresh Notes</button></div>
                     <button class="btn-pay btn-card" style="width:100%; margin:10px 0" onclick="window.loadFromCloud(true)">Force Cloud Sync</button>
-                    
                     <div style="background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd; margin-top:20px;">
                         <h4 style="margin-bottom:10px;"><i class="fa-solid fa-clock-rotate-left"></i> Hourly Backups</h4>
                         <ul id="backup-list" style="list-style:none; padding:0; max-height:150px; overflow-y:auto; border:1px solid #eee; background:white;">
@@ -193,29 +190,7 @@
 <div id="modal-cash" class="modal"><div class="modal-content"><h3>Cash</h3><div class="total-display-large" id="cash-modal-total">$0.00</div><div id="calc-display">$0.00</div><div class="calc-grid"><button class="calc-btn" onclick="window.app.calcInput('1')">1</button><button class="calc-btn" onclick="window.app.calcInput('2')">2</button><button class="calc-btn" onclick="window.app.calcInput('3')">3</button><button class="calc-btn" onclick="window.app.calcInput('4')">4</button><button class="calc-btn" onclick="window.app.calcInput('5')">5</button><button class="calc-btn" onclick="window.app.calcInput('6')">6</button><button class="calc-btn" onclick="window.app.calcInput('7')">7</button><button class="calc-btn" onclick="window.app.calcInput('8')">8</button><button class="calc-btn" onclick="window.app.calcInput('9')">9</button><button class="calc-btn" onclick="window.app.calcInput('.')">.</button><button class="calc-btn" onclick="window.app.calcInput('0')">0</button><button class="calc-btn" onclick="window.app.calcClear()">C</button></div><div id="change-result" class="change-result">Change Due: <span id="change-amt"></span></div><button class="btn-pay btn-cash" onclick="window.app.finalizeCash()">Pay</button><button class="btn-pay btn-train" style="margin-top:10px;" onclick="window.app.closeModal('modal-cash')">Cancel</button></div></div>
 <div id="modal-receipt" class="modal"><div class="modal-content"><div class="receipt-paper" id="receipt-content"></div><button class="btn-pay btn-card" onclick="window.app.closeReceiptAndReset()">Close</button></div></div>
 <div id="modal-product" class="modal"><div class="modal-content"><h3>Product</h3><input id="prod-name" class="form-control" placeholder="Name"><input id="prod-price" class="form-control" placeholder="Price"><input id="prod-stock" class="form-control" placeholder="Stock"><input id="prod-img-url" class="form-control" placeholder="Image URL"><button class="btn-pay btn-gold" onclick="window.app.saveProduct()">Save</button></div></div>
-
-<div id="modal-employee" class="modal">
-    <div class="modal-content">
-        <h3 id="emp-modal-title">Add/Edit Employee</h3>
-        <div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div>
-        <div class="form-group">
-            <label>Role</label>
-            <select id="emp-role" class="form-control">
-                <option>Barista</option>
-                <option>Cashier</option>
-                <option>Inventory</option>
-                <option>Marketing</option>
-                <option>Shopper</option>
-            </select>
-        </div>
-        <div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div>
-        <div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="window.app.handleImageUpload(this, 'emp-img-url')"></div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-employee')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveEmployee()">Save</button>
-        </div>
-    </div>
-</div>
+<div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Barista</option><option>Cashier</option><option>Inventory</option><option>Marketing</option><option>Shopper</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="window.app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveEmployee()">Save</button></div></div></div>
 
 <script type="module" src="js/app.js?v=1.63"></script>
 <script type="module" src="js/firestore.js"></script>
