@@ -39,7 +39,7 @@ const app = {
     backupInterval: null, 
 
     init: () => {
-        displayVersion(); // FROM version.js
+        displayVersion(); 
         app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
         
@@ -56,9 +56,14 @@ const app = {
     refreshUI: () => {
         const orderNum = document.getElementById('order-number');
         if(orderNum) orderNum.innerText = app.data.orderCounter;
-        app.renderLogin();
+        
         app.updateSidebar();
         
+        // Only re-render login if we are actually logged out
+        if (!app.data.currentCashier) {
+            app.renderLogin();
+        }
+
         const active = document.querySelector('.view.active');
         if(active) {
             const id = active.id;
@@ -147,6 +152,7 @@ const app = {
         }
     },
 
+    // --- LOGIN LOGIC ---
     renderLogin: () => {
         const c = document.getElementById('student-login-grid');
         if(c) {
@@ -183,6 +189,10 @@ const app = {
         app.data.currentCashier = name;
         document.getElementById('login-overlay').style.display = "none";
         document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> ${name} (${role})`;
+        
+        // Ensure all modals are closed
+        app.closeModal('modal-pin');
+        
         app.updateSidebar();
         app.navigate('pos');
     },
@@ -191,6 +201,33 @@ const app = {
         app.data.currentCashier = null;
         document.getElementById('login-overlay').style.display = "flex";
         app.renderLogin();
+    },
+
+    // --- PIN SYSTEM ---
+    requestPin: (cb) => {
+        app.pinBuffer = ""; 
+        app.pinCallback = cb;
+        const disp = document.getElementById('pin-display');
+        if(disp) disp.innerText = "";
+        document.getElementById('modal-pin').classList.add('open');
+    },
+    pinInput: (n) => { 
+        if(app.pinBuffer.length < 4) app.pinBuffer += n; 
+        document.getElementById('pin-display').innerText = "*".repeat(app.pinBuffer.length); 
+    },
+    pinClear: () => { 
+        app.pinBuffer = ""; 
+        document.getElementById('pin-display').innerText = ""; 
+    },
+    pinSubmit: () => { 
+        // 1. Run the check
+        if(app.pinCallback) app.pinCallback(app.pinBuffer); 
+        
+        // 2. CLOSE THE MODAL (This was missing!)
+        app.closeModal('modal-pin');
+        
+        // 3. Clear buffer for security
+        app.pinBuffer = "";
     },
 
     // --- KIOSK MODE ---
@@ -336,8 +373,6 @@ const app = {
         if(orderIndex === -1) return;
         
         const order = app.data.orders[orderIndex];
-        
-        // Load items to active cart
         app.data.cart = [...order.items];
         document.getElementById('customer-name').value = order.customer;
         
@@ -347,9 +382,7 @@ const app = {
             if(p) p.stock++; 
         });
 
-        // Remove from pending list
         app.data.orders.splice(orderIndex, 1);
-        
         app.saveData();
         app.closeModal('modal-pickup');
         app.renderCart();
@@ -454,15 +487,6 @@ const app = {
         if(document.getElementById('live-clock')) document.getElementById('live-clock').innerText = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     },
     
-    requestPin: (cb) => {
-        app.pinBuffer = ""; app.pinCallback = cb;
-        document.getElementById('pin-display').innerText = "";
-        // Removed the line causing the error
-        document.getElementById('modal-pin').classList.add('open');
-    },
-    pinInput: (n) => { if(app.pinBuffer.length < 4) app.pinBuffer += n; document.getElementById('pin-display').innerText = "*".repeat(app.pinBuffer.length); },
-    pinClear: () => { app.pinBuffer = ""; document.getElementById('pin-display').innerText = ""; },
-    pinSubmit: () => { if(app.pinCallback) app.pinCallback(app.pinBuffer); },
     closeModal: (id) => document.getElementById(id).classList.remove('open'),
     closeReceiptAndReset: () => { app.closeModal('modal-receipt'); },
     showAlert: (t, m) => { document.getElementById('alert-title').innerText = t; document.getElementById('alert-message').innerText = m; document.getElementById('modal-alert').classList.add('open'); },
