@@ -17,7 +17,6 @@ const docRef = doc(db, "stores", "classroom_cafe_main");
 
 let unsubscribe = null;
 
-// Attach functions to window so app.js can use them
 window.saveToCloud = async (data, silent = false) => {
     const dot = document.getElementById('status-dot');
     if (!silent && dot) dot.className = 'status-dot syncing';
@@ -38,18 +37,17 @@ window.loadFromCloud = (manual = false) => {
     if (manual && dot) dot.className = 'status-dot syncing';
 
     if (!unsubscribe) {
-        // Only set the message to connecting initially, don't block
         if(connMsg) connMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Connecting to cloud...';
 
         unsubscribe = onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
-                console.log("Real-time update received!");
+                console.log("Real-time update received from Cloud!");
                 if (window.app) {
                     window.app.data = doc.data();
                     window.app.refreshUI();
                 }
                 
-                if(connMsg) connMsg.innerHTML = ''; // Clear message on success
+                if(connMsg) connMsg.innerHTML = ''; 
                 if(dot) dot.className = 'status-dot online';
                 if (itStatus) itStatus.innerText = "Connected (Real-Time Listening)";
             }
