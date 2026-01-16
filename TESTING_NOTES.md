@@ -1,24 +1,21 @@
-v1.52
-—————
-# Head
-## Head 2
-### Head 3
-** Bold **
-* Bold *
-**Bold**
-*Bold*
+### v1.53 
+—————————
+Updated employee roles
+Added recurring backup to Firestore (timestamped)
+   • Attempting to prevent data overwriting such as when employees disappeared
+Introduced customer ordering screen
 
-v1.35
-######
+### v1.35 (another "definitive" version)
+—————————
 IT Hub screen content should adjust to window width
 If you click Download for an AI-generated image, it opens the image in the same tab. It should download or open in a new tab. 
 
-v1.34
-######
+### v1.34
+—————————
 New baseline; similar to v1.29
 
-v1.29 (now the "definitive" version for Gemini)
-######
+### v1.29 (now the "definitive" version for Gemini)
+—————————
 Login screen looks correct
   • No more connecting to database delays
 POS screen
