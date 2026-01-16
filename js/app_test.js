@@ -15,6 +15,9 @@ const playTone = (freq, type, duration) => {
 };
 
 const app = {
+    // --- NEW STORAGE KEY forces a fresh start for v1.61 ---
+    STORAGE_KEY: "StarAcademy_Test_v1.61", 
+
     data: {
         currentCashier: null, 
         cart: [], 
@@ -43,11 +46,11 @@ const app = {
         app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
         
-        // Auto-Backup
-        if (app.backupInterval) clearInterval(app.backupInterval);
-        app.backupInterval = setInterval(() => {
-            if(window.createTimestampedBackup) window.createTimestampedBackup(app.data);
-        }, 60 * 60 * 1000);
+        // Disable cloud overwrite for this test version
+        if(window.firebase) {
+            console.log("Disconnecting Firebase for Local Testing...");
+            window.firebase = null; 
+        }
 
         if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
         app.renderLogin(); 
@@ -59,7 +62,6 @@ const app = {
         
         app.updateSidebar();
         
-        // Only re-render login if we are actually logged out
         if (!app.data.currentCashier) {
             app.renderLogin();
         }
@@ -79,31 +81,25 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_data');
+        const stored = localStorage.getItem(app.STORAGE_KEY);
         if (stored) {
             app.data = JSON.parse(stored);
-            // Ensure roles are strictly correct
-            app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
-            
-            // Initialize arrays if missing
+            // Ensure essential arrays exist
+            if (!app.data.roles) app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
             if (!app.data.bugReports) app.data.bugReports = [];
             if (!app.data.timeEntries) app.data.timeEntries = [];
             if (!app.data.orders) app.data.orders = [];
             if (!app.data.customerCart) app.data.customerCart = [];
         } else {
+            console.log("No local data found. Seeding new test data...");
             app.seedData();
         }
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_data', JSON.stringify(app.data));
-        if(window.saveToCloud) window.saveToCloud(app.data, true); 
+        localStorage.setItem(app.STORAGE_KEY, JSON.stringify(app.data));
     },
 
-    // *** NOTE ***
-    // The seedData below is static data and does NOT reflect the current data in Firestore
-    //
-    
     seedData: () => {
         app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
         app.data.products = [
@@ -114,7 +110,7 @@ const app = {
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
         ];
         
-        // UPDATED EMPLOYEE LIST FROM YOUR SCREENSHOT
+        // CORRECTED EMPLOYEE LIST
         app.data.employees = [
             {id: 101, name: "Eloise", role: "Barista", img: "images/placeholder.png"},
             {id: 102, name: "Jamil", role: "Cashier", img: "images/placeholder.png"},
@@ -125,7 +121,7 @@ const app = {
         ];
 
         app.data.orderCounter = 1001;
-        localStorage.setItem('starAcademyPOS_data', JSON.stringify(app.data));
+        app.saveData();
     },
 
     updateSidebar: () => {
@@ -137,7 +133,6 @@ const app = {
         const sidebar = document.querySelector('.sidebar');
         const active = document.querySelector('.view.active');
         
-        // Hide sidebar in Kiosk mode
         if (active && active.id === 'view-customer') {
             if(sidebar) sidebar.style.display = 'none';
             document.querySelector('.main-content').style.marginLeft = '0';
@@ -168,6 +163,9 @@ const app = {
         const c = document.getElementById('student-login-grid');
         if(c) {
              const students = app.data.employees;
+             // Sort alphabetically for cleaner UI
+             students.sort((a,b) => a.name.localeCompare(b.name));
+             
              c.innerHTML = students.map(e => `
                 <div class="login-btn-wrap" onclick="window.app.login('${e.name}')">
                     <img src="${e.img}" class="login-btn-img" onerror="this.src='images/placeholder.png'">
@@ -201,9 +199,7 @@ const app = {
         document.getElementById('login-overlay').style.display = "none";
         document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> ${name} (${role})`;
         
-        // Ensure all modals are closed
         app.closeModal('modal-pin');
-        
         app.updateSidebar();
         app.navigate('pos');
     },
@@ -214,7 +210,7 @@ const app = {
         app.renderLogin();
     },
 
-    // --- PIN SYSTEM ---
+    // --- PIN SYSTEM (FIXED) ---
     requestPin: (cb) => {
         app.pinBuffer = ""; 
         app.pinCallback = cb;
@@ -231,13 +227,17 @@ const app = {
         document.getElementById('pin-display').innerText = ""; 
     },
     pinSubmit: () => { 
-        // 1. Run the check
-        if(app.pinCallback) app.pinCallback(app.pinBuffer); 
-        
-        // 2. CLOSE THE MODAL (This was missing!)
+        // Force modal close FIRST to ensure UI response
         app.closeModal('modal-pin');
-        
-        // 3. Clear buffer for security
+
+        // Execute callback safely
+        if(app.pinCallback) {
+            try {
+                app.pinCallback(app.pinBuffer); 
+            } catch(e) {
+                console.error("PIN Callback Error:", e);
+            }
+        }
         app.pinBuffer = "";
     },
 
@@ -302,11 +302,6 @@ const app = {
 
         const sub = app.data.customerCart.reduce((acc, item) => acc + item.price, 0);
         subEl.innerText = `$${sub.toFixed(2)}`;
-    },
-
-    removeFromCustomerCart: (idx) => {
-        app.data.customerCart.splice(idx, 1);
-        app.renderCustomerCart();
     },
 
     submitKioskOrder: () => {
