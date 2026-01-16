@@ -252,7 +252,7 @@
 <div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Cashier</option><option>Barista</option><option>Inventory</option><option>Manager</option><option>IT Admin</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button></div></div></div>
 
 <script type="module" src="js/app_test.js?v=1.62"></script>
-<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/firestore.js"></script>
     
 </body>
 </html>
