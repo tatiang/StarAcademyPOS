@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style_v1.35.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -251,8 +251,8 @@
 <div id="modal-product" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="prod-modal-title">Add/Edit Product</h3><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div><div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div><div class="form-group"><label>Category</label><select id="prod-cat" class="form-control"><option>Beverages</option><option>Baked Goods</option><option>Snacks</option></select></div><div class="form-group"><label>Price</label><input type="number" id="prod-price" class="form-control" step="0.25"></div><div class="form-group"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div><div class="form-group"><label>Image Preview</label><div class="img-preview-box"><div class="ai-status-wrap"><span id="ai-status" class="ai-status">Ready</span></div><img id="prod-img-preview" class="prod-img-preview" src="" alt="Preview"></div><label style="font-size:0.8rem">Image URL (Hidden)</label><input type="text" id="prod-img-url" class="form-control" style="font-size:0.8rem; color:#888;"><div class="upload-options"><input type="file" id="prod-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'prod-img-url')"><button class="btn-sm" onclick="app.generateAIImage('prod-name','prod-img-url')">AI Image</button> <button class="btn-sm" type="button" onclick="app.downloadProdImage()">Download</button></div></div></div><div><label style="font-weight:600; color:var(--space-indigo);">Product Options</label><div id="prod-options-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;"></div><button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button></div></div><div style="display:flex; gap:10px; margin-top: 20px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button></div></div></div>
 <div id="modal-employee" class="modal"><div class="modal-content"><h3 id="emp-modal-title">Add/Edit Employee</h3><div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div><div class="form-group"><label>Role</label><select id="emp-role" class="form-control"><option>Cashier</option><option>Barista</option><option>Inventory</option><option>Manager</option><option>IT Admin</option></select></div><div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div><div class="upload-options"><input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')"></div><div style="display:flex; gap:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button></div></div></div>
 
-<script type="module" src="js/firebase-init_v1.35.js"></script>
-<script type="module" src="js/app_v1.35.js"></script>
-
+<script type="module" src="js/firestore.js"></script>
+=<script type="module" src="js/app.js"></script> 
+    
 </body>
 </html>
