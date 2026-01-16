@@ -3,6 +3,7 @@ export const BUILD_DATE = "Jan 16, 2026";
 
 export function displayVersion() {
     const isTest = window.location.pathname.includes("_test");
+    // This adds the 'v' and the testing label automatically
     const label = isTest ? `v${APP_VERSION} (TESTING)` : `v${APP_VERSION}`;
     
     console.log(`System Loaded: ${label}`);
