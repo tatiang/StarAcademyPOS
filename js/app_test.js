@@ -16,7 +16,7 @@ const playTone = (freq, type, duration) => {
 
 const app = {
     // --- STORAGE KEY ---
-    STORAGE_KEY: "StarAcademy_Test_v1.62", 
+    STORAGE_KEY: "StarAcademy_Test_v1.63", 
 
     data: {
         currentCashier: null, 
@@ -25,7 +25,6 @@ const app = {
         products: [], 
         orders: [], 
         employees: [], 
-        // Default roles if none exist
         roles: ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'], 
         timeEntries: [], 
         bugReports: [], 
@@ -34,21 +33,20 @@ const app = {
         tempProduct: null, 
         tempOptions: {}, 
         tempCashEntry: "", 
-        editingId: null, 
+        editingId: null,
+        editingRoleOriginalName: null, // NEW: For tracking role renames
         inventorySort: { field: "name", dir: "asc" }
     },
     
     pinBuffer: "",
     pinCallback: null,
-    backupInterval: null, 
-
+    
     init: () => {
         displayVersion(); 
         app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
         
-        // Disable generic cloud overwrite for this test version to prevent "ghosting"
-        // We rely on window.saveToCloud / window.loadFromCloud defined in firebase.js
+        // Disable generic cloud overwrite for this test version
         if(window.firebase) window.firebase = null; 
 
         if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
@@ -83,7 +81,6 @@ const app = {
         const stored = localStorage.getItem(app.STORAGE_KEY);
         if (stored) {
             app.data = JSON.parse(stored);
-            // Ensure essential arrays exist
             if (!app.data.roles || app.data.roles.length === 0) app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
             if (!app.data.bugReports) app.data.bugReports = [];
             if (!app.data.timeEntries) app.data.timeEntries = [];
@@ -96,13 +93,8 @@ const app = {
     },
 
     saveData: () => { 
-        // 1. Save to Local Storage (Instant)
         localStorage.setItem(app.STORAGE_KEY, JSON.stringify(app.data));
-        
-        // 2. Save to Cloud (If connected)
-        if (window.saveToCloud) {
-            window.saveToCloud(app.data, true); // true = silent save (no spinner)
-        }
+        if (window.saveToCloud) window.saveToCloud(app.data, true);
     },
 
     seedData: () => {
@@ -114,8 +106,6 @@ const app = {
             { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "" },
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
         ];
-        
-        // DEFAULT EMPLOYEES
         app.data.employees = [
             {id: 101, name: "Eloise", role: "Barista", img: "images/placeholder.png"},
             {id: 102, name: "Jamil", role: "Cashier", img: "images/placeholder.png"},
@@ -124,7 +114,6 @@ const app = {
             {id: 105, name: "Finn", role: "Cashier", img: "images/placeholder.png"},
             {id: 106, name: "Twyla", role: "Inventory", img: "images/placeholder.png"}
         ];
-
         app.data.orderCounter = 1001;
         app.saveData();
     },
@@ -163,14 +152,12 @@ const app = {
         }
     },
 
-    // --- LOGIN LOGIC ---
+    // --- LOGIN & PIN ---
     renderLogin: () => {
         const c = document.getElementById('student-login-grid');
         if(c) {
              const students = app.data.employees;
-             // Sort alphabetically
              students.sort((a,b) => a.name.localeCompare(b.name));
-             
              c.innerHTML = students.map(e => `
                 <div class="login-btn-wrap" onclick="window.app.login('${e.name}')">
                     <img src="${e.img}" class="login-btn-img" onerror="this.src='images/placeholder.png'">
@@ -179,7 +166,6 @@ const app = {
             `).join('');
         }
     },
-
     login: (name) => {
         if (name === 'Manager') {
              app.requestPin((pin) => {
@@ -198,27 +184,21 @@ const app = {
         const emp = app.data.employees.find(e => e.name === name);
         if (emp) app.completeLogin(emp.name, emp.role);
     },
-
     completeLogin: (name, role) => {
         app.data.currentCashier = name;
         document.getElementById('login-overlay').style.display = "none";
         document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> ${name} (${role})`;
-        
         app.closeModal('modal-pin');
         app.updateSidebar();
         app.navigate('pos');
     },
-
     logout: () => {
         app.data.currentCashier = null;
         document.getElementById('login-overlay').style.display = "flex";
         app.renderLogin();
     },
-
-    // --- PIN SYSTEM ---
     requestPin: (cb) => {
-        app.pinBuffer = ""; 
-        app.pinCallback = cb;
+        app.pinBuffer = ""; app.pinCallback = cb;
         const disp = document.getElementById('pin-display');
         if(disp) disp.innerText = "";
         document.getElementById('modal-pin').classList.add('open');
@@ -227,35 +207,25 @@ const app = {
         if(app.pinBuffer.length < 4) app.pinBuffer += n; 
         document.getElementById('pin-display').innerText = "*".repeat(app.pinBuffer.length); 
     },
-    pinClear: () => { 
-        app.pinBuffer = ""; 
-        document.getElementById('pin-display').innerText = ""; 
-    },
+    pinClear: () => { app.pinBuffer = ""; document.getElementById('pin-display').innerText = ""; },
     pinSubmit: () => { 
         app.closeModal('modal-pin');
-        if(app.pinCallback) {
-            try { app.pinCallback(app.pinBuffer); } catch(e) { console.error(e); }
-        }
+        if(app.pinCallback) { try { app.pinCallback(app.pinBuffer); } catch(e) { console.error(e); } }
         app.pinBuffer = "";
     },
 
-    // --- KIOSK MODE ---
+    // --- POS & KIOSK ---
     startKioskMode: () => {
         document.getElementById('login-overlay').style.display = "none";
         app.data.customerCart = [];
         app.navigate('customer');
     },
-
     exitKioskMode: () => {
         app.requestPin((pin) => {
-            if(pin === "1234") { 
-                app.logout();
-            } else {
-                app.showAlert("Restricted", "Manager PIN required to exit Kiosk.");
-            }
+            if(pin === "1234") app.logout();
+            else app.showAlert("Restricted", "Manager PIN required.");
         });
     },
-
     renderCustomerKiosk: () => {
         const grid = document.getElementById('kiosk-grid');
         if(grid) {
@@ -268,77 +238,49 @@ const app = {
         }
         app.renderCustomerCart();
     },
-
     addToCustomerCart: (id) => {
         const p = app.data.products.find(x => x.id === id);
-        if(p.stock <= 0) return app.showAlert("Sorry", "That item is out of stock.");
+        if(p.stock <= 0) return app.showAlert("Sorry", "Item out of stock.");
         app.data.customerCart.push({ ...p, cartId: Date.now() });
         playTone(800, 'sine', 0.1); 
         app.renderCustomerCart();
     },
-
     renderCustomerCart: () => {
         const list = document.getElementById('kiosk-cart-list');
         const subEl = document.getElementById('kiosk-subtotal');
         if(!list) return;
-
         if(app.data.customerCart.length === 0) {
             list.innerHTML = `<div style="text-align:center; padding:30px; color:#999; font-style:italic;">Your tray is empty.<br>Tap items to add them.</div>`;
             subEl.innerText = "$0.00";
             return;
         }
-
         list.innerHTML = app.data.customerCart.map((item, idx) => `
             <div class="cart-item">
-                <div class="item-info">
-                    <h4>${item.name}</h4>
-                    <div class="opts">$${item.price.toFixed(2)}</div>
-                </div>
+                <div class="item-info"><h4>${item.name}</h4><div class="opts">$${item.price.toFixed(2)}</div></div>
                 <button class="btn-del" onclick="window.app.removeFromCustomerCart(${idx})"><i class="fa-solid fa-trash"></i></button>
             </div>
         `).join('');
-
-        const sub = app.data.customerCart.reduce((acc, item) => acc + item.price, 0);
-        subEl.innerText = `$${sub.toFixed(2)}`;
+        subEl.innerText = `$${app.data.customerCart.reduce((acc, item) => acc + item.price, 0).toFixed(2)}`;
     },
-    
-    removeFromCustomerCart: (idx) => {
-        app.data.customerCart.splice(idx, 1);
-        app.renderCustomerCart();
-    },
-
+    removeFromCustomerCart: (idx) => { app.data.customerCart.splice(idx, 1); app.renderCustomerCart(); },
     submitKioskOrder: () => {
         const name = document.getElementById('kiosk-name').value;
         if(!name) return app.showAlert("Name Required", "Please enter your name.");
         if(app.data.customerCart.length === 0) return app.showAlert("Empty Tray", "Please add items first.");
-
         const pendingOrder = {
-            id: app.data.orderCounter++,
-            date: new Date().toISOString(),
-            items: [...app.data.customerCart],
-            total: app.data.customerCart.reduce((a,b) => a+b.price, 0),
-            type: "Unpaid",
-            cashier: "Kiosk",
-            customer: name,
-            status: "Awaiting Payment"
+            id: app.data.orderCounter++, date: new Date().toISOString(),
+            items: [...app.data.customerCart], total: app.data.customerCart.reduce((a,b) => a+b.price, 0),
+            type: "Unpaid", cashier: "Kiosk", customer: name, status: "Awaiting Payment"
         };
-
-        // Reserve stock
-        app.data.customerCart.forEach(c => { 
-            const p = app.data.products.find(x => x.id === c.id); 
-            if(p) p.stock--; 
-        });
-
+        app.data.customerCart.forEach(c => { const p = app.data.products.find(x => x.id === c.id); if(p) p.stock--; });
         app.data.orders.unshift(pendingOrder);
         app.saveData();
-        
         app.data.customerCart = [];
         document.getElementById('kiosk-name').value = "";
         app.showAlert("Order Sent!", "Please see the Cashier to pay.");
         app.renderCustomerKiosk();
     },
 
-    // --- POS ---
     renderPOS: () => {
         const cats = ['All', ...new Set(app.data.products.map(p => p.cat))];
         const catContainer = document.getElementById('pos-categories');
@@ -347,56 +289,36 @@ const app = {
         app.renderCart();
         app.checkPickupCount();
     },
-
     checkPickupCount: () => {
         const count = app.data.orders.filter(o => o.status === 'Awaiting Payment').length;
         const btn = document.getElementById('btn-pickup-orders');
-        if(btn) {
-            btn.innerHTML = `<i class="fa-solid fa-inbox"></i> Pick Up Orders ${count > 0 ? `<span class="badge-count">${count}</span>` : ''}`;
-        }
+        if(btn) btn.innerHTML = `<i class="fa-solid fa-inbox"></i> Pick Up Orders ${count > 0 ? `<span class="badge-count">${count}</span>` : ''}`;
     },
-
     showPickupModal: () => {
         const unpaid = app.data.orders.filter(o => o.status === 'Awaiting Payment');
         const list = document.getElementById('pickup-list');
         if(!list) return;
-
-        if(unpaid.length === 0) {
-            list.innerHTML = "<li style='padding:20px; text-align:center;'>No orders waiting.</li>";
-        } else {
-            list.innerHTML = unpaid.map(o => `
-                <li class="pickup-item">
-                    <div>
-                        <strong>#${o.id} - ${o.customer}</strong><br>
-                        <small>${o.items.length} items • $${o.total.toFixed(2)}</small>
-                    </div>
-                    <button class="btn-sm" style="background:var(--success)" onclick="window.app.loadPickupOrder(${o.id})">Load</button>
-                </li>
-            `).join('');
-        }
+        if(unpaid.length === 0) list.innerHTML = "<li style='padding:20px; text-align:center;'>No orders waiting.</li>";
+        else list.innerHTML = unpaid.map(o => `
+            <li class="pickup-item">
+                <div><strong>#${o.id} - ${o.customer}</strong><br><small>${o.items.length} items • $${o.total.toFixed(2)}</small></div>
+                <button class="btn-sm" style="background:var(--success)" onclick="window.app.loadPickupOrder(${o.id})">Load</button>
+            </li>
+        `).join('');
         document.getElementById('modal-pickup').classList.add('open');
     },
-
     loadPickupOrder: (orderId) => {
-        const orderIndex = app.data.orders.findIndex(o => o.id === orderId);
-        if(orderIndex === -1) return;
-        
-        const order = app.data.orders[orderIndex];
+        const idx = app.data.orders.findIndex(o => o.id === orderId);
+        if(idx === -1) return;
+        const order = app.data.orders[idx];
         app.data.cart = [...order.items];
         document.getElementById('customer-name').value = order.customer;
-        
-        // Return stock temporarily (finalizeOrder will re-deduct)
-        order.items.forEach(c => { 
-            const p = app.data.products.find(x => x.id === c.id); 
-            if(p) p.stock++; 
-        });
-
-        app.data.orders.splice(orderIndex, 1);
+        order.items.forEach(c => { const p = app.data.products.find(x => x.id === c.id); if(p) p.stock++; });
+        app.data.orders.splice(idx, 1);
         app.saveData();
         app.closeModal('modal-pickup');
         app.renderCart();
     },
-
     filterPos: (cat) => {
         const items = cat === 'All' ? app.data.products : app.data.products.filter(p => p.cat === cat);
         const grid = document.getElementById('pos-grid');
@@ -455,7 +377,6 @@ const app = {
             status: 'Pending'
         };
         app.data.cart.forEach(c => { const p = app.data.products.find(x => x.id === c.id); if(p) p.stock--; });
-        
         app.data.orders.unshift(order);
         app.data.cart = [];
         document.getElementById('customer-name').value = "";
@@ -463,7 +384,6 @@ const app = {
         app.renderCart();
         app.closeModal('modal-cash');
         app.checkPickupCount();
-        
         document.getElementById('receipt-content').innerHTML = `
             <div class="r-center"><h3>STAR ACADEMY</h3><p>Order #${order.id}</p></div>
             ${order.items.map(i => `<div class="r-row"><span>${i.name}</span><span>$${i.price.toFixed(2)}</span></div>`).join('')}
@@ -495,7 +415,6 @@ const app = {
         const d = new Date();
         if(document.getElementById('live-clock')) document.getElementById('live-clock').innerText = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     },
-    
     closeModal: (id) => document.getElementById(id).classList.remove('open'),
     closeReceiptAndReset: () => { app.closeModal('modal-receipt'); },
     showAlert: (t, m) => { document.getElementById('alert-title').innerText = t; document.getElementById('alert-message').innerText = m; document.getElementById('modal-alert').classList.add('open'); },
@@ -509,7 +428,7 @@ const app = {
     },
     markReady: (id) => { app.data.orders.find(o => o.id === id).status = 'Completed'; app.saveData(); app.renderBarista(); },
 
-    // --- MANAGER HUB (New Grid Layout) ---
+    // --- MANAGER HUB (IMPROVED) ---
     renderManagerHub: () => {
         const view = document.getElementById('view-manager');
         if(!view) return;
@@ -541,9 +460,10 @@ const app = {
                         <h3>Roles & Titles</h3>
                         <div style="display:flex; gap:5px; margin-bottom:10px;">
                             <input type="text" id="new-role-input" class="search-bar" placeholder="New Role Name">
-                            <button class="btn-primary" onclick="window.app.addNewRole()">Add</button>
+                            <button id="btn-role-action" class="btn-primary" onclick="window.app.saveRoleAction()">Add</button>
+                            <button id="btn-role-cancel" class="btn-sm" style="display:none; background:#999;" onclick="window.app.cancelRoleEdit()">X</button>
                         </div>
-                        <ul id="role-manager-list" style="list-style:none; padding:0; max-height: 200px; overflow-y:auto;">
+                        <ul id="role-manager-list" style="list-style:none; padding:0; max-height: 250px; overflow-y:auto; border:1px solid #eee; border-radius:4px;">
                             </ul>
                     </div>
 
@@ -558,7 +478,6 @@ const app = {
                 </div>
             </div>
         `;
-        
         app.renderEmployeesManager();
         app.renderRoleManager();
     },
@@ -578,34 +497,103 @@ const app = {
         `).join('');
     },
 
-    // --- ROLE MANAGEMENT ---
+    // --- ROLE MANAGEMENT (NEW LOGIC) ---
     renderRoleManager: () => {
         const list = document.getElementById('role-manager-list');
         if(!list) return;
-        list.innerHTML = app.data.roles.map(r => `
-            <li style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; align-items:center;">
-                <span>${r}</span>
-                <button style="background:none; border:none; color:red; cursor:pointer;" onclick="window.app.deleteRole('${r}')">
-                    <i class="fa-solid fa-times"></i>
-                </button>
+        
+        list.innerHTML = app.data.roles.map(r => {
+            // Calculate usage count
+            const count = app.data.employees.filter(e => e.role === r).length;
+            const isEditing = (app.data.editingRoleOriginalName === r);
+            const bg = isEditing ? '#e3f2fd' : 'transparent';
+
+            return `
+            <li style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; align-items:center; background:${bg};">
+                <span>${r} <span style="font-size:0.8rem; color:#888;">(${count})</span></span>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-sm" style="background:#f39c12;" title="Rename" onclick="window.app.editRole('${r}')">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-sm" style="background:#e74c3c;" title="Delete" onclick="window.app.deleteRole('${r}')">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </li>
-        `).join('');
+        `}).join('');
     },
 
-    addNewRole: () => {
+    saveRoleAction: () => {
         const input = document.getElementById('new-role-input');
         const val = input.value.trim();
         if(!val) return;
-        if(app.data.roles.includes(val)) return app.showAlert("Duplicate", "Role already exists.");
-        
-        app.data.roles.push(val);
+
+        // MODE: UPDATE
+        if(app.data.editingRoleOriginalName) {
+            const oldName = app.data.editingRoleOriginalName;
+            
+            // Check duplicate
+            if(val !== oldName && app.data.roles.includes(val)) return app.showAlert("Duplicate", "Role already exists.");
+            
+            // 1. Update Role List
+            const idx = app.data.roles.indexOf(oldName);
+            if(idx !== -1) app.data.roles[idx] = val;
+            
+            // 2. Update All Employees with this role
+            app.data.employees.forEach(e => {
+                if(e.role === oldName) e.role = val;
+            });
+            
+            app.showAlert("Success", `Renamed '${oldName}' to '${val}' and updated employees.`);
+            app.cancelRoleEdit(); // Reset UI
+            
+        } 
+        // MODE: ADD NEW
+        else {
+            if(app.data.roles.includes(val)) return app.showAlert("Duplicate", "Role already exists.");
+            app.data.roles.push(val);
+        }
+
         app.saveData();
+        app.renderRoleManager();
+        app.renderEmployeesManager(); // Refresh employee table just in case
+        if(!app.data.editingRoleOriginalName) input.value = "";
+    },
+
+    editRole: (roleName) => {
+        app.data.editingRoleOriginalName = roleName;
+        const input = document.getElementById('new-role-input');
+        const btn = document.getElementById('btn-role-action');
+        const cancel = document.getElementById('btn-role-cancel');
+        
+        input.value = roleName;
+        input.focus();
+        btn.innerText = "Update";
+        cancel.style.display = "inline-block";
+        app.renderRoleManager(); // re-render to highlight
+    },
+
+    cancelRoleEdit: () => {
+        app.data.editingRoleOriginalName = null;
+        const input = document.getElementById('new-role-input');
+        const btn = document.getElementById('btn-role-action');
+        const cancel = document.getElementById('btn-role-cancel');
+        
         input.value = "";
+        btn.innerText = "Add";
+        cancel.style.display = "none";
         app.renderRoleManager();
     },
 
     deleteRole: (roleName) => {
+        // 1. Check if assigned
+        const count = app.data.employees.filter(e => e.role === roleName).length;
+        if(count > 0) {
+            return app.showAlert("Action Blocked", `Cannot delete role '${roleName}'. It is assigned to ${count} employee(s). Please reassign them first.`);
+        }
+        
         if(app.data.roles.length <= 1) return app.showAlert("Error", "Must have at least one role.");
+        
         if(confirm(`Delete role "${roleName}"?`)) {
             app.data.roles = app.data.roles.filter(r => r !== roleName);
             app.saveData();
@@ -613,36 +601,27 @@ const app = {
         }
     },
 
-    // --- EMPLOYEE MODAL (Dynamic Roles) ---
+    // --- EMPLOYEE MODAL ---
     openEmployeeModal: () => {
         const sel = document.getElementById('emp-role');
-        // Populate dropdown with Dynamic Roles
         if(sel) sel.innerHTML = app.data.roles.map(r => `<option value="${r}">${r}</option>`).join('');
-        
         document.getElementById('emp-modal-title').innerText = "Add Employee";
         document.getElementById('emp-name').value = "";
         document.getElementById('emp-img-url').value = "";
         app.data.editingId = null;
         document.getElementById('modal-employee').classList.add('open');
     },
-
     editEmployee: (id) => {
         const emp = app.data.employees.find(e => e.id === id);
         if(!emp) return;
-        
         const sel = document.getElementById('emp-role');
-        // Populate dropdown and Select current role
-        if(sel) sel.innerHTML = app.data.roles.map(r => 
-            `<option value="${r}" ${r === emp.role ? 'selected' : ''}>${r}</option>`
-        ).join('');
-        
+        if(sel) sel.innerHTML = app.data.roles.map(r => `<option value="${r}" ${r === emp.role ? 'selected' : ''}>${r}</option>`).join('');
         document.getElementById('emp-modal-title').innerText = "Edit Employee";
         document.getElementById('emp-name').value = emp.name;
         document.getElementById('emp-img-url').value = emp.img;
         app.data.editingId = id;
         document.getElementById('modal-employee').classList.add('open');
     },
-
     saveEmployee: () => {
         const name = document.getElementById('emp-name').value;
         const role = document.getElementById('emp-role').value;
@@ -658,7 +637,6 @@ const app = {
         app.closeModal('modal-employee');
         app.renderManagerHub();
     },
-
     deleteEmployee: (id) => {
         if(confirm("Delete employee?")) {
             app.data.employees = app.data.employees.filter(e => e.id !== id);
@@ -675,8 +653,6 @@ const app = {
         if (navItem) navItem.classList.add('active');
         app.refreshUI();
     },
-    
-    // --- IT TOOLS ---
     renderITHub: () => {
         const pre = document.getElementById('github-notes-content');
         if(pre && pre.innerText.includes("Loading")) app.fetchTestingNotes();
@@ -684,14 +660,9 @@ const app = {
         if(dbStatus) dbStatus.innerText = window.firebase ? "Active" : "Offline";
         app.renderBackupList();
     },
-    fetchTestingNotes: () => {
-        fetch('TESTING_NOTES.md').then(r=>r.text()).then(t=>document.getElementById('github-notes-content').innerText=t).catch(e=>console.log(e));
-    },
-    renderBackupList: () => {
-       // Placeholder if backup system not active
-    },
+    fetchTestingNotes: () => { fetch('TESTING_NOTES.md').then(r=>r.text()).then(t=>document.getElementById('github-notes-content').innerText=t).catch(e=>console.log(e)); },
+    renderBackupList: () => { },
     nuclearReset: () => { if(confirm("WIPE ALL DATA?")) { localStorage.clear(); location.reload(); } },
-    
     renderInventory: () => {
         const tbody = document.getElementById('inventory-body');
         if(!tbody) return;
