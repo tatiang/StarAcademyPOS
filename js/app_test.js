@@ -15,8 +15,8 @@ const playTone = (freq, type, duration) => {
 };
 
 const app = {
-    // --- NEW STORAGE KEY forces a fresh start for v1.61 ---
-    STORAGE_KEY: "StarAcademy_Test_v1.61", 
+    // --- STORAGE KEY ---
+    STORAGE_KEY: "StarAcademy_Test_v1.62", 
 
     data: {
         currentCashier: null, 
@@ -25,6 +25,7 @@ const app = {
         products: [], 
         orders: [], 
         employees: [], 
+        // Default roles if none exist
         roles: ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'], 
         timeEntries: [], 
         bugReports: [], 
@@ -46,11 +47,9 @@ const app = {
         app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
         
-        // Disable cloud overwrite for this test version
-        if(window.firebase) {
-            console.log("Disconnecting Firebase for Local Testing...");
-            window.firebase = null; 
-        }
+        // Disable generic cloud overwrite for this test version to prevent "ghosting"
+        // We rely on window.saveToCloud / window.loadFromCloud defined in firebase.js
+        if(window.firebase) window.firebase = null; 
 
         if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
         app.renderLogin(); 
@@ -85,7 +84,7 @@ const app = {
         if (stored) {
             app.data = JSON.parse(stored);
             // Ensure essential arrays exist
-            if (!app.data.roles) app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
+            if (!app.data.roles || app.data.roles.length === 0) app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
             if (!app.data.bugReports) app.data.bugReports = [];
             if (!app.data.timeEntries) app.data.timeEntries = [];
             if (!app.data.orders) app.data.orders = [];
@@ -97,7 +96,13 @@ const app = {
     },
 
     saveData: () => { 
+        // 1. Save to Local Storage (Instant)
         localStorage.setItem(app.STORAGE_KEY, JSON.stringify(app.data));
+        
+        // 2. Save to Cloud (If connected)
+        if (window.saveToCloud) {
+            window.saveToCloud(app.data, true); // true = silent save (no spinner)
+        }
     },
 
     seedData: () => {
@@ -110,7 +115,7 @@ const app = {
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
         ];
         
-        // CORRECTED EMPLOYEE LIST
+        // DEFAULT EMPLOYEES
         app.data.employees = [
             {id: 101, name: "Eloise", role: "Barista", img: "images/placeholder.png"},
             {id: 102, name: "Jamil", role: "Cashier", img: "images/placeholder.png"},
@@ -163,7 +168,7 @@ const app = {
         const c = document.getElementById('student-login-grid');
         if(c) {
              const students = app.data.employees;
-             // Sort alphabetically for cleaner UI
+             // Sort alphabetically
              students.sort((a,b) => a.name.localeCompare(b.name));
              
              c.innerHTML = students.map(e => `
@@ -210,7 +215,7 @@ const app = {
         app.renderLogin();
     },
 
-    // --- PIN SYSTEM (FIXED) ---
+    // --- PIN SYSTEM ---
     requestPin: (cb) => {
         app.pinBuffer = ""; 
         app.pinCallback = cb;
@@ -227,16 +232,9 @@ const app = {
         document.getElementById('pin-display').innerText = ""; 
     },
     pinSubmit: () => { 
-        // Force modal close FIRST to ensure UI response
         app.closeModal('modal-pin');
-
-        // Execute callback safely
         if(app.pinCallback) {
-            try {
-                app.pinCallback(app.pinBuffer); 
-            } catch(e) {
-                console.error("PIN Callback Error:", e);
-            }
+            try { app.pinCallback(app.pinBuffer); } catch(e) { console.error(e); }
         }
         app.pinBuffer = "";
     },
@@ -302,6 +300,11 @@ const app = {
 
         const sub = app.data.customerCart.reduce((acc, item) => acc + item.price, 0);
         subEl.innerText = `$${sub.toFixed(2)}`;
+    },
+    
+    removeFromCustomerCart: (idx) => {
+        app.data.customerCart.splice(idx, 1);
+        app.renderCustomerCart();
     },
 
     submitKioskOrder: () => {
@@ -497,24 +500,6 @@ const app = {
     closeReceiptAndReset: () => { app.closeModal('modal-receipt'); },
     showAlert: (t, m) => { document.getElementById('alert-title').innerText = t; document.getElementById('alert-message').innerText = m; document.getElementById('modal-alert').classList.add('open'); },
     
-    // --- IT TOOLS ---
-    fetchTestingNotes: () => {
-        fetch('TESTING_NOTES.md')
-            .then(res => {
-                if(!res.ok) throw new Error("Missing file");
-                return res.text();
-            })
-            .then(text => document.getElementById('github-notes-content').innerText = text)
-            .catch(() => document.getElementById('github-notes-content').innerText = "Could not load TESTING_NOTES.md");
-    },
-    downloadFullBackup: () => {
-        const a = document.createElement('a');
-        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(app.data));
-        a.download = "StarAcademy_Backup_v1.59.json";
-        a.click();
-    },
-    nuclearReset: () => { if(confirm("WIPE ALL DATA?")) { localStorage.clear(); location.reload(); } },
-    
     // --- VIEWS ---
     renderBarista: () => {
         const grid = document.getElementById('barista-grid');
@@ -524,19 +509,58 @@ const app = {
     },
     markReady: (id) => { app.data.orders.find(o => o.id === id).status = 'Completed'; app.saveData(); app.renderBarista(); },
 
-    renderRoles: () => {
-        const list = document.getElementById('role-list');
-        if(!list) return;
-        list.innerHTML = app.data.roles.map(r => `
-            <li class="role-item">
-                <span>${r}</span>
-                <span style="font-size:0.8rem; color:#999;">(Standard)</span>
-            </li>
-        `).join('');
-    },
-
+    // --- MANAGER HUB (New Grid Layout) ---
     renderManagerHub: () => {
+        const view = document.getElementById('view-manager');
+        if(!view) return;
+        
+        view.innerHTML = `
+            <div class="header-main">
+                <h2>Manager Hub</h2>
+                <span id="live-clock"></span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 20px;">
+                
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3>Employees</h3>
+                        <button class="btn-primary" onclick="window.app.openEmployeeModal()">+ Add Employee</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Role</th><th>Actions</th></tr></thead>
+                            <tbody id="employees-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    
+                    <div class="card">
+                        <h3>Roles & Titles</h3>
+                        <div style="display:flex; gap:5px; margin-bottom:10px;">
+                            <input type="text" id="new-role-input" class="search-bar" placeholder="New Role Name">
+                            <button class="btn-primary" onclick="window.app.addNewRole()">Add</button>
+                        </div>
+                        <ul id="role-manager-list" style="list-style:none; padding:0; max-height: 200px; overflow-y:auto;">
+                            </ul>
+                    </div>
+
+                    <div class="card">
+                        <h3>System Data</h3>
+                        <p>Total Orders: ${app.data.orders.length}</p>
+                        <p>Total Revenue: $${app.data.orders.reduce((a,b)=>a+b.total,0).toFixed(2)}</p>
+                        <hr>
+                        <button class="btn-danger" style="width:100%" onclick="window.app.nuclearReset()">Factory Reset (Wipe All)</button>
+                    </div>
+
+                </div>
+            </div>
+        `;
+        
         app.renderEmployeesManager();
+        app.renderRoleManager();
     },
 
     renderEmployeesManager: () => {
@@ -553,26 +577,72 @@ const app = {
             </tr>
         `).join('');
     },
+
+    // --- ROLE MANAGEMENT ---
+    renderRoleManager: () => {
+        const list = document.getElementById('role-manager-list');
+        if(!list) return;
+        list.innerHTML = app.data.roles.map(r => `
+            <li style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; align-items:center;">
+                <span>${r}</span>
+                <button style="background:none; border:none; color:red; cursor:pointer;" onclick="window.app.deleteRole('${r}')">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </li>
+        `).join('');
+    },
+
+    addNewRole: () => {
+        const input = document.getElementById('new-role-input');
+        const val = input.value.trim();
+        if(!val) return;
+        if(app.data.roles.includes(val)) return app.showAlert("Duplicate", "Role already exists.");
+        
+        app.data.roles.push(val);
+        app.saveData();
+        input.value = "";
+        app.renderRoleManager();
+    },
+
+    deleteRole: (roleName) => {
+        if(app.data.roles.length <= 1) return app.showAlert("Error", "Must have at least one role.");
+        if(confirm(`Delete role "${roleName}"?`)) {
+            app.data.roles = app.data.roles.filter(r => r !== roleName);
+            app.saveData();
+            app.renderRoleManager();
+        }
+    },
+
+    // --- EMPLOYEE MODAL (Dynamic Roles) ---
     openEmployeeModal: () => {
         const sel = document.getElementById('emp-role');
+        // Populate dropdown with Dynamic Roles
         if(sel) sel.innerHTML = app.data.roles.map(r => `<option value="${r}">${r}</option>`).join('');
+        
         document.getElementById('emp-modal-title').innerText = "Add Employee";
         document.getElementById('emp-name').value = "";
         document.getElementById('emp-img-url').value = "";
         app.data.editingId = null;
         document.getElementById('modal-employee').classList.add('open');
     },
+
     editEmployee: (id) => {
         const emp = app.data.employees.find(e => e.id === id);
         if(!emp) return;
+        
         const sel = document.getElementById('emp-role');
-        if(sel) sel.innerHTML = app.data.roles.map(r => `<option value="${r}" ${r === emp.role ? 'selected' : ''}>${r}</option>`).join('');
+        // Populate dropdown and Select current role
+        if(sel) sel.innerHTML = app.data.roles.map(r => 
+            `<option value="${r}" ${r === emp.role ? 'selected' : ''}>${r}</option>`
+        ).join('');
+        
         document.getElementById('emp-modal-title').innerText = "Edit Employee";
         document.getElementById('emp-name').value = emp.name;
         document.getElementById('emp-img-url').value = emp.img;
         app.data.editingId = id;
         document.getElementById('modal-employee').classList.add('open');
     },
+
     saveEmployee: () => {
         const name = document.getElementById('emp-name').value;
         const role = document.getElementById('emp-role').value;
@@ -588,6 +658,7 @@ const app = {
         app.closeModal('modal-employee');
         app.renderManagerHub();
     },
+
     deleteEmployee: (id) => {
         if(confirm("Delete employee?")) {
             app.data.employees = app.data.employees.filter(e => e.id !== id);
@@ -605,6 +676,7 @@ const app = {
         app.refreshUI();
     },
     
+    // --- IT TOOLS ---
     renderITHub: () => {
         const pre = document.getElementById('github-notes-content');
         if(pre && pre.innerText.includes("Loading")) app.fetchTestingNotes();
@@ -612,28 +684,14 @@ const app = {
         if(dbStatus) dbStatus.innerText = window.firebase ? "Active" : "Offline";
         app.renderBackupList();
     },
+    fetchTestingNotes: () => {
+        fetch('TESTING_NOTES.md').then(r=>r.text()).then(t=>document.getElementById('github-notes-content').innerText=t).catch(e=>console.log(e));
+    },
     renderBackupList: () => {
-        const list = document.getElementById('backup-list');
-        if(!list || !window.fetchBackupList) return;
-        list.innerHTML = "<li>Loading backups...</li>";
-        window.fetchBackupList().then(backups => {
-            if(!backups || backups.length === 0) { list.innerHTML = "<li>No backups found.</li>"; return; }
-            backups.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-            list.innerHTML = backups.slice(0, 5).map(b => `
-                    <li style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee; font-size:0.9rem;">
-                        <span>${new Date(b.timestamp).toLocaleString()}</span>
-                        <button class="btn-sm" style="background:#e67e22;" onclick="window.app.restoreBackup('${b.id}')">Restore</button>
-                    </li>
-                `).join('');
-        });
+       // Placeholder if backup system not active
     },
-    restoreBackup: (docId) => {
-        if(confirm("Overwriting current data with backup. Sure?")) {
-            window.restoreFromBackup(docId).then(data => {
-                if(data) { app.data = data; app.saveData(); location.reload(); }
-            });
-        }
-    },
+    nuclearReset: () => { if(confirm("WIPE ALL DATA?")) { localStorage.clear(); location.reload(); } },
+    
     renderInventory: () => {
         const tbody = document.getElementById('inventory-body');
         if(!tbody) return;
