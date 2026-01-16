@@ -81,25 +81,26 @@ const app = {
     },
 
     seedData: () => {
+        // Initialize default structure
         app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin'];
         app.data.products = [
-            { id: 1, name: "Coffee", cat: "Beverages", price: 3.50, stock: 50, img: "images/coffee.jpg", options: [{ name: "Add-ins", type: "select", choices: [{name:"+ Half & Half"}, {name:"+ Extra Room"}, {name:"(No Caf) Decaf"}] }] },
-            { id: 2, name: "Herbal Tea", cat: "Beverages", price: 3.25, stock: 40, img: "", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
-            { id: 3, name: "Latte", cat: "Beverages", price: 4.50, stock: 40, img: "", options: [{ name: "Syrup", type: "select", choices: [{name:"Plain"}, {name:"+ Vanilla"}, {name:"+ Hazelnut"}] }] },
-            { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "" },
-            { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
+            // ... (keep your product list or leave empty) ...
         ];
-        
         app.data.employees = [
-            {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
-            {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"},
-            {id: 4, name: "Jordan", role: "Inventory", img: "images/placeholder.png"}
+            // ... (keep your default employees) ...
         ];
         app.data.orderCounter = 1001;
         app.data.orders = [];
         app.data.timeEntries = [];
         app.data.bugReports = [];
-        app.saveData();
+        
+        // SAFETY FIX: Save ONLY to LocalStorage initially.
+        // We DO NOT call window.saveToCloud() here.
+        // This prevents overwriting your real Firebase data with this seed data
+        // if the app loads on a new device before the cloud sync finishes.
+        localStorage.setItem('starAcademyPOS_v152', JSON.stringify(app.data));
+        
+        console.log("Seed data initialized (Local Only). Waiting for Cloud Sync...");
     },
 
     updateSidebar: () => {
