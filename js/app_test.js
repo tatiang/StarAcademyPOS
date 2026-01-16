@@ -100,6 +100,10 @@ const app = {
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
+    // *** NOTE ***
+    // The seedData below is static data and does NOT reflect the current data in Firestore
+    //
+    
     seedData: () => {
         app.data.roles = ['Barista', 'Cashier', 'Inventory', 'Marketing', 'Shopper'];
         app.data.products = [
@@ -109,10 +113,17 @@ const app = {
             { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "" },
             { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
         ];
+        
+        // UPDATED EMPLOYEE LIST FROM YOUR SCREENSHOT
         app.data.employees = [
-            {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
-            {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"}
+            {id: 101, name: "Eloise", role: "Barista", img: "images/placeholder.png"},
+            {id: 102, name: "Jamil", role: "Cashier", img: "images/placeholder.png"},
+            {id: 103, name: "Diego", role: "Inventory", img: "images/placeholder.png"},
+            {id: 104, name: "Lexi", role: "Inventory", img: "images/placeholder.png"},
+            {id: 105, name: "Finn", role: "Cashier", img: "images/placeholder.png"},
+            {id: 106, name: "Twyla", role: "Inventory", img: "images/placeholder.png"}
         ];
+
         app.data.orderCounter = 1001;
         localStorage.setItem('starAcademyPOS_data', JSON.stringify(app.data));
     },
