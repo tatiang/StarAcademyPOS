@@ -19,7 +19,8 @@ const app = {
         products: [], 
         orders: [], 
         employees: [], 
-        roles: ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin'], 
+        // UPDATED DEFAULT ROLES v1.53
+        roles: ['Cashier', 'Barista', 'Inventory', 'Shopper', 'Marketing'], 
         timeEntries: [], 
         bugReports: [], 
         orderCounter: 1001, 
@@ -35,12 +36,22 @@ const app = {
     pinBuffer: "",
     pinCallback: null,
     itAuthAttempts: 0, 
+    backupInterval: null, // v1.53
 
     init: () => {
         app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
-        const orderNum = document.getElementById('order-number');
-        if(orderNum) orderNum.innerText = app.data.orderCounter;
+        
+        // v1.53: Start Auto-Backup (Every 60 mins)
+        if (app.backupInterval) clearInterval(app.backupInterval);
+        app.backupInterval = setInterval(() => {
+            if(window.createTimestampedBackup) {
+                console.log("⏳ Running Hourly Backup...");
+                window.createTimestampedBackup(app.data);
+            }
+        }, 60 * 60 * 1000);
+
+        if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
         app.renderLogin(); 
     },
 
@@ -63,11 +74,15 @@ const app = {
     },
 
     loadLocalData: () => {
-        const stored = localStorage.getItem('starAcademyPOS_v152') || localStorage.getItem('starAcademyPOS_v131');
+        // Updated key for v1.53
+        const stored = localStorage.getItem('starAcademyPOS_v153') || localStorage.getItem('starAcademyPOS_v152');
         if (stored) {
             app.data = JSON.parse(stored);
-            // Self-Repair: Ensure arrays exist
-            if (!app.data.roles) app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin'];
+            // v1.53 Migration: Ensure new standard roles exist
+            if (!app.data.roles) app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Shopper', 'Marketing'];
+            // Remove legacy system roles from the editable list if they exist (to clean up UI)
+            app.data.roles = app.data.roles.filter(r => r !== 'Manager' && r !== 'IT Admin');
+            
             if (!app.data.bugReports) app.data.bugReports = [];
             if (!app.data.timeEntries) app.data.timeEntries = [];
             if (!app.data.orders) app.data.orders = [];
@@ -77,12 +92,13 @@ const app = {
     },
 
     saveData: () => { 
-        localStorage.setItem('starAcademyPOS_v152', JSON.stringify(app.data));
+        localStorage.setItem('starAcademyPOS_v153', JSON.stringify(app.data));
         if(window.saveToCloud) window.saveToCloud(app.data, true); 
     },
 
     seedData: () => {
-        app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin'];
+        // UPDATED SEED ROLES v1.53
+        app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Shopper', 'Marketing'];
         app.data.products = [
             { id: 1, name: "Coffee", cat: "Beverages", price: 3.50, stock: 50, img: "images/coffee.jpg", options: [{ name: "Add-ins", type: "select", choices: [{name:"+ Half & Half"}, {name:"+ Extra Room"}, {name:"(No Caf) Decaf"}] }] },
             { id: 2, name: "Herbal Tea", cat: "Beverages", price: 3.25, stock: 40, img: "", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
@@ -99,7 +115,9 @@ const app = {
         app.data.orders = [];
         app.data.timeEntries = [];
         app.data.bugReports = [];
-        app.saveData();
+        
+        // Save local only first to prevent overwrite
+        localStorage.setItem('starAcademyPOS_v153', JSON.stringify(app.data));
     },
 
     updateSidebar: () => {
@@ -108,9 +126,14 @@ const app = {
         if (manLink) manLink.classList.add('hidden');
         if (itLink) itLink.classList.add('hidden');
         
-        const role = (app.data.currentCashier === 'Manager') ? 'Manager' : 
-                     (app.data.currentCashier === 'IT Support') ? 'IT Admin' : 
-                     (app.data.employees.find(e => e.name === app.data.currentCashier)?.role);
+        // Determine Role
+        let role = null;
+        if (app.data.currentCashier === 'Manager') role = 'Manager';
+        else if (app.data.currentCashier === 'IT Support') role = 'IT Admin';
+        else {
+            const emp = app.data.employees.find(e => e.name === app.data.currentCashier);
+            if(emp) role = emp.role;
+        }
 
         if (role === 'Manager') {
             if (manLink) manLink.classList.remove('hidden');
@@ -216,12 +239,59 @@ const app = {
         app.renderRoles(); 
     },
 
-    // --- IT HUB (FIXED) ---
+    // --- IT HUB (UPDATED v1.53) ---
     renderITHub: () => {
         const pre = document.getElementById('github-notes-content');
         if(pre && pre.innerText.includes("Loading")) app.fetchTestingNotes();
         const dbStatus = document.getElementById('it-db-status');
         if(dbStatus) dbStatus.innerText = window.firebase ? "Active" : "Offline";
+        
+        // Render Backup List
+        app.renderBackupList();
+    },
+
+    // v1.53 Backup Listing
+    renderBackupList: () => {
+        const list = document.getElementById('backup-list');
+        if(!list || !window.fetchBackupList) return;
+        
+        list.innerHTML = "<li>Loading backups...</li>";
+        
+        window.fetchBackupList().then(backups => {
+            if(!backups || backups.length === 0) {
+                list.innerHTML = "<li>No backups found.</li>";
+                return;
+            }
+            
+            // Sort newest first
+            backups.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            list.innerHTML = backups.slice(0, 5).map(b => { // Show last 5
+                const date = new Date(b.timestamp).toLocaleString();
+                return `
+                    <li style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee; font-size:0.9rem;">
+                        <span>${date}</span>
+                        <button class="btn-sm" style="background:#e67e22;" onclick="app.restoreBackup('${b.id}')">Restore</button>
+                    </li>
+                `;
+            }).join('');
+        });
+    },
+
+    // v1.53 Restore Logic
+    restoreBackup: (docId) => {
+        if(confirm("⚠️ WARNING: This will overwrite ALL current data with the selected backup. Are you sure?")) {
+            window.restoreFromBackup(docId).then(data => {
+                if(data) {
+                    app.data = data;
+                    app.saveData(); // Save locally
+                    alert("System restored successfully! Reloading...");
+                    location.reload();
+                } else {
+                    app.showAlert("Error", "Failed to load backup data.");
+                }
+            });
+        }
     },
 
     // Role Management
@@ -229,13 +299,15 @@ const app = {
         const list = document.getElementById('role-list');
         if(!list) return;
         list.innerHTML = app.data.roles.map(r => {
-            const isSystem = ['Manager', 'IT Admin'].includes(r);
+            // These roles are managed via logic, not lists
+            if (r === 'Manager' || r === 'IT Admin') return ''; 
+            
             return `
                 <li class="role-item">
                     <span>${r}</span>
                     <div>
-                        ${!isSystem ? `<button class="btn-role-action" onclick="app.editRole('${r}')"><i class="fa-solid fa-pen"></i></button>` : ''}
-                        ${!isSystem ? `<button class="btn-role-action btn-role-delete" onclick="app.deleteRole('${r}')"><i class="fa-solid fa-trash"></i></button>` : '<i class="fa-solid fa-lock" style="color:#ccc; font-size:0.8rem; margin-left:5px;"></i>'}
+                        <button class="btn-role-action" onclick="app.editRole('${r}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-role-action btn-role-delete" onclick="app.deleteRole('${r}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </li>
             `;
@@ -486,7 +558,7 @@ const app = {
     downloadFullBackup: () => {
         const a = document.createElement('a');
         a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(app.data));
-        a.download = "StarAcademy_Backup_v1.52.json";
+        a.download = "StarAcademy_Backup_v1.53.json";
         a.click();
     },
     nuclearReset: () => { if(confirm("WIPE ALL DATA?")) { localStorage.clear(); location.reload(); } },
