@@ -39,12 +39,14 @@ const app = {
     init: () => {
         app.loadLocalData(); 
         setInterval(app.updateClock, 1000);
-        if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
+        const orderNum = document.getElementById('order-number');
+        if(orderNum) orderNum.innerText = app.data.orderCounter;
         app.renderLogin(); 
     },
 
     refreshUI: () => {
-        if(document.getElementById('order-number')) document.getElementById('order-number').innerText = app.data.orderCounter;
+        const orderNum = document.getElementById('order-number');
+        if(orderNum) orderNum.innerText = app.data.orderCounter;
         app.renderLogin();
         app.updateSidebar();
         
@@ -61,11 +63,10 @@ const app = {
     },
 
     loadLocalData: () => {
-        // We use v1.35 key to maintain compatibility, or upgrade to v1.52 key
-        const stored = localStorage.getItem('starAcademyPOS_v131') || localStorage.getItem('starAcademyPOS_v152');
+        const stored = localStorage.getItem('starAcademyPOS_v152') || localStorage.getItem('starAcademyPOS_v131');
         if (stored) {
             app.data = JSON.parse(stored);
-            // v1.52 SELF-REPAIR: Add missing arrays to prevent crashes
+            // Self-Repair: Ensure arrays exist
             if (!app.data.roles) app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin'];
             if (!app.data.bugReports) app.data.bugReports = [];
             if (!app.data.timeEntries) app.data.timeEntries = [];
@@ -81,26 +82,24 @@ const app = {
     },
 
     seedData: () => {
-        // Initialize default structure
         app.data.roles = ['Cashier', 'Barista', 'Inventory', 'Manager', 'IT Admin'];
         app.data.products = [
-            // ... (keep your product list or leave empty) ...
+            { id: 1, name: "Coffee", cat: "Beverages", price: 3.50, stock: 50, img: "images/coffee.jpg", options: [{ name: "Add-ins", type: "select", choices: [{name:"+ Half & Half"}, {name:"+ Extra Room"}, {name:"(No Caf) Decaf"}] }] },
+            { id: 2, name: "Herbal Tea", cat: "Beverages", price: 3.25, stock: 40, img: "", options: [{ name: "Temp", type: "toggle", choice: {name:"Not too hot"} }] },
+            { id: 3, name: "Latte", cat: "Beverages", price: 4.50, stock: 40, img: "", options: [{ name: "Syrup", type: "select", choices: [{name:"Plain"}, {name:"+ Vanilla"}, {name:"+ Hazelnut"}] }] },
+            { id: 8, name: "Blueberry Muffin", cat: "Baked Goods", price: 3.75, stock: 20, img: "" },
+            { id: 13, name: "Bottled Water", cat: "Beverages", price: 1.50, stock: 50, img: "" }
         ];
         app.data.employees = [
-            // ... (keep your default employees) ...
+            {id: 2, name: "Alex", role: "Cashier", img: "images/placeholder.png"},
+            {id: 3, name: "Brianna", role: "Barista", img: "images/placeholder.png"},
+            {id: 4, name: "Jordan", role: "Inventory", img: "images/placeholder.png"}
         ];
         app.data.orderCounter = 1001;
         app.data.orders = [];
         app.data.timeEntries = [];
         app.data.bugReports = [];
-        
-        // SAFETY FIX: Save ONLY to LocalStorage initially.
-        // We DO NOT call window.saveToCloud() here.
-        // This prevents overwriting your real Firebase data with this seed data
-        // if the app loads on a new device before the cloud sync finishes.
-        localStorage.setItem('starAcademyPOS_v152', JSON.stringify(app.data));
-        
-        console.log("Seed data initialized (Local Only). Waiting for Cloud Sync...");
+        app.saveData();
     },
 
     updateSidebar: () => {
@@ -109,10 +108,9 @@ const app = {
         if (manLink) manLink.classList.add('hidden');
         if (itLink) itLink.classList.add('hidden');
         
-        const currentUser = app.data.employees.find(e => e.name === app.data.currentCashier);
         const role = (app.data.currentCashier === 'Manager') ? 'Manager' : 
                      (app.data.currentCashier === 'IT Support') ? 'IT Admin' : 
-                     (currentUser ? currentUser.role : null);
+                     (app.data.employees.find(e => e.name === app.data.currentCashier)?.role);
 
         if (role === 'Manager') {
             if (manLink) manLink.classList.remove('hidden');
@@ -147,7 +145,7 @@ const app = {
         }
     },
 
-    // --- AUTHENTICATION & SECURITY (v1.52) ---
+    // --- AUTHENTICATION ---
     login: (name) => {
         if (name === 'Manager') {
              app.requestPin((pin) => {
@@ -158,19 +156,20 @@ const app = {
         }
         if (name === 'IT Support') {
              app.itAuthAttempts = 0;
-             document.getElementById('it-reset-btn').classList.add('hidden');
+             const resetBtn = document.getElementById('it-reset-btn');
+             if(resetBtn) resetBtn.classList.add('hidden');
              
              app.requestPin((pin) => {
                 if (pin === "9753") {
                     app.itAuthAttempts = 0;
-                    app.closeModal('modal-pin'); // v1.52 FIX: Close modal on success
+                    app.closeModal('modal-pin'); 
                     app.completeLogin("IT Support", "IT Admin");
                 } else {
                     app.itAuthAttempts++;
                     let msg = "Incorrect PIN.";
-                    if (app.itAuthAttempts >= 2) {
+                    if (app.itAuthAttempts >= 2 && resetBtn) {
                         msg += " (Attempts exceeded)";
-                        document.getElementById('it-reset-btn').classList.remove('hidden');
+                        resetBtn.classList.remove('hidden');
                     }
                     app.showAlert("Access Denied", msg);
                 }
@@ -215,6 +214,14 @@ const app = {
         app.renderProductsManager(); 
         app.renderEmployeesManager(); 
         app.renderRoles(); 
+    },
+
+    // --- IT HUB (FIXED) ---
+    renderITHub: () => {
+        const pre = document.getElementById('github-notes-content');
+        if(pre && pre.innerText.includes("Loading")) app.fetchTestingNotes();
+        const dbStatus = document.getElementById('it-db-status');
+        if(dbStatus) dbStatus.innerText = window.firebase ? "Active" : "Offline";
     },
 
     // Role Management
@@ -270,6 +277,7 @@ const app = {
     // Employee Management
     renderEmployeesManager: () => {
         const tbody = document.getElementById('employees-body');
+        if(!tbody) return;
         tbody.innerHTML = app.data.employees.map(e => `
             <tr>
                 <td><img src="${e.img}" class="emp-thumb" onerror="this.src='images/placeholder.png'"> ${e.name}</td>
@@ -284,7 +292,7 @@ const app = {
 
     openEmployeeModal: () => {
         const sel = document.getElementById('emp-role');
-        sel.innerHTML = app.data.roles.map(r => `<option value="${r}">${r}</option>`).join('');
+        if(sel) sel.innerHTML = app.data.roles.map(r => `<option value="${r}">${r}</option>`).join('');
         document.getElementById('emp-modal-title').innerText = "Add Employee";
         document.getElementById('emp-name').value = "";
         document.getElementById('emp-img-url').value = "";
@@ -296,7 +304,7 @@ const app = {
         const emp = app.data.employees.find(e => e.id === id);
         if(!emp) return;
         const sel = document.getElementById('emp-role');
-        sel.innerHTML = app.data.roles.map(r => `<option value="${r}" ${r === emp.role ? 'selected' : ''}>${r}</option>`).join('');
+        if(sel) sel.innerHTML = app.data.roles.map(r => `<option value="${r}" ${r === emp.role ? 'selected' : ''}>${r}</option>`).join('');
         document.getElementById('emp-modal-title').innerText = "Edit Employee";
         document.getElementById('emp-name').value = emp.name;
         document.getElementById('emp-img-url').value = emp.img;
@@ -332,13 +340,15 @@ const app = {
     // --- STANDARD POS FUNCTIONS ---
     renderPOS: () => {
         const cats = ['All', ...new Set(app.data.products.map(p => p.cat))];
-        document.getElementById('pos-categories').innerHTML = cats.map(c => `<div class="cat-tab" onclick="app.filterPos('${c}')">${c}</div>`).join('');
+        const catContainer = document.getElementById('pos-categories');
+        if(catContainer) catContainer.innerHTML = cats.map(c => `<div class="cat-tab" onclick="app.filterPos('${c}')">${c}</div>`).join('');
         app.filterPos('All');
         app.renderCart();
     },
     filterPos: (cat) => {
         const items = cat === 'All' ? app.data.products : app.data.products.filter(p => p.cat === cat);
-        document.getElementById('pos-grid').innerHTML = items.map(p => `
+        const grid = document.getElementById('pos-grid');
+        if(grid) grid.innerHTML = items.map(p => `
             <div class="product-card" onclick="app.addToCart(${p.id})">
                 <div class="p-image" style="background-image:url('${p.img}');"></div>
                 <div class="p-info"><div class="p-name">${p.name}</div><div class="p-price">$${p.price.toFixed(2)}</div></div>
@@ -354,6 +364,7 @@ const app = {
     },
     renderCart: () => {
         const list = document.getElementById('cart-list');
+        if(!list) return;
         if(!app.data.cart.length) {
             list.innerHTML = `<div style="padding:20px; text-align:center; color:#999;">Cart is empty</div>`;
             document.getElementById('pos-total').innerText = "$0.00";
@@ -432,10 +443,12 @@ const app = {
     },
     renderTimeClock: () => {
         const s = document.getElementById('time-employee-select');
-        s.innerHTML = `<option>Select name...</option>` + app.data.employees.map(e => `<option>${e.name}</option>`).join('');
+        if(s) s.innerHTML = `<option>Select name...</option>` + app.data.employees.map(e => `<option>${e.name}</option>`).join('');
         const active = app.data.timeEntries.filter(t => !t.out);
-        document.getElementById('time-active-count').innerText = active.length;
-        document.getElementById('active-workers-list').innerHTML = active.length ? active.map(a => `<span class="worker-pill">${a.name}</span>`).join('') : "Nobody clocked in.";
+        const countEl = document.getElementById('time-active-count');
+        if(countEl) countEl.innerText = active.length;
+        const list = document.getElementById('active-workers-list');
+        if(list) list.innerHTML = active.length ? active.map(a => `<span class="worker-pill">${a.name}</span>`).join('') : "Nobody clocked in.";
     },
     clockIn: () => {
         const n = document.getElementById('time-employee-select').value;
@@ -477,10 +490,12 @@ const app = {
         a.click();
     },
     nuclearReset: () => { if(confirm("WIPE ALL DATA?")) { localStorage.clear(); location.reload(); } },
+    goLiveReset: function() { if(confirm("Reset operational data (Orders, Time Logs) but keep Setup (Products, Employees)?")) { app.data.orders = []; app.data.timeEntries = []; app.data.bugReports = []; app.data.orderCounter = 1001; app.saveData(); location.reload(); } },
     
     // Other renders
     renderBarista: () => {
-        document.getElementById('barista-grid').innerHTML = app.data.orders.filter(o => o.status === 'Pending').map(o => `
+        const grid = document.getElementById('barista-grid');
+        if(grid) grid.innerHTML = app.data.orders.filter(o => o.status === 'Pending').map(o => `
             <div class="order-card"><div class="oc-header">#${o.id} - ${o.customer}</div><div class="oc-body">${o.items.map(i => i.name).join('<br>')}</div><button class="btn-ready" onclick="app.markReady(${o.id})">Done</button></div>
         `).join('');
     },
@@ -488,7 +503,8 @@ const app = {
     
     // Products
     renderProductsManager: () => {
-        document.getElementById('products-manager-body').innerHTML = app.data.products.map(p => `<tr><td><img src="${p.img}" width="30"></td><td>${p.name}</td><td>$${p.price}</td><td><button class="btn-sm" onclick="app.editProduct(${p.id})">Edit</button></td></tr>`).join('');
+        const tbody = document.getElementById('products-manager-body');
+        if(tbody) tbody.innerHTML = app.data.products.map(p => `<tr><td><img src="${p.img}" width="30"></td><td>${p.name}</td><td>$${p.price}</td><td><button class="btn-sm" onclick="app.editProduct(${p.id})">Edit</button></td></tr>`).join('');
     },
     openProductModal: () => {
         document.getElementById('prod-modal-title').innerText = "Add Product";
@@ -537,6 +553,7 @@ const app = {
     },
     renderBugReports: () => {
         const tbody = document.getElementById('bug-log-body');
+        if(!tbody) return;
         if (app.data.bugReports && app.data.bugReports.length > 0) {
             const logs = [...app.data.bugReports].reverse();
             tbody.innerHTML = logs.slice(0,5).map(l => `<tr><td style="font-size:0.8rem;">${new Date(l.date).toLocaleDateString()}</td><td>${l.type}</td><td>${l.details}</td></tr>`).join('');
