@@ -1,137 +1,80 @@
-/* Star Academy POS - v1.65 (TEST) */
+/* Star Academy POS - v1.63 (Restored & Patched) */
 
 // --- CONFIGURATION ---
-const APP_VERSION = "1.65";
-let db = null; // Global DB reference
-let currentAdminTarget = null; 
-
-// Firebase Config (Derived from your uploaded files)
-const firebaseConfig = {
-  apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
-  authDomain: "star-academy-cafe-pos.firebaseapp.com",
-  projectId: "star-academy-cafe-pos",
-  storageBucket: "star-academy-cafe-pos.firebasestorage.app",
-  messagingSenderId: "148643314098",
-  appId: "1:148643314098:web:fd730b7d111f5fd374ccab",
-  measurementId: "G-Y61XRHTJ3Y"
-};
+const APP_VERSION = "v1.63";
+let currentAdminTarget = null; // Stores 'manager' or 'it'
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
 
-async function initApp() {
-    console.log(`Initializing Test Environment v${APP_VERSION}`);
-    const statusText = document.querySelector('#connection-status span');
-    const statusIcon = document.querySelector('#connection-status i');
-    const statusDiv = document.getElementById('connection-status');
+function initApp() {
+    console.log("App Initializing...");
 
-    try {
-        // 1. Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+    // 1. Force Offline Message if Firestore hangs (The "Connecting..." Fix)
+    setTimeout(() => {
+        const statusEl = document.getElementById('connection-status');
+        if (statusEl && statusEl.innerText.includes('Connecting')) {
+            console.warn("Firestore connection timed out - forcing Offline status");
+            statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline Mode (Local)';
+            statusEl.style.color = '#e74c3c';
         }
-        db = firebase.firestore();
+    }, 4000); // Wait 4 seconds then force it
 
-        // 2. Test Connection
-        // We try to fetch the 'system' doc, or just wait for online status
-        statusText.textContent = "Checking Cloud...";
-        
-        // Simple ping to see if we can read anything or if we are online
-        // Using a timeout to prevent infinite "Connecting..."
-        const connectionPromise = db.collection('stores').doc('classroom_cafe_main').get();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 5000));
+    // 2. Load Students (Simulated or from Cache)
+    loadStudents();
 
-        await Promise.race([connectionPromise, timeoutPromise])
-            .then(() => {
-                statusText.textContent = "Connected (Test Mode)";
-                statusIcon.className = "fas fa-wifi";
-                statusDiv.style.color = "#2ecc71"; // Green
-                loadUsers();
-            })
-            .catch((e) => {
-                console.warn("Cloud check slow/failed:", e);
-                throw e;
-            });
-
-    } catch (error) {
-        console.error("Offline/Init Error:", error);
-        statusText.textContent = "Offline Mode";
-        statusIcon.className = "fas fa-exclamation-triangle";
-        statusDiv.style.color = "#e74c3c"; // Red
-        
-        // Load fallback users so app is still usable
-        renderPlaceholderUsers();
-    }
-
-    setupEventListeners();
+    // 3. Attach Admin Security Listeners (The PIN Fix)
+    document.getElementById('manager-btn').onclick = () => openPinModal('Manager');
+    document.getElementById('it-btn').onclick = () => openPinModal('IT Support');
 }
 
-function setupEventListeners() {
-    document.getElementById('kiosk-btn').addEventListener('click', () => {
-        alert("Kiosk Mode (Test) - Functionality would load here.");
-    });
-
-    // Admin Buttons
-    document.getElementById('manager-btn').addEventListener('click', () => openPinModal('Manager'));
-    document.getElementById('it-btn').addEventListener('click', () => openPinModal('IT Support'));
-}
-
-// --- User Logic ---
-function loadUsers() {
+function loadStudents() {
     const grid = document.getElementById('user-list');
-    grid.innerHTML = ''; 
+    if(!grid) return;
+    
+    // v1.63 Data Structure
+    const students = [
+        { name: "Alex",    role: "student" },
+        { name: "Brianna", role: "student" },
+        { name: "Jordan",  role: "student" },
+        { name: "Casey",   role: "student" }
+    ];
 
-    // In a real app, you might fetch this list from Firestore:
-    // db.collection('users').where('role', '==', 'student').get()...
-    
-    // For now, we use the standard list:
-    const students = ['Alex', 'Brianna', 'Jordan', 'Casey'];
-    
-    students.forEach(name => {
-        const div = document.createElement('div');
-        div.className = 'user-container';
-        div.innerHTML = `
-            <div class="user-avatar">${name.substring(0,2).toUpperCase()}</div>
-            <div style="margin-top:8px; font-weight:bold;">${name}</div>
-        `;
-        div.onclick = () => alert(`Login attempt: ${name}`);
-        grid.appendChild(div);
-    });
+    grid.innerHTML = students.map(s => `
+        <div class="user-avatar" onclick="alert('Logging in as ${s.name}')">
+            ${s.name.substring(0,2).toUpperCase()}
+            <div style="font-size:0.8rem; margin-top:5px; color:#333;">${s.name}</div>
+        </div>
+    `).join('');
 }
 
-function renderPlaceholderUsers() {
-    loadUsers(); // Uses the same hardcoded list for now
-}
+// --- PIN SYSTEM LOGIC ---
 
-// --- PIN System (Fixed) ---
-
-function openPinModal(role) {
+window.openPinModal = (role) => {
     currentAdminTarget = role;
-    document.getElementById('pin-target-text').textContent = `Enter PIN for ${role}`;
+    document.getElementById('pin-target-text').innerText = `Enter PIN for ${role}`;
     document.getElementById('pin-input').value = '';
     document.getElementById('pin-modal').style.display = 'flex';
-}
+};
 
-// Global functions for HTML onclick attributes
 window.togglePinModal = (show) => {
     document.getElementById('pin-modal').style.display = show ? 'flex' : 'none';
-    if (!show) currentAdminTarget = null;
-}
+};
 
 window.pinPad = (num) => {
     const input = document.getElementById('pin-input');
     if (input.value.length < 6) input.value += num;
-}
+};
 
 window.pinAction = (action) => {
     const input = document.getElementById('pin-input');
     if (action === 'clear') input.value = '';
     if (action === 'enter') verifyPin(input.value);
-}
+};
 
-async function verifyPin(enteredPin) {
-    // Hardcoded PINs for Testing
+window.verifyPin = (enteredPin) => {
+    // Hardcoded PINs for protection
     const MANAGER_PIN = '1234';
     const IT_PIN = '9999';
 
@@ -140,13 +83,23 @@ async function verifyPin(enteredPin) {
     if (currentAdminTarget === 'IT Support' && enteredPin === IT_PIN) isValid = true;
 
     if (isValid) {
-        window.togglePinModal(false);
-        setTimeout(() => {
-            alert(`SUCCESS: Logged in as ${currentAdminTarget}`);
-            // Here you would redirect: window.location.href = 'manager_dashboard.html';
-        }, 100);
+        togglePinModal(false);
+        // Navigate based on role
+        if (currentAdminTarget === 'Manager') {
+            // Replace with your actual manager screen logic
+            alert("Access Granted: Manager Dashboard");
+        } else {
+             // Replace with your actual IT screen logic
+            alert("Access Granted: IT Support");
+        }
     } else {
-        alert("Incorrect PIN. (Hint: Manager=1234, IT=9999)");
-        document.getElementById('pin-input').value = '';
+        alert("Incorrect PIN");
+        input.value = '';
     }
-}
+};
+
+// Global App Object (Preserving v1.63 structure if other files need it)
+window.app = {
+    refreshUI: () => console.log("UI Refreshed"),
+    data: {}
+};
