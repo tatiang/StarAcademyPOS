@@ -2,49 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Rising Star Cafe POS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rising Star Cafe POS (TEST)</title>
 
-  <!-- Styles -->
   <link rel="stylesheet" href="style_test_ChatGPT.css" />
 
-  <!-- Version + App Metadata -->
+  <!-- Version is a classic script so the UI can show version even if modules fail -->
   <script src="version_test_ChatGPT.js"></script>
 
-  <!-- Firebase / Firestore -->
+  <!-- App + Firestore are ES modules (must be served over http/https) -->
   <script type="module" src="firestore_test_ChatGPT.js"></script>
-
-  <!-- Main App Logic -->
   <script type="module" src="app_test_ChatGPT.js"></script>
 </head>
-
 <body>
   <header class="app-header">
-    <h1>RISING STAR CAFE</h1>
+    <div class="brand">
+      <div class="brand-title">RISING STAR CAFE</div>
+      <div class="brand-subtitle">POS</div>
+    </div>
   </header>
 
-  <main class="login-card">
-    <h2>Rising Star Cafe Login</h2>
-    <div id="connectionStatus" class="status">Connecting to cloud…</div>
+  <main class="card" role="main">
+    <h1 class="card-title">Rising Star Cafe Login</h1>
 
-    <button class="primary" onclick="window.app.enterKiosk()">
-      📱 Customer Ordering (Kiosk)
+    <div class="status-row">
+      <div id="connectionStatus" class="status">Connecting to cloud…</div>
+      <div id="versionLabel" class="version"></div>
+    </div>
+
+    <button id="btnKiosk" class="btn btn-primary" type="button">
+      <span class="btn-icon">📱</span>
+      Customer Ordering (Kiosk)
     </button>
 
-    <div class="divider">ADMINISTRATION</div>
+    <div class="divider">
+      <span>ADMINISTRATION</span>
+    </div>
 
-    <div class="admin-buttons">
-      <button onclick="window.app.login('manager')">
-        👤 Manager
+    <div class="admin-grid">
+      <button id="btnManager" class="btn btn-ghost" type="button">
+        <span class="btn-icon">👤</span>
+        Manager
       </button>
-      <button onclick="window.app.login('it')">
-        🖥️ IT Support
+      <button id="btnIT" class="btn btn-ghost" type="button">
+        <span class="btn-icon">🖥️</span>
+        IT Support
       </button>
+    </div>
+
+    <div class="hint" id="hostingHint" hidden>
+      This page must be served over <b>http/https</b> (not file://) for Firebase modules to load.
     </div>
   </main>
 
   <footer class="footer">
-    <span id="versionLabel"></span>
+    <span id="footerBuild"></span>
   </footer>
 </body>
 </html>
