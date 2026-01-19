@@ -1,12 +1,23 @@
-window.RSCPOS = {
-  version: "v1.67",
-  build: "TEST_ChatGPT",
-  appName: "Rising Star Cafe POS"
-};
+// Rising Star Cafe POS — TEST build metadata
+// v1.68
+(function(){
+  window.RSCPOS = {
+    appName: 'Rising Star Cafe POS',
+    version: 'v1.68',
+    build: 'TEST_ChatGPT'
+  };
 
-document.addEventListener("DOMContentLoaded", () => {
-  const el = document.getElementById("versionLabel");
-  if (el) {
-    el.textContent = `${RSCPOS.appName} — ${RSCPOS.version} (${RSCPOS.build})`;
+  function render(){
+    var el = document.getElementById('versionLabel');
+    if (el) el.textContent = window.RSCPOS.version + ' (' + window.RSCPOS.build + ')';
+
+    var footer = document.getElementById('footerBuild');
+    if (footer) footer.textContent = window.RSCPOS.appName + ' — ' + window.RSCPOS.version + ' (' + window.RSCPOS.build + ')';
   }
-});
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+})();
