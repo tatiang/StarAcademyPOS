@@ -119,7 +119,7 @@ window.app = {
     
     pinSubmit: () => {
         // Hardcoded PINs for protection
-        const PINS = { 'Manager': '1234', 'IT Support': '9999' };
+        const PINS = { 'Manager': '1234', 'IT Support': '9753' };
         
         if (PINS[targetRole] && pinBuffer === PINS[targetRole]) {
             document.getElementById('modal-pin').classList.remove('open');
