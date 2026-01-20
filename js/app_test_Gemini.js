@@ -1,5 +1,5 @@
 // Rising Star Cafe POS — Main Logic (TEST_Gemini)
-// v1.74
+// v1.75
 
 import * as DB from './firestore_test_Gemini.js';
 
@@ -37,14 +37,18 @@ async function init() {
 }
 
 function renderLoading() {
+  mainView.classList.add('card'); // Ensure card look for loading
   mainView.innerHTML = `
-    <h2 style="color:#307785; font-weight:300;">Booting System v1.74...</h2>
+    <h2 style="color:#307785; font-weight:300;">Booting System v1.75...</h2>
     <div class="status" style="color:#64748b; margin-top:10px;">Connecting to Cloud Database</div>
   `;
 }
 
 // --- VIEW: Login Screen ---
 function renderLogin() {
+  mainView.className = 'card'; // RESET: Ensure it looks like a card
+  document.body.classList.remove('dashboard-mode'); // RESET: Remove dashboard background
+  
   mainView.innerHTML = '';
   
   const title = document.createElement('h1');
@@ -74,7 +78,7 @@ function renderLogin() {
     const card = document.createElement('div');
     card.className = 'emp-card';
     
-    // LOGIC CHANGE: Employees login directly (No PIN)
+    // LOGIC: Employees login directly (No PIN)
     card.onclick = () => renderDashboard(emp); 
 
     let avatarHtml = '';
@@ -107,7 +111,7 @@ function renderLogin() {
   `;
   mainView.appendChild(adminGrid);
 
-  // LOGIC CHANGE: Admin roles REQUIRE PIN
+  // LOGIC: Admin roles REQUIRE PIN
   document.getElementById('btnMgr').onclick = () => showPinPad({ name: 'Manager', role: 'admin' });
   document.getElementById('btnIT').onclick = () => showPinPad({ name: 'IT Support', role: 'it' });
 }
@@ -161,6 +165,9 @@ window.app = {
 // --- VIEW: Dashboard ---
 function renderDashboard(user) {
   state.currentUser = user;
+  
+  // FIX: Remove 'card' class so it doesn't get hidden by CSS
+  mainView.classList.remove('card');
   document.body.classList.add('dashboard-mode');
 
   mainView.innerHTML = `
