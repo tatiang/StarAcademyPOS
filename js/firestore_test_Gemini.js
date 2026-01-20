@@ -1,5 +1,5 @@
 // Rising Star Cafe POS — Firestore Service (TEST_Gemini)
-// v1.73
+// v1.75
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
@@ -23,7 +23,7 @@ try {
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   isConnected = true;
-  console.log('[RSC POS] Firestore v1.73 initialized');
+  console.log('[RSC POS] Firestore v1.75 initialized');
 } catch (err) {
   console.error('[RSC POS] Firebase Init Error:', err);
 }
