@@ -3,31 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rising Star Cafe POS (v1.71)</title>
-
+  <title>Rising Star Cafe POS (v1.72)</title>
   <link rel="stylesheet" href="css/style_test_Gemini.css" />
-
   <script src="js/version_test_Gemini.js"></script>
-
   <script type="module" src="js/firestore_test_Gemini.js"></script>
   <script type="module" src="js/app_test_Gemini.js"></script>
 </head>
 <body>
   <header class="app-header">
-    <div class="brand">
-      <div class="brand-title">RISING STAR CAFE</div>
-      <div class="brand-subtitle">POS <span id="header-suffix"></span></div>
+    <div class="brand-title" style="color:white; text-align:center; padding-top:40px; font-weight:300; letter-spacing:2px; font-size:32px;">
+      RISING STAR CAFE <br> <span style="font-size:14px; opacity:0.7">POS SYSTEM</span>
     </div>
   </header>
 
   <main id="main-view" class="card" role="main">
-    <div class="status-row">
-      <div class="status">Booting System v1.71...</div>
-    </div>
+    <div class="status-row">Booting System v1.72...</div>
   </main>
 
+  <div id="modal-overlay" hidden></div>
+
   <footer class="footer">
-    <span id="footerBuild"></span>
+    <div id="footerBuild" style="text-align:center; color:rgba(255,255,255,0.4); padding:20px;"></div>
   </footer>
 </body>
 </html>
