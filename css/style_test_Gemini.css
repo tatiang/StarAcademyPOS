@@ -1,19 +1,8 @@
-/* Rising Star Cafe POS — Styles v1.75 */
+/* Rising Star Cafe POS — Styles v1.76 */
 :root{
-  /* Star Academy Coolors Palette */
-  --teal: #307785;
-  --gold: #CB9832;
-  --white: #FFFFFF;
-  --navy: #152149;
-  --black: #030303;
-  
-  /* UI Helper Colors */
-  --bg-gradient-1: #152149;
-  --bg-gradient-2: #030303; 
-  --ink: #1b1b1b;
-  --muted: #64748b;
-  --danger: #ef4444;
-  --success: #10b981;
+  --teal: #307785; --gold: #CB9832; --white: #FFFFFF; --navy: #152149; --black: #030303;
+  --bg-gradient-1: #152149; --bg-gradient-2: #030303; 
+  --ink: #1b1b1b; --muted: #64748b; --danger: #ef4444; --success: #10b981;
 }
 
 *{ box-sizing:border-box; }
@@ -24,125 +13,107 @@ body{
   color:var(--ink); min-height:100vh;
 }
 
-/* --- Login View (Card) --- */
+/* --- Login View --- */
 .card{
   width:min(980px, calc(100% - 32px));
   margin: 60px auto; background:var(--white);
-  border-radius:18px; 
-  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-  padding: 50px 40px; text-align:center;
-  border-top: 12px solid var(--gold);
+  border-radius:18px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  padding: 50px 40px; text-align:center; border-top: 12px solid var(--gold);
 }
 .card-title{ margin-bottom: 24px; font-weight:700; font-size:36px; color:var(--navy);}
 
-.divider{ 
-  margin: 35px 0; border-bottom: 1px solid #e2e8f0; 
-  line-height:0.1em; color:var(--muted); font-weight:700; letter-spacing:1.5px; 
-  text-transform:uppercase; font-size:12px;
-}
+.divider{ margin: 35px 0; border-bottom: 1px solid #e2e8f0; line-height:0.1em; color:var(--muted); font-weight:700; letter-spacing:1.5px; text-transform:uppercase; font-size:12px; }
 .divider span { background:var(--white); padding:0 15px; }
 
-/* --- Buttons --- */
-.btn { 
-  border:none; padding:18px; border-radius:12px; 
-  font-size:18px; font-weight:600; cursor:pointer; width:100%; 
-  display:flex; justify-content:center; align-items:center; gap:10px; 
-  transition:transform 0.1s, filter 0.2s;
-}
+/* Buttons */
+.btn { border:none; padding:18px; border-radius:12px; font-size:18px; font-weight:600; cursor:pointer; width:100%; display:flex; justify-content:center; align-items:center; gap:10px; transition:transform 0.1s, filter 0.2s; }
 .btn:active { transform:scale(0.98); }
-
 .btn-primary { background:var(--navy); color:white; box-shadow:0 10px 25px rgba(21, 33, 73, 0.4); }
 .btn-primary:hover { filter:brightness(1.2); }
-
 .btn-ghost { background:#f8fafc; color:var(--navy); border:2px solid #e2e8f0; }
 .btn-ghost:hover { background:#f1f5f9; border-color:var(--navy); }
 
-/* --- Employee Grid --- */
+/* Employee Grid */
 .employee-grid { display:flex; gap:30px; justify-content:center; flex-wrap:wrap; margin:30px 0;}
-.emp-card {
-  background:white; border:2px solid #f1f5f9; border-radius:120px;
-  width:140px; height:180px;
-  display:flex; flex-direction:column; align-items:center; padding:20px 10px;
-  cursor:pointer; transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-.emp-card:hover { 
-  transform:translateY(-8px); 
-  border-color:var(--gold); 
-  box-shadow:0 15px 30px rgba(0,0,0,0.1); 
-}
+.emp-card { background:white; border:2px solid #f1f5f9; border-radius:120px; width:140px; height:180px; display:flex; flex-direction:column; align-items:center; padding:20px 10px; cursor:pointer; transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); }
+.emp-card:hover { transform:translateY(-8px); border-color:var(--gold); box-shadow:0 15px 30px rgba(0,0,0,0.1); }
 .emp-avatar { width:75px; height:75px; border-radius:50%; background:#e2e8f0; object-fit:cover; margin-bottom:15px; border:3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
 .emp-name { font-weight:700; font-size:17px; color:var(--navy); margin-bottom:5px; }
-.emp-role { font-size:13px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.5px;}
+.emp-role { font-size:13px; color:var(--muted); font-weight:500; text-transform:uppercase; }
 .emp-initials { width:75px; height:75px; border-radius:50%; background:var(--teal); color:white; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:bold; margin-bottom:15px; }
 
 .admin-grid { display:flex; gap:20px; justify-content:center; max-width:600px; margin:0 auto; }
 
-/* --- PIN Modal --- */
-#modal-overlay {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(21, 33, 73, 0.95); /* Deep Navy Overlay */
-  z-index:999;
-  display:none; 
-  justify-content:center; align-items:center;
-  backdrop-filter: blur(5px);
-}
+/* PIN Modal */
+#modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(21, 33, 73, 0.95); z-index:999; display:none; justify-content:center; align-items:center; backdrop-filter: blur(5px); }
 #modal-overlay.open { display:flex; }
-
-.pin-modal { 
-  background:white; padding:40px; border-radius:24px; text-align:center; width:360px; 
-  box-shadow:0 25px 50px rgba(0,0,0,0.5); border-top: 8px solid var(--teal);
-}
+.pin-modal { background:white; padding:40px; border-radius:24px; text-align:center; width:360px; box-shadow:0 25px 50px rgba(0,0,0,0.5); border-top: 8px solid var(--teal); }
 .pin-display { font-size:40px; letter-spacing:12px; margin:25px 0; font-family:monospace; color:var(--navy); font-weight:bold; }
 .pin-pad { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:25px;}
-.pin-pad button {
-  padding:20px; font-size:24px; background:#f1f5f9; border:none; border-radius:14px; cursor:pointer; color:var(--navy); font-weight:bold;
-  transition: background 0.2s;
-}
+.pin-pad button { padding:20px; font-size:24px; background:#f1f5f9; border:none; border-radius:14px; cursor:pointer; color:var(--navy); font-weight:bold; transition: background 0.2s; }
 .pin-pad button:hover { background:#e2e8f0; }
 
-/* --- DASHBOARD MODE --- */
-/* IMPORTANT: Hides the login card when this class is active */
+/* --- DASHBOARD & POS --- */
 body.dashboard-mode { background: #f8fafc; }
 body.dashboard-mode .app-header, body.dashboard-mode .footer, body.dashboard-mode .card { display:none; }
 
 .dash-container { position:fixed; top:0; left:0; width:100vw; height:100vh; display:flex; background:#f8fafc; }
 
-/* Sidebar: Navy */
-.dash-sidebar { width:260px; background:var(--navy); color:white; display:flex; flex-direction:column; }
-.sidebar-brand { 
-  padding:24px; display:flex; align-items:center; gap:12px; 
-  font-weight:700; font-size:20px; border-bottom:1px solid rgba(255,255,255,0.1); 
-  color:var(--white); letter-spacing:1px;
-}
+/* Sidebar */
+.dash-sidebar { width:260px; background:var(--navy); color:white; display:flex; flex-direction:column; flex-shrink:0; }
+.sidebar-brand { padding:24px; display:flex; align-items:center; gap:12px; font-weight:700; font-size:20px; border-bottom:1px solid rgba(255,255,255,0.1); color:var(--white); letter-spacing:1px; }
 .sidebar-nav { flex:1; padding:20px 12px; }
-.nav-item {
-  display:flex; align-items:center; gap:12px; padding:14px 16px; 
-  color:rgba(255,255,255,0.6); text-decoration:none; margin-bottom:4px; border-radius:8px; font-weight:500;
-  transition: all 0.2s;
-}
+.nav-item { display:flex; align-items:center; gap:12px; padding:14px 16px; color:rgba(255,255,255,0.6); text-decoration:none; margin-bottom:4px; border-radius:8px; font-weight:500; transition: all 0.2s; cursor:pointer;}
 .nav-item:hover { background:rgba(255,255,255,0.1); color:white; }
 .nav-item.active { background:var(--gold); color:var(--navy); font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
-
 .sidebar-footer { padding:20px; border-top:1px solid rgba(255,255,255,0.1); }
 .btn-logout { background:transparent; border:1px solid rgba(255,255,255,0.3); color:rgba(255,255,255,0.7); width:100%; padding:12px; cursor:pointer; border-radius:8px; }
-.btn-logout:hover { border-color:white; color:white; }
 
-/* Dashboard Header: Teal */
-.dash-header { 
-  background:var(--teal); color:white; padding:0 24px; height: 64px;
-  display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 12px rgba(48, 119, 133, 0.2);
-}
+/* Main Area */
+.dash-main { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+.dash-header { background:var(--teal); color:white; padding:0 24px; height: 64px; flex-shrink:0; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 12px rgba(48, 119, 133, 0.2); }
 
 .pos-layout { flex:1; display:flex; padding:20px; gap:20px; overflow:hidden; }
-.product-area { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); align-content:start; gap:16px; overflow-y:auto; }
 
-.prod-card { 
-  background:white; padding:20px 15px; border-radius:16px; text-align:center; 
-  box-shadow:0 4px 6px rgba(0,0,0,0.02); cursor:pointer; border:1px solid white;
-}
-.prod-card:hover { transform:translateY(-3px); border-color:var(--gold); }
-.prod-name { font-weight:700; margin-bottom:4px; font-size:15px; color:var(--navy); }
-.prod-price { color:var(--gold); font-weight:700; font-size:14px; }
+/* Product Grid (Responsive) */
+.product-area { flex:1; display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); align-content:start; gap:16px; overflow-y:auto; padding-right:5px; }
+.prod-card { background:white; padding:20px 15px; border-radius:16px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.02); cursor:pointer; border:1px solid white; transition: transform 0.1s; }
+.prod-card:active { transform:scale(0.96); }
+.prod-name { font-weight:700; margin-bottom:4px; font-size:16px; color:var(--navy); }
+.prod-price { color:var(--gold); font-weight:700; font-size:15px; }
 
-.cart-area { width:380px; background:white; border-radius:16px; padding:24px; display:flex; flex-direction:column; box-shadow:0 10px 25px rgba(0,0,0,0.05); }
-.btn-pay { background:var(--success); color:white; margin-top:20px; font-size:20px; font-weight:bold; }
+/* Cart (Right Side) */
+.cart-area { width:400px; background:white; border-radius:16px; padding:24px; display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,0.08); }
+.cart-customer-input { width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:8px; font-size:16px; margin-bottom:15px; }
+.cart-items { flex:1; overflow-y:auto; border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; padding:10px 0; }
+.cart-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f8fafc; animation: fadeIn 0.2s; }
+.item-info { flex:1; }
+.item-name { font-weight:600; font-size:15px; color:var(--navy); }
+.item-price { font-size:13px; color:var(--muted); }
+.item-controls { display:flex; align-items:center; gap:8px; }
+.btn-qty { width:28px; height:28px; border-radius:6px; border:1px solid #e2e8f0; background:white; cursor:pointer; font-weight:bold; color:var(--navy); }
+.btn-qty:hover { background:#f1f5f9; }
+
+.cart-summary { padding-top:20px; }
+.summary-row { display:flex; justify-content:space-between; margin-bottom:8px; color:#4b5563; font-size:14px; }
+.total-row { display:flex; justify-content:space-between; margin-top:15px; font-size:24px; font-weight:800; color:var(--navy); }
+
+.pay-buttons { display:flex; gap:10px; margin-top:20px; }
+.btn-pay-cash { flex:1; background:var(--success); color:white; padding:15px; border-radius:10px; font-weight:bold; font-size:18px; border:none; cursor:pointer; }
+.btn-pay-card { flex:1; background:var(--navy); color:white; padding:15px; border-radius:10px; font-weight:bold; font-size:18px; border:none; cursor:pointer; }
+
+/* Receipt View */
+.receipt-view { text-align:center; padding:40px; max-width:400px; margin:0 auto; }
+.receipt-paper { background:white; padding:30px; box-shadow:0 10px 30px rgba(0,0,0,0.1); margin-bottom:30px; border-radius:4px; text-align:left; font-family: monospace; }
+
+/* Barista View */
+.barista-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px; padding:20px; overflow-y:auto; height:100%; }
+.order-card { background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); display:flex; flex-direction:column; border-left: 6px solid var(--gold); }
+.order-header { display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px; }
+.order-id { font-weight:bold; font-size:18px; color:var(--navy); }
+.order-time { font-size:12px; color:#888; }
+.order-items { flex:1; margin-bottom:20px; }
+.order-item { padding:4px 0; font-size:15px; }
+.btn-complete { background:var(--teal); color:white; padding:10px; border-radius:8px; border:none; cursor:pointer; font-weight:600; width:100%; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
