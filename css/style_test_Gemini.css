@@ -1,0 +1,87 @@
+/* Rising Star Cafe POS — Styles v1.70 */
+:root{
+  --bg1:#1e2741;
+  --bg2:#162035;
+  --card:#ffffff;
+  --ink:#1b1b1b;
+  --muted:#6b7280;
+  --gold:#cb9832;
+  --danger:#ef4444;
+  --success:#10b981;
+  --shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: radial-gradient(1200px 600px at 50% -10%, #2b3963 0%, var(--bg1) 40%, var(--bg2) 100%);
+  color:var(--ink);
+  min-height:100vh;
+}
+
+.app-header{ padding:40px 16px 20px; text-align:center; }
+.brand-title{ color:white; font-size:42px; letter-spacing:3px; font-weight:300; }
+.brand-subtitle{ color:rgba(255,255,255,.8); margin-top:4px; letter-spacing:2px; font-size: 14px;}
+
+.card{
+  width:min(980px, calc(100% - 32px));
+  margin: 12px auto 34px;
+  background:var(--card);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  border-top:10px solid var(--gold);
+  padding: 30px 24px;
+  min-height: 400px;
+  position: relative;
+}
+
+.card-title{ margin:0 0 20px; font-size:32px; font-weight:600; text-align:center; color:#3b3b3b; }
+
+/* -- Buttons -- */
+.btn{
+  appearance:none; border: none; border-radius:12px;
+  padding: 16px; font-size:18px; font-weight:600; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  transition: all 0.2s;
+}
+.btn-primary{ background:#1e2741; color:white; width:100%; box-shadow: 0 8px 20px rgba(30,39,65,.2); }
+.btn-primary:hover{ transform:translateY(-2px); filter:brightness(1.1); }
+
+.btn-ghost{ background:#f8fafc; color:#1f2937; border:2px solid #e5e7eb; width:100%; }
+.btn-ghost:hover{ background:#f1f5f9; border-color:#d1d5db; }
+
+.btn-sm { padding: 8px 16px; font-size: 14px; width: auto; }
+.btn-danger { background: #fee2e2; color: #991b1b; }
+.btn-danger:hover { background: #fecaca; }
+
+.btn-back { 
+  position: absolute; top: 20px; left: 20px; 
+  background: transparent; border: 1px solid #e5e7eb; 
+  padding: 8px 12px; border-radius: 8px; color: var(--muted);
+}
+.btn-back:hover { background: #f3f4f6; color: var(--ink); }
+
+/* -- Navigation -- */
+.nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;}
+.nav-tab { background: none; border: none; padding: 8px 16px; font-size: 16px; color: var(--muted); cursor: pointer; border-radius: 8px;}
+.nav-tab.active { background: #eff6ff; color: #1e2741; font-weight: bold; }
+
+/* -- Forms & Tables -- */
+.input-group { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; justify-content: center; flex-wrap: wrap;}
+.form-input { padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; width: 200px; }
+.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.data-table th { text-align: left; padding: 12px; background: #f9fafb; color: var(--muted); font-size: 14px; border-bottom: 2px solid #e5e7eb;}
+.data-table td { padding: 12px; border-bottom: 1px solid #f3f4f6; }
+.badge { padding: 4px 8px; border-radius: 99px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-green { background: #d1fae5; color: #065f46; }
+
+/* -- Layout Helpers -- */
+.admin-grid{ display:flex; gap:18px; justify-content:center; flex-wrap:wrap; margin-top: 20px; }
+.status-row{ display:flex; justify-content:center; margin-bottom:20px; color: var(--muted); }
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #a3a3a3; font-weight: 700; letter-spacing: 2px; }
+.divider::before, .divider::after { content: ""; height: 1px; background: #e6e6e6; flex: 1; }
+.footer{ text-align:center; padding: 20px; color: rgba(255,255,255,.5); font-size: 12px;}
