@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>v1.73 Rising Star Cafe POS</title>
+  <title>Rising Star Cafe POS (v1.74)</title>
   <link rel="stylesheet" href="css/style_test_Gemini.css" />
   <script src="js/version_test_Gemini.js"></script>
   <script type="module" src="js/firestore_test_Gemini.js"></script>
@@ -11,19 +11,20 @@
 </head>
 <body>
   <header class="app-header">
-    <div class="brand-title" style="color:white; text-align:center; padding-top:40px; font-weight:300; letter-spacing:2px; font-size:32px;">
-      RISING STAR CAFE <br> <span style="font-size:14px; opacity:0.7">POS SYSTEM</span>
+    <div class="brand-title" style="color:white; text-align:center; padding-top:40px; font-weight:700; letter-spacing:1px; font-size:42px;">
+      RISING STAR CAFE
     </div>
+    <div style="color:#CB9832; text-align:center; letter-spacing:3px; font-weight:600; font-size:14px; margin-top:5px;">POS SYSTEM</div>
   </header>
 
   <main id="main-view" class="card" role="main">
-    <div class="status-row">Booting System v1.73...</div>
+    <div class="status-row">Booting System v1.74...</div>
   </main>
 
   <div id="modal-overlay">
     <div class="pin-modal">
-      <h2 id="pinName" style="margin:0; color:#4b5563; font-size:18px;">Hello</h2>
-      <p style="margin:5px 0 20px; color:#9ca3af; font-size:14px;">Enter PIN to login</p>
+      <h2 id="pinName" style="margin:0; color:#152149; font-size:20px; font-weight:bold;">Login</h2>
+      <p style="margin:5px 0 20px; color:#64748b; font-size:14px;">Enter Access PIN</p>
       
       <div id="pinDisplay" class="pin-display">_ _ _ _</div>
       
@@ -42,12 +43,12 @@
         <button onclick="window.app.handlePin('GO')" style="background:#10b981; color:white">➜</button>
       </div>
       
-      <button class="btn-close-modal" onclick="window.app.closeModal()">Cancel Login</button>
+      <button class="btn-close-modal" onclick="window.app.closeModal()">Cancel</button>
     </div>
   </div>
 
   <footer class="footer">
-    <div id="footerBuild" style="text-align:center; color:rgba(255,255,255,0.4); padding:20px;"></div>
+    <div id="footerBuild" style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:12px;"></div>
   </footer>
 </body>
 </html>
