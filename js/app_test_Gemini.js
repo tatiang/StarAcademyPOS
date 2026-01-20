@@ -1,235 +1,261 @@
 // Rising Star Cafe POS — Main Logic (TEST_Gemini)
-// v1.70
+// v1.72
 
 import * as DB from './firestore_test_Gemini.js';
 
-// --- State Management ---
+// --- State ---
 const state = {
-  view: 'home', // home, kiosk, manager, it
-  managerTab: 'products' // products, employees
+  currentUser: null,
+  storeData: { employees: [], products: [] }, // Cache
+  cart: []
 };
 
 // --- DOM References ---
 const mainView = document.getElementById('main-view');
-const headerSuffix = document.getElementById('header-suffix');
+const modalOverlay = document.getElementById('modal-overlay');
 
 // --- Helper: Clear View ---
 function clearView() {
   mainView.innerHTML = '';
-  headerSuffix.textContent = '';
 }
 
-// --- VIEW: Home / Login ---
-function renderHome() {
-  clearView();
-  state.view = 'home';
-  
-  const html = `
-    <h1 class="card-title">Rising Star Cafe Login</h1>
+// --- BOOTSTRAP ---
+async function init() {
+  renderLoading();
+  // Fetch real data from Firestore
+  const data = await DB.getStoreData();
+  if (data) {
+    state.storeData = data;
+    renderLogin();
+  } else {
+    mainView.innerHTML = `<div class="status" style="color:red">Failed to load Store Data. Check Console.</div>`;
+  }
+}
+
+// --- VIEW: Loading ---
+function renderLoading() {
+  mainView.innerHTML = `
     <div class="status-row">
-      <div id="connectionStatus" class="status">${DB.dbStatus() ? 'Cloud Connected' : 'Connecting...'}</div>
+      <div class="status">Connecting to Firestore...</div>
+    </div>`;
+}
+
+// --- VIEW: Login (Employee Grid) ---
+function renderLogin() {
+  clearView();
+  
+  // Header
+  const header = document.createElement('h1');
+  header.className = 'card-title';
+  header.textContent = 'Rising Star Cafe Login';
+  mainView.appendChild(header);
+
+  // Kiosk Button
+  const kioskBtn = document.createElement('button');
+  kioskBtn.className = 'btn btn-primary';
+  kioskBtn.innerHTML = '<span class="btn-icon">📱</span> Customer Ordering (Kiosk)';
+  mainView.appendChild(kioskBtn);
+
+  // Employee Grid Container
+  const gridLabel = document.createElement('div');
+  gridLabel.className = 'divider';
+  gridLabel.innerHTML = '<span>EMPLOYEES</span>';
+  mainView.appendChild(gridLabel);
+
+  const empGrid = document.createElement('div');
+  empGrid.className = 'employee-grid';
+
+  // Sort employees by ID or Name
+  const employees = state.storeData.employees || [];
+  
+  if (employees.length === 0) {
+    empGrid.innerHTML = '<div style="text-align:center; width:100%">No employees found in DB.</div>';
+  }
+
+  employees.forEach(emp => {
+    const btn = document.createElement('button');
+    btn.className = 'emp-card';
+    // Use a default avatar if img path is generic
+    const imgSrc = (emp.img && emp.img.includes('placeholder')) 
+      ? 'https://ui-avatars.com/api/?name=' + emp.name + '&background=random' 
+      : emp.img;
+      
+    btn.innerHTML = `
+      <img src="${imgSrc}" class="emp-avatar" alt="${emp.name}" />
+      <div class="emp-name">${emp.name}</div>
+      <div class="emp-role">${emp.role}</div>
+    `;
+    btn.onclick = () => showPinPad(emp);
+    empGrid.appendChild(btn);
+  });
+
+  mainView.appendChild(empGrid);
+
+  // Admin Footer
+  const adminDiv = document.createElement('div');
+  adminDiv.className = 'divider';
+  adminDiv.innerHTML = '<span>ADMINISTRATION</span>';
+  mainView.appendChild(adminDiv);
+  
+  const adminGrid = document.createElement('div');
+  adminGrid.className = 'admin-grid';
+  adminGrid.innerHTML = `
+    <button class="btn btn-ghost" id="btnLoginManager">Manager</button>
+    <button class="btn btn-ghost" id="btnLoginIT">IT Support</button>
+  `;
+  mainView.appendChild(adminGrid);
+
+  // Wire Admin buttons to fake login for now
+  document.getElementById('btnLoginManager').onclick = () => renderDashboard('Manager');
+  document.getElementById('btnLoginIT').onclick = () => alert('IT Console active');
+}
+
+// --- FEATURE: PIN Pad Modal ---
+let currentPinUser = null;
+let currentPinInput = "";
+
+function showPinPad(user) {
+  currentPinUser = user;
+  currentPinInput = "";
+  
+  modalOverlay.innerHTML = `
+    <div class="pin-modal">
+      <h2>Hello, ${user.name}</h2>
+      <p>Enter your PIN to login</p>
+      <div class="pin-display" id="pinDisplay">_ _ _ _</div>
+      <div class="pin-pad">
+        <button onclick="window.app.handlePin('1')">1</button>
+        <button onclick="window.app.handlePin('2')">2</button>
+        <button onclick="window.app.handlePin('3')">3</button>
+        <button onclick="window.app.handlePin('4')">4</button>
+        <button onclick="window.app.handlePin('5')">5</button>
+        <button onclick="window.app.handlePin('6')">6</button>
+        <button onclick="window.app.handlePin('7')">7</button>
+        <button onclick="window.app.handlePin('8')">8</button>
+        <button onclick="window.app.handlePin('9')">9</button>
+        <button onclick="window.app.handlePin('C')" style="color:#ef4444">C</button>
+        <button onclick="window.app.handlePin('0')">0</button>
+        <button onclick="window.app.handlePin('GO')" style="background:#10b981; color:white">➜</button>
+      </div>
+      <button class="btn-close-modal" onclick="window.app.closeModal()">Cancel</button>
     </div>
+  `;
+  modalOverlay.hidden = false;
+}
 
-    <button id="btnKiosk" class="btn btn-primary" type="button">
-      <span class="btn-icon">📱</span> Customer Ordering (Kiosk)
-    </button>
+window.app = {
+  // Expose PIN logic to HTML
+  handlePin: (key) => {
+    const display = document.getElementById('pinDisplay');
+    
+    if (key === 'C') {
+      currentPinInput = "";
+    } else if (key === 'GO') {
+      // Mock validation: In real app, check against DB
+      if (currentPinInput.length === 4) {
+        window.app.closeModal();
+        renderDashboard(currentPinUser);
+      } else {
+        display.style.color = 'red';
+        setTimeout(() => display.style.color = 'inherit', 500);
+      }
+      return;
+    } else {
+      if (currentPinInput.length < 4) currentPinInput += key;
+    }
+    
+    // Update display (show dots)
+    let masked = "";
+    for(let i=0; i<4; i++) {
+      masked += (i < currentPinInput.length) ? "• " : "_ ";
+    }
+    display.textContent = masked;
+  },
+  
+  closeModal: () => {
+    modalOverlay.hidden = true;
+    currentPinUser = null;
+  }
+};
 
-    <div class="divider"><span>ADMINISTRATION</span></div>
+// --- VIEW: Dashboard (POS / Manager) ---
+function renderDashboard(user) {
+  state.currentUser = user;
+  
+  // Enable Dark Mode Container
+  document.body.classList.add('dashboard-mode');
+  
+  // Sidebar + Main Content Layout
+  const html = `
+    <div class="dash-container">
+      <aside class="dash-sidebar">
+        <div class="sidebar-brand">
+          <div class="icon">⭐</div>
+          <div>STAR ACADEMY</div>
+        </div>
+        
+        <nav class="sidebar-nav">
+          <a href="#" class="active">☕ POS</a>
+          <a href="#">🔔 Barista View</a>
+          <a href="#">📈 Dashboard</a>
+          <a href="#">📦 Inventory</a>
+          <a href="#">🕒 Time Clock</a>
+        </nav>
+        
+        <div class="sidebar-footer">
+           <button onclick="window.location.reload()" class="btn-logout">↪ Sign Out</button>
+        </div>
+      </aside>
 
-    <div class="admin-grid">
-      <button id="btnManager" class="btn btn-ghost" type="button">
-        <span class="btn-icon">👤</span> Manager Hub
-      </button>
-      <button id="btnIT" class="btn btn-ghost" type="button">
-        <span class="btn-icon">🖥️</span> IT Support
-      </button>
+      <main class="dash-main">
+        <header class="dash-header">
+          <div class="user-info">👤 ${user.name || user}</div>
+          <div class="sys-info">🟢 Cloud Sync | ${new Date().toLocaleTimeString()}</div>
+        </header>
+        
+        <div class="pos-layout">
+          <div class="product-area">
+             ${renderProductGrid()}
+          </div>
+          
+          <div class="cart-area">
+             <h3>Order #001</h3>
+             <div class="cart-items">
+                <div style="color:#aaa; text-align:center; margin-top:40px;">Cart is empty</div>
+             </div>
+             <div class="cart-total">
+               <div>Total</div>
+               <div style="font-size:24px">$0.00</div>
+             </div>
+             <button class="btn btn-primary" style="margin-top:10px;">Pay Now</button>
+          </div>
+        </div>
+      </main>
     </div>
   `;
   
   mainView.innerHTML = html;
-
-  // Event Listeners
-  document.getElementById('btnKiosk').onclick = () => alert("Kiosk Mode coming in v1.75");
-  document.getElementById('btnManager').onclick = () => renderManagerHub();
-  document.getElementById('btnIT').onclick = () => renderITHub();
-}
-
-// --- VIEW: Manager Hub ---
-async function renderManagerHub() {
-  clearView();
-  state.view = 'manager';
-  headerSuffix.textContent = '// MANAGER';
-
-  // 1. Scaffold the Layout
-  const container = document.createElement('div');
-  container.innerHTML = `
-    <button id="btnBack" class="btn-back">← Home</button>
-    <h2 class="card-title">Manager Dashboard</h2>
-    
-    <div class="nav-tabs">
-      <button id="tabProd" class="nav-tab ${state.managerTab === 'products' ? 'active' : ''}">Products</button>
-      <button id="tabEmp" class="nav-tab ${state.managerTab === 'employees' ? 'active' : ''}">Employees</button>
-    </div>
-
-    <div id="managerContent">
-      <div class="status-row">Loading Firestore Data...</div>
-    </div>
-  `;
-  mainView.appendChild(container);
-
-  // Wire Navigation
-  document.getElementById('btnBack').onclick = renderHome;
-  document.getElementById('tabProd').onclick = () => { state.managerTab = 'products'; renderManagerHub(); };
-  document.getElementById('tabEmp').onclick = () => { state.managerTab = 'employees'; renderManagerHub(); };
-
-  // 2. Fetch & Render Data
-  const contentDiv = document.getElementById('managerContent');
   
-  if (state.managerTab === 'products') {
-    renderProductManager(contentDiv);
-  } else {
-    renderEmployeeManager(contentDiv);
-  }
+  // Unwrap the main view from the centered card style
+  mainView.className = ''; 
 }
 
-// --- SUB-VIEW: Product Manager ---
-async function renderProductManager(targetDiv) {
-  try {
-    const products = await DB.getCollectionData('products');
-    
-    let html = `
-      <div class="input-group">
-        <input type="text" id="newProdName" class="form-input" placeholder="Product Name" />
-        <input type="number" id="newProdPrice" class="form-input" placeholder="Price ($)" />
-        <button id="btnAddProd" class="btn btn-sm btn-primary">Add Product</button>
-      </div>
-      <table class="data-table">
-        <thead><tr><th>Name</th><th>Price</th><th>Action</th></tr></thead>
-        <tbody>
-    `;
-
-    if (products.length === 0) {
-      html += `<tr><td colspan="3" style="text-align:center">No products found. Add one!</td></tr>`;
-    } else {
-      products.forEach(p => {
-        html += `
-          <tr>
-            <td>${p.name}</td>
-            <td>$${p.price}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="window.app.deleteProduct('${p.id}')">Delete</button></td>
-          </tr>`;
-      });
-    }
-    html += `</tbody></table>`;
-    targetDiv.innerHTML = html;
-
-    // Add Logic
-    document.getElementById('btnAddProd').onclick = async () => {
-      const name = document.getElementById('newProdName').value;
-      const price = document.getElementById('newProdPrice').value;
-      if(name && price) {
-        await DB.addData('products', { name, price });
-        renderManagerHub(); // Refresh
-      }
-    };
-
-  } catch (err) {
-    targetDiv.innerHTML = `<div class="status" style="color:red">Error loading products: ${err.message}</div>`;
-  }
-}
-
-// --- SUB-VIEW: Employee Manager ---
-async function renderEmployeeManager(targetDiv) {
-  try {
-    const employees = await DB.getCollectionData('employees');
-    
-    let html = `
-      <div class="input-group">
-        <input type="text" id="newEmpName" class="form-input" placeholder="Name" />
-        <input type="number" id="newEmpPin" class="form-input" placeholder="PIN (4 digits)" />
-        <button id="btnAddEmp" class="btn btn-sm btn-primary">Add Staff</button>
-      </div>
-      <table class="data-table">
-        <thead><tr><th>Name</th><th>Role</th><th>PIN</th><th>Action</th></tr></thead>
-        <tbody>
-    `;
-
-    employees.forEach(e => {
-      html += `
-        <tr>
-          <td>${e.name}</td>
-          <td><span class="badge badge-blue">Staff</span></td>
-          <td>****</td>
-          <td><button class="btn btn-sm btn-danger" onclick="window.app.deleteEmployee('${e.id}')">Remove</button></td>
-        </tr>`;
-    });
-    html += `</tbody></table>`;
-    targetDiv.innerHTML = html;
-
-    // Add Logic
-    document.getElementById('btnAddEmp').onclick = async () => {
-      const name = document.getElementById('newEmpName').value;
-      const pin = document.getElementById('newEmpPin').value;
-      if(name && pin) {
-        await DB.addData('employees', { name, pin, role: 'staff' });
-        renderManagerHub(); // Refresh
-      }
-    };
-
-  } catch (err) {
-    targetDiv.innerHTML = `<div class="status" style="color:red">Error loading employees: ${err.message}</div>`;
-  }
-}
-
-// --- VIEW: IT Hub ---
-function renderITHub() {
-  clearView();
-  state.view = 'it';
-  headerSuffix.textContent = '// IT SUPPORT';
-
-  mainView.innerHTML = `
-    <button id="btnBack" class="btn-back">← Home</button>
-    <h2 class="card-title">System Diagnostics</h2>
-    
-    <table class="data-table">
-      <tr><td><strong>App Version</strong></td><td>${window.RSCPOS.version} (${window.RSCPOS.build})</td></tr>
-      <tr><td><strong>Browser</strong></td><td>${navigator.userAgent.slice(0, 50)}...</td></tr>
-      <tr><td><strong>Database Status</strong></td><td><span class="badge ${DB.dbStatus() ? 'badge-green' : 'badge-blue'}">${DB.dbStatus() ? 'ONLINE' : 'OFFLINE'}</span></td></tr>
-      <tr><td><strong>Protocol</strong></td><td>${window.location.protocol}</td></tr>
-    </table>
-
-    <div class="divider"><span>ACTIONS</span></div>
-
-    <div style="text-align:center">
-      <button id="btnReload" class="btn btn-ghost" style="margin-bottom:10px">♻️ Force Reload App</button>
-      <button id="btnTest" class="btn btn-ghost">🧪 Test Alert System</button>
+function renderProductGrid() {
+  const products = state.storeData.products || [];
+  if (products.length === 0) return "<div>No products loaded</div>";
+  
+  return products.map(p => `
+    <div class="prod-card">
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-price">$${p.price}</div>
     </div>
-  `;
-
-  document.getElementById('btnBack').onclick = renderHome;
-  document.getElementById('btnReload').onclick = () => window.location.reload();
-  document.getElementById('btnTest').onclick = () => alert("System Alert: Test Successful.");
+  `).join('');
 }
 
-// --- Expose Global Actions for Inline HTML OnClick ---
-window.app = {
-  deleteProduct: async (id) => {
-    if(confirm("Delete this product?")) {
-      await DB.deleteData('products', id);
-      renderManagerHub(); 
-    }
-  },
-  deleteEmployee: async (id) => {
-    if(confirm("Remove this employee?")) {
-      await DB.deleteData('employees', id);
-      renderManagerHub();
-    }
-  }
-};
 
-// --- BOOT ---
+// --- INIT ---
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderHome);
+  document.addEventListener('DOMContentLoaded', init);
 } else {
-  renderHome();
+  init();
 }
