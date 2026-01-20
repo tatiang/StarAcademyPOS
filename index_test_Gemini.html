@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rising Star Cafe POS (v1.72)</title>
+  <title>Rising Star Cafe POS (v1.73)</title>
   <link rel="stylesheet" href="css/style_test_Gemini.css" />
   <script src="js/version_test_Gemini.js"></script>
   <script type="module" src="js/firestore_test_Gemini.js"></script>
@@ -17,10 +17,34 @@
   </header>
 
   <main id="main-view" class="card" role="main">
-    <div class="status-row">Booting System v1.72...</div>
+    <div class="status-row">Booting System v1.73...</div>
   </main>
 
-  <div id="modal-overlay" hidden></div>
+  <div id="modal-overlay">
+    <div class="pin-modal">
+      <h2 id="pinName" style="margin:0; color:#4b5563; font-size:18px;">Hello</h2>
+      <p style="margin:5px 0 20px; color:#9ca3af; font-size:14px;">Enter PIN to login</p>
+      
+      <div id="pinDisplay" class="pin-display">_ _ _ _</div>
+      
+      <div class="pin-pad">
+        <button onclick="window.app.handlePin('1')">1</button>
+        <button onclick="window.app.handlePin('2')">2</button>
+        <button onclick="window.app.handlePin('3')">3</button>
+        <button onclick="window.app.handlePin('4')">4</button>
+        <button onclick="window.app.handlePin('5')">5</button>
+        <button onclick="window.app.handlePin('6')">6</button>
+        <button onclick="window.app.handlePin('7')">7</button>
+        <button onclick="window.app.handlePin('8')">8</button>
+        <button onclick="window.app.handlePin('9')">9</button>
+        <button onclick="window.app.handlePin('C')" style="color:#ef4444">C</button>
+        <button onclick="window.app.handlePin('0')">0</button>
+        <button onclick="window.app.handlePin('GO')" style="background:#10b981; color:white">➜</button>
+      </div>
+      
+      <button class="btn-close-modal" onclick="window.app.closeModal()">Cancel Login</button>
+    </div>
+  </div>
 
   <footer class="footer">
     <div id="footerBuild" style="text-align:center; color:rgba(255,255,255,0.4); padding:20px;"></div>
