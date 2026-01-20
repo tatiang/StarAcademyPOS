@@ -1,5 +1,5 @@
 // Rising Star Cafe POS — Main Logic (TEST_Gemini)
-// v1.73
+// v1.74
 
 import * as DB from './firestore_test_Gemini.js';
 
@@ -22,11 +22,9 @@ function getInitials(name) {
 // --- BOOTSTRAP ---
 async function init() {
   renderLoading();
-  // Fetch real data from Firestore
   const data = await DB.getStoreData();
   
   if (data) {
-    // Sort employees by ID to keep order consistent
     if(data.employees) data.employees.sort((a,b) => a.id - b.id);
     state.storeData = data;
     renderLogin();
@@ -40,46 +38,45 @@ async function init() {
 
 function renderLoading() {
   mainView.innerHTML = `
-    <h2 style="color:#6b7280; font-weight:300;">Booting System v1.73...</h2>
-    <div class="status" style="color:#9ca3af; margin-top:10px;">Connecting to Cloud Database</div>
+    <h2 style="color:#307785; font-weight:300;">Booting System v1.74...</h2>
+    <div class="status" style="color:#64748b; margin-top:10px;">Connecting to Cloud Database</div>
   `;
 }
 
 // --- VIEW: Login Screen ---
 function renderLogin() {
-  mainView.innerHTML = ''; // Clear
+  mainView.innerHTML = '';
   
-  // 1. Title
   const title = document.createElement('h1');
   title.className = 'card-title';
   title.textContent = 'Rising Star Cafe Login';
   mainView.appendChild(title);
 
-  // 2. Kiosk Button
   const btnKiosk = document.createElement('button');
   btnKiosk.className = 'btn btn-primary';
   btnKiosk.innerHTML = '<span>📱</span> Customer Ordering (Kiosk)';
   btnKiosk.onclick = () => alert('Kiosk Mode launching soon...');
   mainView.appendChild(btnKiosk);
 
-  // 3. Employee Section
   const divEmp = document.createElement('div');
   divEmp.className = 'divider';
-  divEmp.innerHTML = '<span>Employees</span>';
+  divEmp.innerHTML = '<span>Select User</span>';
   mainView.appendChild(divEmp);
 
   const grid = document.createElement('div');
   grid.className = 'employee-grid';
 
   const emps = state.storeData.employees || [];
-  if (emps.length === 0) grid.innerHTML = '<div style="color:#999">No employees found in database.</div>';
+  
+  if (emps.length === 0) grid.innerHTML = '<div style="color:#999">No employees found.</div>';
 
   emps.forEach(emp => {
     const card = document.createElement('div');
     card.className = 'emp-card';
-    card.onclick = () => showPinPad(emp);
+    
+    // LOGIC CHANGE: Employees login directly (No PIN)
+    card.onclick = () => renderDashboard(emp); 
 
-    // Check if image is placeholder or real
     let avatarHtml = '';
     if (emp.img && !emp.img.includes('placeholder')) {
        avatarHtml = `<img src="${emp.img}" class="emp-avatar" alt="${emp.name}" onerror="this.style.display='none'"/>`;
@@ -96,7 +93,7 @@ function renderLogin() {
   });
   mainView.appendChild(grid);
 
-  // 4. Admin Section
+  // Admin Section
   const divAdm = document.createElement('div');
   divAdm.className = 'divider';
   divAdm.innerHTML = '<span>Administration</span>';
@@ -110,9 +107,9 @@ function renderLogin() {
   `;
   mainView.appendChild(adminGrid);
 
-  // Wire buttons
-  document.getElementById('btnMgr').onclick = () => renderDashboard({ name: 'Manager', role: 'Admin' });
-  document.getElementById('btnIT').onclick = () => alert('System Status: ONLINE\nVersion: 1.73\nDB: Connected');
+  // LOGIC CHANGE: Admin roles REQUIRE PIN
+  document.getElementById('btnMgr').onclick = () => showPinPad({ name: 'Manager', role: 'admin' });
+  document.getElementById('btnIT').onclick = () => showPinPad({ name: 'IT Support', role: 'it' });
 }
 
 // --- FEATURE: PIN Pad ---
@@ -123,9 +120,8 @@ function showPinPad(user) {
   currentPinUser = user;
   currentPinInput = "";
   document.getElementById('pinDisplay').textContent = "_ _ _ _";
-  document.getElementById('pinName').textContent = "Hello, " + user.name;
+  document.getElementById('pinName').textContent = "Login: " + user.name;
   
-  // OPEN THE MODAL
   modalOverlay.classList.add('open');
 }
 
@@ -141,21 +137,19 @@ window.app = {
     if (key === 'C') {
       currentPinInput = "";
     } else if (key === 'GO') {
-      // Allow any 4 digits for testing
+      // Simple validation: Any 4 digits allowed for now
       if (currentPinInput.length === 4) {
         window.app.closeModal();
         renderDashboard(currentPinUser);
       } else {
-        // Shake/Red effect
         display.style.color = '#ef4444';
-        setTimeout(() => display.style.color = '#111', 400);
+        setTimeout(() => display.style.color = '#152149', 400);
       }
       return;
     } else {
       if (currentPinInput.length < 4) currentPinInput += key;
     }
 
-    // Render Dots
     let html = "";
     for(let i=0; i<4; i++) {
       html += (i < currentPinInput.length) ? "• " : "_ ";
@@ -169,7 +163,6 @@ function renderDashboard(user) {
   state.currentUser = user;
   document.body.classList.add('dashboard-mode');
 
-  // Build the Dashboard HTML
   mainView.innerHTML = `
     <div class="dash-container">
       <aside class="dash-sidebar">
@@ -190,29 +183,23 @@ function renderDashboard(user) {
 
       <main class="dash-main">
         <header class="dash-header">
-          <div class="user-badge">👤 ${user.name}</div>
-          <div style="font-size:14px; opacity:0.9;">🟢 Cloud Sync | ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          <div style="font-weight:bold; font-size:18px;">👤 ${user.name} <span style="font-weight:400; opacity:0.8; font-size:14px;">(${user.role || 'Staff'})</span></div>
+          <div style="font-size:14px; opacity:0.9;">🟢 Online | ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
         </header>
         
         <div class="pos-layout">
-          <div class="product-area" id="productArea">
-            </div>
+          <div class="product-area" id="productArea"></div>
           
           <div class="cart-area">
-            <div class="cart-header">
-              <div class="cart-title">Current Order</div>
-              <div style="color:#6b7280">#001</div>
+            <div style="font-size:20px; font-weight:800; color:#152149; margin-bottom:10px;">Current Order #001</div>
+            <div class="cart-items" id="cartItems" style="flex:1; border-top:1px solid #eee; border-bottom:1px solid #eee;">
+              <div style="text-align:center; color:#999; margin-top:50px;">Cart is empty</div>
             </div>
-            
-            <div class="cart-items" id="cartItems">
-              <div class="cart-empty">Cart is empty</div>
-            </div>
-            
-            <div class="cart-summary">
-              <div class="summary-row"><span>Subtotal</span><span>$0.00</span></div>
-              <div class="summary-row"><span>Tax (9.25%)</span><span>$0.00</span></div>
-              <div class="total-row"><span>Total</span><span>$0.00</span></div>
-              <button class="btn btn-pay">Pay Now</button>
+            <div style="padding-top:20px;">
+              <div style="display:flex; justify-content:space-between; font-weight:800; font-size:22px; color:#152149;">
+                 <span>Total</span><span>$0.00</span>
+              </div>
+              <button class="btn btn-pay">PAY</button>
             </div>
           </div>
         </div>
@@ -228,20 +215,18 @@ function renderProducts() {
   const products = state.storeData.products || [];
 
   if (products.length === 0) {
-    container.innerHTML = "<div>No products loaded from Firestore</div>";
+    container.innerHTML = "<div>No products loaded</div>";
     return;
   }
 
   container.innerHTML = products.map(p => {
-    // Determine image logic
-    let img = `<div style="height:100px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; margin-bottom:10px; border-radius:8px; color:#ccc; font-size:30px;">☕</div>`;
+    let img = `<div style="height:90px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin-bottom:10px; border-radius:8px; color:#cbd5e1; font-size:30px;">☕</div>`;
     if (p.img && !p.img.includes('placeholder')) {
-        img = `<img src="${p.img}" class="prod-img" onerror="this.style.display='none'"/>`;
+        img = `<img src="${p.img}" style="width:100%; height:90px; object-fit:contain; margin-bottom:10px;" onerror="this.style.display='none'"/>`;
     }
 
     return `
-    <div class="prod-card" onclick="alert('Add to cart: ${p.name}')">
-      <span class="prod-stock">x${p.stock || 0}</span>
+    <div class="prod-card" onclick="alert('Added ${p.name}')">
       ${img}
       <div class="prod-name">${p.name}</div>
       <div class="prod-price">$${Number(p.price).toFixed(2)}</div>
