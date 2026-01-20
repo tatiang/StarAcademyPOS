@@ -3,7 +3,7 @@
 (function(){
   window.RSCPOS = {
     appName: 'Rising Star Cafe POS',
-    version: 'v1.70',
+    version: 'v1.72',
     build: 'TEST_Gemini_Hubs'
   };
 
