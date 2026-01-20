@@ -1,14 +1,15 @@
-/* Rising Star Cafe POS — Styles v1.74 */
+/* Rising Star Cafe POS — Styles v1.75 */
 :root{
-  /* Star Academy Brand Palette */
-  --navy: #152149;
+  /* Star Academy Coolors Palette */
   --teal: #307785;
   --gold: #CB9832;
   --white: #FFFFFF;
+  --navy: #152149;
+  --black: #030303;
   
   /* UI Helper Colors */
   --bg-gradient-1: #152149;
-  --bg-gradient-2: #0b1229; /* Darker navy for depth */
+  --bg-gradient-2: #030303; 
   --ink: #1b1b1b;
   --muted: #64748b;
   --danger: #ef4444;
@@ -30,7 +31,7 @@ body{
   border-radius:18px; 
   box-shadow: 0 30px 60px rgba(0,0,0,0.5);
   padding: 50px 40px; text-align:center;
-  border-top: 12px solid var(--gold); /* Star Gold Top Border */
+  border-top: 12px solid var(--gold);
 }
 .card-title{ margin-bottom: 24px; font-weight:700; font-size:36px; color:var(--navy);}
 
@@ -50,7 +51,6 @@ body{
 }
 .btn:active { transform:scale(0.98); }
 
-/* Primary Button is now Star Navy */
 .btn-primary { background:var(--navy); color:white; box-shadow:0 10px 25px rgba(21, 33, 73, 0.4); }
 .btn-primary:hover { filter:brightness(1.2); }
 
@@ -80,7 +80,7 @@ body{
 /* --- PIN Modal --- */
 #modal-overlay {
   position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(21, 33, 73, 0.92); /* Navy Tint */
+  background:rgba(21, 33, 73, 0.95); /* Deep Navy Overlay */
   z-index:999;
   display:none; 
   justify-content:center; align-items:center;
@@ -101,6 +101,7 @@ body{
 .pin-pad button:hover { background:#e2e8f0; }
 
 /* --- DASHBOARD MODE --- */
+/* IMPORTANT: Hides the login card when this class is active */
 body.dashboard-mode { background: #f8fafc; }
 body.dashboard-mode .app-header, body.dashboard-mode .footer, body.dashboard-mode .card { display:none; }
 
