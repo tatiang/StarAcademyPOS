@@ -1,12 +1,12 @@
 // Rising Star Cafe POS — Main Logic (TEST_Gemini)
-// v1.72
+// v1.73
 
 import * as DB from './firestore_test_Gemini.js';
 
 // --- State ---
 const state = {
   currentUser: null,
-  storeData: { employees: [], products: [] }, // Cache
+  storeData: { employees: [], products: [] }, 
   cart: []
 };
 
@@ -14,9 +14,9 @@ const state = {
 const mainView = document.getElementById('main-view');
 const modalOverlay = document.getElementById('modal-overlay');
 
-// --- Helper: Clear View ---
-function clearView() {
-  mainView.innerHTML = '';
+// --- Helper: Initials for Avatar ---
+function getInitials(name) {
+  return name ? name.substring(0, 2).toUpperCase() : '??';
 }
 
 // --- BOOTSTRAP ---
@@ -24,236 +24,233 @@ async function init() {
   renderLoading();
   // Fetch real data from Firestore
   const data = await DB.getStoreData();
+  
   if (data) {
+    // Sort employees by ID to keep order consistent
+    if(data.employees) data.employees.sort((a,b) => a.id - b.id);
     state.storeData = data;
     renderLogin();
   } else {
-    mainView.innerHTML = `<div class="status" style="color:red">Failed to load Store Data. Check Console.</div>`;
+    mainView.innerHTML = `
+      <div class="status-row" style="color:#ef4444; font-weight:bold;">
+        ⚠ Connection Failed <br> Could not load 'stores/classroom_cafe_main'
+      </div>`;
   }
 }
 
-// --- VIEW: Loading ---
 function renderLoading() {
   mainView.innerHTML = `
-    <div class="status-row">
-      <div class="status">Connecting to Firestore...</div>
-    </div>`;
+    <h2 style="color:#6b7280; font-weight:300;">Booting System v1.73...</h2>
+    <div class="status" style="color:#9ca3af; margin-top:10px;">Connecting to Cloud Database</div>
+  `;
 }
 
-// --- VIEW: Login (Employee Grid) ---
+// --- VIEW: Login Screen ---
 function renderLogin() {
-  clearView();
+  mainView.innerHTML = ''; // Clear
   
-  // Header
-  const header = document.createElement('h1');
-  header.className = 'card-title';
-  header.textContent = 'Rising Star Cafe Login';
-  mainView.appendChild(header);
+  // 1. Title
+  const title = document.createElement('h1');
+  title.className = 'card-title';
+  title.textContent = 'Rising Star Cafe Login';
+  mainView.appendChild(title);
 
-  // Kiosk Button
-  const kioskBtn = document.createElement('button');
-  kioskBtn.className = 'btn btn-primary';
-  kioskBtn.innerHTML = '<span class="btn-icon">📱</span> Customer Ordering (Kiosk)';
-  mainView.appendChild(kioskBtn);
+  // 2. Kiosk Button
+  const btnKiosk = document.createElement('button');
+  btnKiosk.className = 'btn btn-primary';
+  btnKiosk.innerHTML = '<span>📱</span> Customer Ordering (Kiosk)';
+  btnKiosk.onclick = () => alert('Kiosk Mode launching soon...');
+  mainView.appendChild(btnKiosk);
 
-  // Employee Grid Container
-  const gridLabel = document.createElement('div');
-  gridLabel.className = 'divider';
-  gridLabel.innerHTML = '<span>EMPLOYEES</span>';
-  mainView.appendChild(gridLabel);
+  // 3. Employee Section
+  const divEmp = document.createElement('div');
+  divEmp.className = 'divider';
+  divEmp.innerHTML = '<span>Employees</span>';
+  mainView.appendChild(divEmp);
 
-  const empGrid = document.createElement('div');
-  empGrid.className = 'employee-grid';
+  const grid = document.createElement('div');
+  grid.className = 'employee-grid';
 
-  // Sort employees by ID or Name
-  const employees = state.storeData.employees || [];
-  
-  if (employees.length === 0) {
-    empGrid.innerHTML = '<div style="text-align:center; width:100%">No employees found in DB.</div>';
-  }
+  const emps = state.storeData.employees || [];
+  if (emps.length === 0) grid.innerHTML = '<div style="color:#999">No employees found in database.</div>';
 
-  employees.forEach(emp => {
-    const btn = document.createElement('button');
-    btn.className = 'emp-card';
-    // Use a default avatar if img path is generic
-    const imgSrc = (emp.img && emp.img.includes('placeholder')) 
-      ? 'https://ui-avatars.com/api/?name=' + emp.name + '&background=random' 
-      : emp.img;
-      
-    btn.innerHTML = `
-      <img src="${imgSrc}" class="emp-avatar" alt="${emp.name}" />
+  emps.forEach(emp => {
+    const card = document.createElement('div');
+    card.className = 'emp-card';
+    card.onclick = () => showPinPad(emp);
+
+    // Check if image is placeholder or real
+    let avatarHtml = '';
+    if (emp.img && !emp.img.includes('placeholder')) {
+       avatarHtml = `<img src="${emp.img}" class="emp-avatar" alt="${emp.name}" onerror="this.style.display='none'"/>`;
+    } else {
+       avatarHtml = `<div class="emp-initials">${getInitials(emp.name)}</div>`;
+    }
+
+    card.innerHTML = `
+      ${avatarHtml}
       <div class="emp-name">${emp.name}</div>
       <div class="emp-role">${emp.role}</div>
     `;
-    btn.onclick = () => showPinPad(emp);
-    empGrid.appendChild(btn);
+    grid.appendChild(card);
   });
+  mainView.appendChild(grid);
 
-  mainView.appendChild(empGrid);
+  // 4. Admin Section
+  const divAdm = document.createElement('div');
+  divAdm.className = 'divider';
+  divAdm.innerHTML = '<span>Administration</span>';
+  mainView.appendChild(divAdm);
 
-  // Admin Footer
-  const adminDiv = document.createElement('div');
-  adminDiv.className = 'divider';
-  adminDiv.innerHTML = '<span>ADMINISTRATION</span>';
-  mainView.appendChild(adminDiv);
-  
   const adminGrid = document.createElement('div');
   adminGrid.className = 'admin-grid';
   adminGrid.innerHTML = `
-    <button class="btn btn-ghost" id="btnLoginManager">Manager</button>
-    <button class="btn btn-ghost" id="btnLoginIT">IT Support</button>
+    <button id="btnMgr" class="btn btn-ghost">Manager</button>
+    <button id="btnIT" class="btn btn-ghost">IT Support</button>
   `;
   mainView.appendChild(adminGrid);
 
-  // Wire Admin buttons to fake login for now
-  document.getElementById('btnLoginManager').onclick = () => renderDashboard('Manager');
-  document.getElementById('btnLoginIT').onclick = () => alert('IT Console active');
+  // Wire buttons
+  document.getElementById('btnMgr').onclick = () => renderDashboard({ name: 'Manager', role: 'Admin' });
+  document.getElementById('btnIT').onclick = () => alert('System Status: ONLINE\nVersion: 1.73\nDB: Connected');
 }
 
-// --- FEATURE: PIN Pad Modal ---
-let currentPinUser = null;
+// --- FEATURE: PIN Pad ---
 let currentPinInput = "";
+let currentPinUser = null;
 
 function showPinPad(user) {
   currentPinUser = user;
   currentPinInput = "";
+  document.getElementById('pinDisplay').textContent = "_ _ _ _";
+  document.getElementById('pinName').textContent = "Hello, " + user.name;
   
-  modalOverlay.innerHTML = `
-    <div class="pin-modal">
-      <h2>Hello, ${user.name}</h2>
-      <p>Enter your PIN to login</p>
-      <div class="pin-display" id="pinDisplay">_ _ _ _</div>
-      <div class="pin-pad">
-        <button onclick="window.app.handlePin('1')">1</button>
-        <button onclick="window.app.handlePin('2')">2</button>
-        <button onclick="window.app.handlePin('3')">3</button>
-        <button onclick="window.app.handlePin('4')">4</button>
-        <button onclick="window.app.handlePin('5')">5</button>
-        <button onclick="window.app.handlePin('6')">6</button>
-        <button onclick="window.app.handlePin('7')">7</button>
-        <button onclick="window.app.handlePin('8')">8</button>
-        <button onclick="window.app.handlePin('9')">9</button>
-        <button onclick="window.app.handlePin('C')" style="color:#ef4444">C</button>
-        <button onclick="window.app.handlePin('0')">0</button>
-        <button onclick="window.app.handlePin('GO')" style="background:#10b981; color:white">➜</button>
-      </div>
-      <button class="btn-close-modal" onclick="window.app.closeModal()">Cancel</button>
-    </div>
-  `;
-  modalOverlay.hidden = false;
+  // OPEN THE MODAL
+  modalOverlay.classList.add('open');
 }
 
 window.app = {
-  // Expose PIN logic to HTML
+  closeModal: () => {
+    modalOverlay.classList.remove('open');
+    currentPinUser = null;
+  },
+  
   handlePin: (key) => {
     const display = document.getElementById('pinDisplay');
     
     if (key === 'C') {
       currentPinInput = "";
     } else if (key === 'GO') {
-      // Mock validation: In real app, check against DB
+      // Allow any 4 digits for testing
       if (currentPinInput.length === 4) {
         window.app.closeModal();
         renderDashboard(currentPinUser);
       } else {
-        display.style.color = 'red';
-        setTimeout(() => display.style.color = 'inherit', 500);
+        // Shake/Red effect
+        display.style.color = '#ef4444';
+        setTimeout(() => display.style.color = '#111', 400);
       }
       return;
     } else {
       if (currentPinInput.length < 4) currentPinInput += key;
     }
-    
-    // Update display (show dots)
-    let masked = "";
+
+    // Render Dots
+    let html = "";
     for(let i=0; i<4; i++) {
-      masked += (i < currentPinInput.length) ? "• " : "_ ";
+      html += (i < currentPinInput.length) ? "• " : "_ ";
     }
-    display.textContent = masked;
-  },
-  
-  closeModal: () => {
-    modalOverlay.hidden = true;
-    currentPinUser = null;
+    display.textContent = html;
   }
 };
 
-// --- VIEW: Dashboard (POS / Manager) ---
+// --- VIEW: Dashboard ---
 function renderDashboard(user) {
   state.currentUser = user;
-  
-  // Enable Dark Mode Container
   document.body.classList.add('dashboard-mode');
-  
-  // Sidebar + Main Content Layout
-  const html = `
+
+  // Build the Dashboard HTML
+  mainView.innerHTML = `
     <div class="dash-container">
       <aside class="dash-sidebar">
         <div class="sidebar-brand">
-          <div class="icon">⭐</div>
-          <div>STAR ACADEMY</div>
+           ⭐ STAR ACADEMY
         </div>
-        
         <nav class="sidebar-nav">
-          <a href="#" class="active">☕ POS</a>
-          <a href="#">🔔 Barista View</a>
-          <a href="#">📈 Dashboard</a>
-          <a href="#">📦 Inventory</a>
-          <a href="#">🕒 Time Clock</a>
+          <a href="#" class="nav-item active">☕ POS</a>
+          <a href="#" class="nav-item">🔔 Barista View</a>
+          <a href="#" class="nav-item">📈 Dashboard</a>
+          <a href="#" class="nav-item">📦 Inventory</a>
+          <a href="#" class="nav-item">🕒 Time Clock</a>
         </nav>
-        
         <div class="sidebar-footer">
-           <button onclick="window.location.reload()" class="btn-logout">↪ Sign Out</button>
+          <button class="btn-logout" onclick="window.location.reload()">↪ Sign Out</button>
         </div>
       </aside>
 
       <main class="dash-main">
         <header class="dash-header">
-          <div class="user-info">👤 ${user.name || user}</div>
-          <div class="sys-info">🟢 Cloud Sync | ${new Date().toLocaleTimeString()}</div>
+          <div class="user-badge">👤 ${user.name}</div>
+          <div style="font-size:14px; opacity:0.9;">🟢 Cloud Sync | ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
         </header>
         
         <div class="pos-layout">
-          <div class="product-area">
-             ${renderProductGrid()}
-          </div>
+          <div class="product-area" id="productArea">
+            </div>
           
           <div class="cart-area">
-             <h3>Order #001</h3>
-             <div class="cart-items">
-                <div style="color:#aaa; text-align:center; margin-top:40px;">Cart is empty</div>
-             </div>
-             <div class="cart-total">
-               <div>Total</div>
-               <div style="font-size:24px">$0.00</div>
-             </div>
-             <button class="btn btn-primary" style="margin-top:10px;">Pay Now</button>
+            <div class="cart-header">
+              <div class="cart-title">Current Order</div>
+              <div style="color:#6b7280">#001</div>
+            </div>
+            
+            <div class="cart-items" id="cartItems">
+              <div class="cart-empty">Cart is empty</div>
+            </div>
+            
+            <div class="cart-summary">
+              <div class="summary-row"><span>Subtotal</span><span>$0.00</span></div>
+              <div class="summary-row"><span>Tax (9.25%)</span><span>$0.00</span></div>
+              <div class="total-row"><span>Total</span><span>$0.00</span></div>
+              <button class="btn btn-pay">Pay Now</button>
+            </div>
           </div>
         </div>
       </main>
     </div>
   `;
-  
-  mainView.innerHTML = html;
-  
-  // Unwrap the main view from the centered card style
-  mainView.className = ''; 
+
+  renderProducts();
 }
 
-function renderProductGrid() {
+function renderProducts() {
+  const container = document.getElementById('productArea');
   const products = state.storeData.products || [];
-  if (products.length === 0) return "<div>No products loaded</div>";
-  
-  return products.map(p => `
-    <div class="prod-card">
+
+  if (products.length === 0) {
+    container.innerHTML = "<div>No products loaded from Firestore</div>";
+    return;
+  }
+
+  container.innerHTML = products.map(p => {
+    // Determine image logic
+    let img = `<div style="height:100px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; margin-bottom:10px; border-radius:8px; color:#ccc; font-size:30px;">☕</div>`;
+    if (p.img && !p.img.includes('placeholder')) {
+        img = `<img src="${p.img}" class="prod-img" onerror="this.style.display='none'"/>`;
+    }
+
+    return `
+    <div class="prod-card" onclick="alert('Add to cart: ${p.name}')">
+      <span class="prod-stock">x${p.stock || 0}</span>
+      ${img}
       <div class="prod-name">${p.name}</div>
-      <div class="prod-price">$${p.price}</div>
+      <div class="prod-price">$${Number(p.price).toFixed(2)}</div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-
-// --- INIT ---
+// --- Init ---
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
