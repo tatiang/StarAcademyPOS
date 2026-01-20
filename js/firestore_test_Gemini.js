@@ -1,11 +1,10 @@
 // Rising Star Cafe POS — Firestore Service (TEST_Gemini)
-// v1.70
+// v1.72
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getFirestore, collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp 
+  getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
@@ -17,15 +16,14 @@ const firebaseConfig = {
   measurementId: "G-Y61XRHTJ3Y"
 };
 
-let app, db, auth;
+let db;
 let isConnected = false;
 
 try {
-  app = initializeApp(firebaseConfig);
+  const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  auth = getAuth(app);
   isConnected = true;
-  console.log('[RSC POS] Firestore v1.70 initialized');
+  console.log('[RSC POS] Firestore v1.72 initialized');
 } catch (err) {
   console.error('[RSC POS] Firebase Init Error:', err);
 }
@@ -34,39 +32,35 @@ try {
 
 export const dbStatus = () => isConnected;
 
+// Your specific document path based on screenshots
+const STORE_DOC_REF = () => doc(db, "stores", "classroom_cafe_main");
+
 /**
- * Fetch all documents from a collection
- * @param {string} colName - 'products' or 'employees'
+ * Fetches the entire store configuration (Employees & Products)
+ * from the single document 'stores/classroom_cafe_main'
  */
-export async function getCollectionData(colName) {
-  if (!db) return [];
+export async function getStoreData() {
+  if (!db) return null;
   try {
-    const querySnapshot = await getDocs(collection(db, colName));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const docSnap = await getDoc(STORE_DOC_REF());
+    if (docSnap.exists()) {
+      return docSnap.data(); // Returns { employees: [...], products: [...] }
+    } else {
+      console.error("No such document: stores/classroom_cafe_main");
+      return null;
+    }
   } catch (e) {
-    console.error(`Error getting ${colName}:`, e);
+    console.error("Error fetching store data:", e);
     throw e;
   }
 }
 
 /**
- * Add a new document
- * @param {string} colName 
- * @param {object} data 
+ * Helper to update the arrays (for future editing)
  */
-export async function addData(colName, data) {
-  if (!db) throw new Error("Database offline");
-  // Add server timestamp
-  const payload = { ...data, createdAt: serverTimestamp() };
-  return await addDoc(collection(db, colName), payload);
-}
-
-/**
- * Delete a document by ID
- * @param {string} colName 
- * @param {string} docId 
- */
-export async function deleteData(colName, docId) {
-  if (!db) throw new Error("Database offline");
-  await deleteDoc(doc(db, colName, docId));
+export async function updateStoreArray(field, newItem) {
+    // This is a placeholder for adding items. 
+    // Complex array manipulation requires reading, modifying, and writing back
+    // or using arrayUnion if the data is simple.
+    // implementation reserved for v1.75
 }
