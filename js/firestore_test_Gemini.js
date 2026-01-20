@@ -1,9 +1,9 @@
 // Rising Star Cafe POS — Firestore Service (TEST_Gemini)
-// v1.75
+// v1.76
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getFirestore, doc, getDoc
+  getFirestore, doc, getDoc, updateDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -23,7 +23,7 @@ try {
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   isConnected = true;
-  console.log('[RSC POS] Firestore v1.75 initialized');
+  console.log('[RSC POS] Firestore v1.76 initialized');
 } catch (err) {
   console.error('[RSC POS] Firebase Init Error:', err);
 }
@@ -39,9 +39,7 @@ export async function getStoreData() {
   try {
     const docSnap = await getDoc(STORE_DOC_REF());
     if (docSnap.exists()) {
-      const data = docSnap.data();
-      console.log("Firestore Data Loaded:", data);
-      return data;
+      return docSnap.data();
     } else {
       console.warn("Document 'stores/classroom_cafe_main' not found.");
       return null;
@@ -49,5 +47,38 @@ export async function getStoreData() {
   } catch (e) {
     console.error("Error fetching store data:", e);
     return null;
+  }
+}
+
+// --- ORDER MANAGEMENT ---
+
+export async function saveOrder(order) {
+  if (!db) return false;
+  try {
+    // Append the new order object to the 'orders' array in the document
+    await updateDoc(STORE_DOC_REF(), {
+      orders: arrayUnion(order)
+    });
+    console.log("Order saved:", order.id);
+    return true;
+  } catch (e) {
+    console.error("Error saving order:", e);
+    alert("Database Error: Could not save order.");
+    return false;
+  }
+}
+
+// For updating status, we read the whole array, modify, and write back.
+// (Firestore doesn't allow updating a specific array element by index easily)
+export async function updateOrdersList(newOrdersArray) {
+  if (!db) return false;
+  try {
+    await updateDoc(STORE_DOC_REF(), {
+      orders: newOrdersArray
+    });
+    return true;
+  } catch (e) {
+    console.error("Error updating orders:", e);
+    return false;
   }
 }
