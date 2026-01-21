@@ -1,537 +1,390 @@
-// Rising Star Cafe POS — Main Logic (TEST_Gemini)
-// v1.77 (Implementing v1.42 Spec Features)
+/* Star Academy POS v1.80 (Gemini Edition) */
 
-import * as DB from './firestore_test_Gemini.js';
+const APP_VERSION = "v1.80";
+const STORAGE_KEY = "star_pos_v180_data";
+const TAX_RATE = 0.0925;
 
-// --- State (v1.42 Spec Compliant) ---
-const state = {
-  view: 'login',
-  currentUser: null,
-  // Mirroring the v1.42 data model
-  storeData: { 
-    currentCashier: '',
+// --- DATA MODEL ---
+const DEFAULT_PRODUCTS = [
+    { id: 1, name: "Coffee", price: 2.50, cat: "Hot Drinks", opts: ["Cream", "Sugar"], img: "https://image.pollinations.ai/prompt/hot%20black%20coffee%20cup%20white%20background?nologo=true" },
+    { id: 2, name: "Hot Chocolate", price: 3.00, cat: "Hot Drinks", opts: ["Whipped Cream", "Not too hot"], img: "https://image.pollinations.ai/prompt/hot%20chocolate%20mug%20whipped%20cream%20white%20background?nologo=true" },
+    { id: 3, name: "Apple Cider", price: 3.00, cat: "Hot Drinks", opts: ["Not too hot"], img: "https://image.pollinations.ai/prompt/hot%20apple%20cider%20cinnamon%20stick%20white%20background?nologo=true" },
+    { id: 4, name: "Blueberry Muffin", price: 3.50, cat: "Snacks", opts: [], img: "https://image.pollinations.ai/prompt/blueberry%20muffin%20bakery%20white%20background?nologo=true" },
+    { id: 5, name: "Chocolate Muffin", price: 3.50, cat: "Snacks", opts: [], img: "https://image.pollinations.ai/prompt/chocolate%20muffin%20white%20background?nologo=true" },
+    { id: 6, name: "Bagel", price: 2.50, cat: "Snacks", opts: ["Cream Cheese"], img: "https://image.pollinations.ai/prompt/plain%20bagel%20white%20background?nologo=true" },
+    { id: 7, name: "Choc Chip Cookie", price: 1.50, cat: "Snacks", opts: [], img: "https://image.pollinations.ai/prompt/chocolate%20chip%20cookie%20white%20background?nologo=true" },
+    { id: 8, name: "Water", price: 0.00, cat: "Cold Drinks", opts: [], img: "https://image.pollinations.ai/prompt/water%20bottle%20white%20background?nologo=true" }
+];
+
+const DEFAULT_DATA = {
+    products: DEFAULT_PRODUCTS,
+    employees: [], // Will load from Cloud
     cart: [],
-    products: [],
     orders: [],
-    employees: [],
     timeEntries: [],
-    bugReports: [],
-    orderCounter: 1001,
-    taxRate: 0.0925
-  }, 
-  cart: [],
-  customerName: '',
-  // Temp states for modals
-  tempProduct: null,
-  currentOrder: null
+    orderCounter: 1001
 };
 
-// --- DOM References ---
-const mainView = document.getElementById('main-view');
-const modalOverlay = document.getElementById('modal-overlay');
-const optionsOverlay = document.getElementById('options-overlay');
-const cashOverlay = document.getElementById('cash-overlay');
+// Temp State
+let tempProduct = null;
+let tempOptions = [];
+let pinBuffer = "";
+let targetRole = "";
+let cashTendered = "";
 
-function getInitials(name) { return name ? name.substring(0, 2).toUpperCase() : '??'; }
-
-// --- BOOTSTRAP (Offline First) ---
-async function init() {
-  renderLoading();
-  
-  // 1. Load from LocalStorage immediately
-  const local = localStorage.getItem('rsc_store_data');
-  if (local) {
-    try {
-      state.storeData = JSON.parse(local);
-      console.log("Loaded from LocalStorage");
-    } catch(e) { console.error("Local load error", e); }
-  }
-
-  // 2. Render immediately (don't wait for cloud)
-  renderLogin();
-
-  // 3. Sync with Cloud in background
-  try {
-    const cloudData = await DB.getStoreData();
-    if (cloudData) {
-      console.log("Cloud Sync Successful");
-      state.storeData = { ...state.storeData, ...cloudData };
-      // Sort for UI consistency
-      if(state.storeData.employees) state.storeData.employees.sort((a,b) => a.id - b.id);
-      saveLocal(); // Update local
-      // Only refresh if we are still on login screen to avoid disrupting user
-      if(!state.currentUser) renderLogin(); 
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log(`System Loaded: ${APP_VERSION}`);
+    
+    // 1. Load Local
+    const stored = localStorage.getItem(STORAGE_KEY);
+    window.app.data = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+    
+    // 2. Ensure default products exist if local storage is old
+    if(!window.app.data.products || window.app.data.products.length < 5) {
+        window.app.data.products = DEFAULT_PRODUCTS;
     }
-  } catch (err) {
-    console.warn("Cloud offline, using local data.");
-  }
-}
 
-function saveLocal() {
-  localStorage.setItem('rsc_store_data', JSON.stringify(state.storeData));
-}
+    // 3. Render Login (Using local employee cache if available, else placeholders)
+    renderLoginGrid();
 
-async function saveToCloud() {
-  saveLocal();
-  await DB.saveStoreData(state.storeData);
-}
+    // 4. Clock
+    setInterval(() => {
+        const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if(document.getElementById('live-clock')) document.getElementById('live-clock').textContent = t;
+    }, 1000);
+});
 
-function renderLoading() {
-  mainView.className = 'card';
-  mainView.innerHTML = `<h2 style="color:#307785;">Booting System v1.77...</h2>`;
-}
+// --- GLOBAL APP OBJECT ---
+window.app = {
+    data: null,
 
-// --- VIEW: Login ---
-function renderLogin() {
-  mainView.className = 'card';
-  document.body.className = ''; 
-  mainView.innerHTML = '';
-  
-  const title = document.createElement('h1');
-  title.className = 'card-title';
-  title.textContent = 'Rising Star Cafe Login';
-  mainView.appendChild(title);
+    // Navigation
+    navigate: (view) => {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+        document.getElementById(`view-${view}`).classList.add('active');
+        document.getElementById(`nav-${view}`).classList.add('active');
+        
+        if(view === 'pos') renderPOS();
+        if(view === 'inventory') renderInventory();
+        if(view === 'time') renderTimeClock();
+        if(view === 'barista') renderBarista();
+    },
 
-  const btnKiosk = document.createElement('button');
-  btnKiosk.className = 'btn btn-primary';
-  btnKiosk.innerHTML = '<span>📱</span> Customer Ordering (Kiosk)';
-  mainView.appendChild(btnKiosk);
+    // Login/Security
+    login: (name) => {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${name}`;
+        window.app.navigate('pos');
+    },
 
-  const divEmp = document.createElement('div');
-  divEmp.className = 'divider';
-  divEmp.innerHTML = '<span>Select User</span>';
-  mainView.appendChild(divEmp);
+    logout: () => {
+        window.app.data.cart = [];
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.querySelectorAll('.nav-admin-link').forEach(el => el.style.display = 'none');
+    },
 
-  const grid = document.createElement('div');
-  grid.className = 'employee-grid';
+    promptPin: (role) => {
+        targetRole = role;
+        pinBuffer = "";
+        document.getElementById('pin-display').textContent = "";
+        document.getElementById('modal-pin').classList.add('open');
+    },
 
-  (state.storeData.employees || []).forEach(emp => {
-    const card = document.createElement('div');
-    card.className = 'emp-card';
-    // Logic: Admin roles need PIN, Students don't
-    const needsPin = (emp.role === 'admin' || emp.role === 'it' || emp.role === 'manager');
-    card.onclick = () => needsPin ? showPinPad(emp) : loginUser(emp);
+    pinInput: (n) => {
+        if(pinBuffer.length < 4) {
+            pinBuffer += n;
+            document.getElementById('pin-display').textContent = "•".repeat(pinBuffer.length);
+        }
+    },
+    pinClear: () => { pinBuffer = ""; document.getElementById('pin-display').textContent = ""; },
+    pinSubmit: () => {
+        const PINS = { 'Manager': '1234', 'IT Support': '9753' };
+        if(PINS[targetRole] && pinBuffer === PINS[targetRole]) {
+            document.getElementById('modal-pin').classList.remove('open');
+            window.app.login(targetRole);
+            document.querySelectorAll('.nav-admin-link').forEach(el => el.style.display = 'block');
+            if(targetRole === 'Manager') window.app.navigate('inventory'); // Managers go to inventory often
+            else window.app.navigate('dashboard');
+        } else {
+            alert("Incorrect PIN");
+            window.app.pinClear();
+        }
+    },
 
-    let avatarHtml = emp.img && !emp.img.includes('placeholder') 
-      ? `<img src="${emp.img}" class="emp-avatar" onerror="this.style.display='none'"/>` 
-      : `<div class="emp-initials">${getInitials(emp.name)}</div>`;
+    // POS Logic
+    addToCartPrecheck: (id) => {
+        tempProduct = window.app.data.products.find(p => p.id === id);
+        tempOptions = [];
+        document.getElementById('opt-product-name').textContent = tempProduct.name;
+        document.getElementById('opt-notes').value = "";
+        
+        // Dynamic Checkboxes
+        const box = document.getElementById('opt-checkboxes');
+        box.innerHTML = '';
+        if(tempProduct.opts && tempProduct.opts.length > 0) {
+            tempProduct.opts.forEach(opt => {
+                const chip = document.createElement('div');
+                chip.className = 'opt-chip';
+                chip.textContent = opt;
+                chip.onclick = () => {
+                    chip.classList.toggle('selected');
+                    if(tempOptions.includes(opt)) tempOptions = tempOptions.filter(o => o !== opt);
+                    else tempOptions.push(opt);
+                };
+                box.appendChild(chip);
+            });
+        }
+        
+        document.getElementById('modal-options').classList.add('open');
+    },
 
-    card.innerHTML = `${avatarHtml}<div class="emp-name">${emp.name}</div><div class="emp-role">${emp.role}</div>`;
-    grid.appendChild(card);
-  });
-  mainView.appendChild(grid);
-  
-  // Admin Footer
-  const adminDiv = document.createElement('div');
-  adminDiv.className = 'divider';
-  adminDiv.innerHTML = '<span>Administration</span>';
-  mainView.appendChild(adminDiv);
-  
-  const adminGrid = document.createElement('div');
-  adminGrid.className = 'admin-grid';
-  adminGrid.innerHTML = `
-    <button id="btnMgr" class="btn btn-ghost" style="padding:10px 20px">Manager</button>
-    <button id="btnIT" class="btn btn-ghost" style="padding:10px 20px">IT Support</button>
-  `;
-  mainView.appendChild(adminGrid);
-  
-  document.getElementById('btnMgr').onclick = () => showPinPad({ name: 'Manager', role: 'manager' });
-  document.getElementById('btnIT').onclick = () => showPinPad({ name: 'IT Support', role: 'it' });
-}
+    confirmAddToCart: () => {
+        const note = document.getElementById('opt-notes').value;
+        const finalOptions = [...tempOptions];
+        if(note) finalOptions.push(note);
+        
+        const item = {
+            ...tempProduct,
+            qty: 1,
+            options: finalOptions
+        };
+        
+        // Aggegrate
+        const existing = window.app.data.cart.find(i => i.id === item.id && JSON.stringify(i.options) === JSON.stringify(item.options));
+        if(existing) existing.qty++;
+        else window.app.data.cart.push(item);
+        
+        document.getElementById('modal-options').classList.remove('open');
+        renderCart();
+        saveData();
+    },
 
-// --- PIN Logic ---
-let pinInput = "";
-let pinUser = null;
-function showPinPad(user) {
-  pinUser = user; pinInput = "";
-  document.getElementById('pinDisplay').textContent = "_ _ _ _";
-  document.getElementById('pinName').textContent = "Login: " + user.name;
-  modalOverlay.classList.add('open');
-}
-// Expose handlers
-window.app = window.app || {};
-window.app.closeModal = () => modalOverlay.classList.remove('open');
-window.app.handlePin = (key) => {
-  const display = document.getElementById('pinDisplay');
-  if (key === 'C') pinInput = "";
-  else if (key === 'GO') {
-    // Spec: Manager=1234, IT=9753
-    let valid = false;
-    if (pinUser.role === 'manager' && pinInput === '1234') valid = true;
-    else if (pinUser.role === 'it' && pinInput === '9753') valid = true;
-    else if (pinUser.role === 'admin' && (pinInput === '1234' || pinInput === '9753')) valid = true; // Fallback
-    
-    if (valid) { window.app.closeModal(); loginUser(pinUser); }
-    else { display.style.color = 'red'; setTimeout(() => display.style.color = '#152149', 400); }
-    return;
-  } else if (pinInput.length < 4) pinInput += key;
-  display.textContent = Array(4).fill(0).map((_, i) => i < pinInput.length ? "• " : "_ ").join("");
+    removeFromCart: (idx) => {
+        window.app.data.cart.splice(idx, 1);
+        renderCart();
+        saveData();
+    },
+
+    validateAndPay: (method) => {
+        if(window.app.data.cart.length === 0) return alert("Empty Cart");
+        if(!document.getElementById('customer-name').value) return alert("Enter Customer Name");
+        if(method === 'Cash') {
+            cashTendered = "";
+            updateCashUI();
+            document.getElementById('modal-cash').classList.add('open');
+        } else {
+            completeOrder(method);
+        }
+    },
+
+    // Cash Logic
+    cashInput: (n) => { cashTendered += n; updateCashUI(); },
+    cashClear: () => { cashTendered = ""; updateCashUI(); },
+    finalizeCash: () => {
+        const total = getCartTotal();
+        if(parseFloat(cashTendered) >= total) {
+            completeOrder('Cash');
+            document.getElementById('modal-cash').classList.remove('open');
+        } else { alert("Insufficient Funds"); }
+    },
+
+    // Product Management (AI Image)
+    openProductModal: (id = null) => {
+        if(id) {
+            const p = window.app.data.products.find(x => x.id === id);
+            document.getElementById('edit-prod-id').value = p.id;
+            document.getElementById('edit-prod-name').value = p.name;
+            document.getElementById('edit-prod-price').value = p.price;
+            document.getElementById('edit-prod-img').value = p.img;
+        } else {
+            document.getElementById('edit-prod-id').value = "";
+            document.getElementById('edit-prod-name').value = "";
+            document.getElementById('edit-prod-price').value = "";
+            document.getElementById('edit-prod-img').value = "";
+        }
+        document.getElementById('modal-product').classList.add('open');
+    },
+
+    generateAIImage: () => {
+        const name = document.getElementById('edit-prod-name').value;
+        if(!name) return alert("Enter a product name first!");
+        
+        // Use Pollinations.ai for instant generation without API key
+        // We add "food photography white background" to prompt for consistency
+        const prompt = `${name} food photography white background appetizing`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true`;
+        
+        document.getElementById('edit-prod-img').value = url;
+        alert("AI Image Prompt Sent! URL updated.");
+    },
+
+    saveProduct: () => {
+        const id = document.getElementById('edit-prod-id').value;
+        const name = document.getElementById('edit-prod-name').value;
+        const price = parseFloat(document.getElementById('edit-prod-price').value);
+        const img = document.getElementById('edit-prod-img').value;
+
+        if(id) {
+            const p = window.app.data.products.find(x => x.id == id);
+            if(p) { p.name = name; p.price = price; p.img = img; }
+        } else {
+            window.app.data.products.push({
+                id: Date.now(),
+                name, price, img, cat: "Misc", opts: []
+            });
+        }
+        document.getElementById('modal-product').classList.remove('open');
+        saveData();
+        renderInventory();
+    },
+
+    // Time Clock
+    clockIn: () => handleClock('in'),
+    clockOut: () => handleClock('out'),
+
+    closeModal: (id) => document.getElementById(id).classList.remove('open'),
+    refreshUI: () => { renderLoginGrid(); renderPOS(); renderInventory(); }
 };
 
-function loginUser(user) {
-  state.currentUser = user;
-  state.cart = [];
-  state.customerName = '';
-  renderDashboard();
+// --- HELPERS ---
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(window.app.data));
+    if(window.saveToCloud) window.saveToCloud(window.app.data, true);
 }
 
-// --- VIEW: Dashboard Shell ---
-function renderDashboard() {
-  mainView.classList.remove('card');
-  document.body.classList.add('dashboard-mode');
-  
-  // Sidebar Items based on Role
-  let navItems = `
-    <div class="nav-item active" onclick="window.ui.switch('pos', this)">☕ POS</div>
-    <div class="nav-item" onclick="window.ui.switch('barista', this)">🔔 Barista View</div>
-    <div class="nav-item" onclick="window.ui.switch('inventory', this)">📦 Inventory</div>
-    <div class="nav-item" onclick="window.ui.switch('timeclock', this)">🕒 Time Clock</div>
-  `;
-  
-  if (state.currentUser.role === 'manager' || state.currentUser.role === 'it') {
-    navItems += `<div class="nav-item" onclick="window.ui.switch('dashboard', this)">📈 Dashboard</div>`;
-  }
+function getCartTotal() {
+    const sub = window.app.data.cart.reduce((s,i) => s + (i.price * i.qty), 0);
+    return sub + (sub * TAX_RATE);
+}
 
-  mainView.innerHTML = `
-    <div class="dash-container">
-      <aside class="dash-sidebar">
-        <div class="sidebar-brand">⭐ STAR ACADEMY</div>
-        <nav class="sidebar-nav">${navItems}</nav>
-        <div class="sidebar-footer">
-          <button class="btn-logout" onclick="window.location.reload()">↪ Sign Out</button>
+function completeOrder(method) {
+    window.app.data.orders.push({
+        id: window.app.data.orderCounter++,
+        customer: document.getElementById('customer-name').value,
+        items: [...window.app.data.cart],
+        total: getCartTotal(),
+        status: "Pending",
+        time: new Date().toISOString()
+    });
+    window.app.data.cart = [];
+    document.getElementById('customer-name').value = "";
+    renderCart();
+    saveData();
+    alert("Order Placed!");
+}
+
+function updateCashUI() {
+    const total = getCartTotal();
+    const val = parseFloat(cashTendered || "0");
+    document.getElementById('calc-display').textContent = `$${val.toFixed(2)}`;
+    document.getElementById('cash-total-due').textContent = `Total: $${total.toFixed(2)}`;
+    const bar = document.getElementById('change-bar');
+    if(val >= total) {
+        bar.classList.add('active');
+        bar.textContent = `Change Due: $${(val - total).toFixed(2)}`;
+    } else {
+        bar.classList.remove('active');
+        bar.textContent = "Change Due: $0.00";
+    }
+}
+
+function handleClock(type) {
+    const name = document.getElementById('time-employee-select').value;
+    if(!name) return alert("Select Name");
+    const emp = window.app.data.employees.find(e => e.name === name);
+    if(emp) {
+        emp.status = type;
+        alert(`${name} Clocked ${type.toUpperCase()}`);
+        renderTimeClock();
+        saveData();
+    }
+}
+
+// --- RENDERERS ---
+function renderLoginGrid() {
+    const grid = document.getElementById('student-login-grid');
+    if(!grid) return;
+    
+    // Use cloud employees if available, else standard fallback
+    const list = (window.app.data.employees && window.app.data.employees.length > 0) 
+        ? window.app.data.employees 
+        : [{name:'Student 1'}, {name:'Student 2'}, {name:'Student 3'}];
+
+    grid.innerHTML = list.map(e => `
+        <div onclick="window.app.login('${e.name}')" style="display:inline-block; margin:10px; cursor:pointer;">
+            <div style="width:60px; height:60px; background:#eee; border-radius:50%; margin:0 auto; border:3px solid var(--golden-bronze); overflow:hidden;">
+                ${e.img ? `<img src="${e.img}" style="width:100%;height:100%;object-fit:cover;">` : ''}
+            </div>
+            <div style="font-weight:bold; color:var(--space-indigo); font-size:0.9rem;">${e.name}</div>
         </div>
-      </aside>
-      <main class="dash-main">
-        <header class="dash-header">
-          <div style="font-weight:bold; font-size:18px;">👤 ${state.currentUser.name}</div>
-          <div style="font-size:14px;">🟢 Online</div>
-        </header>
-        <div id="workspace" class="pos-layout"></div>
-      </main>
-    </div>`;
-
-  renderPOS(); // Default view
+    `).join('');
 }
 
-window.ui = {
-  switch: (view, el) => {
-    document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-    if(el) el.classList.add('active');
-    
-    const ws = document.getElementById('workspace');
-    ws.innerHTML = ''; // clear
-    ws.className = (view === 'pos') ? 'pos-layout' : 'std-layout'; // switch layout mode
-
-    if(view === 'pos') renderPOS();
-    if(view === 'barista') renderBarista();
-    if(view === 'inventory') renderInventory();
-    if(view === 'timeclock') renderTimeClock();
-    if(view === 'dashboard') ws.innerHTML = '<div style="padding:40px; text-align:center; color:#666">Manager Dashboard features coming soon...</div>';
-  }
-};
-
-// --- SUB-VIEW: POS ---
 function renderPOS() {
-  const ws = document.getElementById('workspace');
-  ws.innerHTML = `
-    <div class="product-area" id="productGrid"></div>
-    <div class="cart-area">
-      <input type="text" id="custName" class="cart-customer-input" placeholder="Customer Name (Required)" value="${state.customerName}" oninput="state.customerName = this.value">
-      <div style="font-weight:800; color:#152149; margin-bottom:10px;">Order #${state.storeData.orderCounter}</div>
-      <div class="cart-items" id="cartList"></div>
-      <div class="cart-summary" id="cartSummary"></div>
-      <div class="pay-buttons">
-        <button class="btn-pay-cash" onclick="window.pos.payCheck('Cash')">CASH</button>
-        <button class="btn-pay-card" onclick="window.pos.payCheck('Card')">CARD</button>
-      </div>
-    </div>
-  `;
-  renderProductGrid();
-  renderCart();
-}
-
-function renderProductGrid() {
-  const grid = document.getElementById('productGrid');
-  grid.innerHTML = (state.storeData.products || []).map(p => `
-    <div class="prod-card" onclick="window.pos.clickProduct('${p.id}')">
-      <div style="height:80px; display:flex; align-items:center; justify-content:center; font-size:30px; background:#f8fafc; border-radius:8px; margin-bottom:10px;">
-        ${p.img && !p.img.includes('placeholder') ? `<img src="${p.img}" style="height:100%; object-fit:contain">` : '☕'}
-      </div>
-      <div class="prod-name">${p.name}</div>
-      <div class="prod-price">$${Number(p.price).toFixed(2)}</div>
-    </div>
-  `).join('');
+    const grid = document.getElementById('pos-grid');
+    if(grid) grid.innerHTML = window.app.data.products.map(p => `
+        <div class="product-card" onclick="window.app.addToCartPrecheck(${p.id})">
+            <img src="${p.img}" class="prod-img" onerror="this.src='https://placehold.co/150x100?text=${p.name}'">
+            <div class="prod-info">
+                <h4>${p.name}</h4>
+                <div>$${p.price.toFixed(2)}</div>
+            </div>
+        </div>
+    `).join('');
+    renderCart();
 }
 
 function renderCart() {
-  const list = document.getElementById('cartList');
-  if (state.cart.length === 0) {
-    list.innerHTML = `<div style="text-align:center; color:#ccc; margin-top:50px;">Cart is empty</div>`;
-  } else {
-    list.innerHTML = state.cart.map((item, idx) => `
-      <div class="cart-item">
-        <div class="item-info">
-          <div class="item-name">${item.name}</div>
-          <div style="font-size:12px; color:#666">${item.note ? '📝 '+item.note : ''}</div>
-          <div class="item-price">$${item.price} x ${item.qty}</div>
+    const list = document.getElementById('cart-list');
+    const sub = window.app.data.cart.reduce((s,i) => s + (i.price * i.qty), 0);
+    const total = sub + (sub * TAX_RATE);
+    
+    if(list) list.innerHTML = window.app.data.cart.map((item, i) => `
+        <div class="cart-item">
+            <div>
+                <strong>${item.name}</strong> x${item.qty}
+                ${item.options.length ? `<br><small style="color:#666">${item.options.join(', ')}</small>` : ''}
+            </div>
+            <div style="color:var(--danger); cursor:pointer;" onclick="window.app.removeFromCart(${i})"><i class="fa-solid fa-trash"></i></div>
         </div>
-        <div class="item-controls">
-          <button class="btn-qty" onclick="window.pos.mod(${idx}, -1)">-</button>
-          <span>${item.qty}</span>
-          <button class="btn-qty" onclick="window.pos.mod(${idx}, 1)">+</button>
-          <button class="btn-qty" style="color:red; border-color:red" onclick="window.pos.del(${idx})">🗑</button>
-        </div>
-      </div>
     `).join('');
-  }
-  
-  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const tax = subtotal * state.storeData.taxRate;
-  const total = subtotal + tax;
-  
-  document.getElementById('cartSummary').innerHTML = `
-    <div class="summary-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
-    <div class="summary-row"><span>Tax (9.25%)</span><span>$${tax.toFixed(2)}</span></div>
-    <div class="total-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>
-  `;
-}
-
-// --- POS LOGIC & MODALS ---
-window.pos = {
-  clickProduct: (id) => {
-    state.tempProduct = state.storeData.products.find(x => x.id == id);
-    // Show Options Modal
-    document.getElementById('optTitle').textContent = state.tempProduct.name;
-    document.getElementById('optNote').value = '';
-    optionsOverlay.classList.add('open');
-  },
-  mod: (idx, delta) => {
-    state.cart[idx].qty += delta;
-    if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
-    renderCart();
-  },
-  del: (idx) => {
-    state.cart.splice(idx, 1);
-    renderCart();
-  },
-  payCheck: (method) => {
-    if (state.cart.length === 0) return alert("Cart is empty!");
-    if (!state.customerName) return alert("Customer Name is required!");
     
-    if (method === 'Cash') {
-      openCashModal();
-    } else {
-      processPayment(method);
-    }
-  },
-  calcChange: () => {
-    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    const total = subtotal + (subtotal * state.storeData.taxRate);
-    const tendered = parseFloat(document.getElementById('cashTendered').value) || 0;
-    const change = tendered - total;
-    
-    const display = document.getElementById('cashChangeDisplay');
-    const box = document.getElementById('cashChangeBox');
-    const btn = document.getElementById('btnFinalizeCash');
-
-    if (change >= 0) {
-      display.textContent = '$' + change.toFixed(2);
-      box.style.backgroundColor = '#d1fae5'; // Green tint
-      btn.disabled = false;
-    } else {
-      display.textContent = 'Insufficient';
-      box.style.backgroundColor = '#f3f4f6';
-      btn.disabled = true;
-    }
-  },
-  finalizeCash: () => {
-    processPayment('Cash');
-    document.getElementById('cash-overlay').classList.remove('open');
-  }
-};
-
-// Options Modal Actions
-window.app.closeOptions = () => optionsOverlay.classList.remove('open');
-window.app.confirmOptions = () => {
-  const note = document.getElementById('optNote').value;
-  // Aggregate if same item + same note
-  const existing = state.cart.find(x => x.id === state.tempProduct.id && x.note === note);
-  if (existing) {
-    existing.qty++;
-  } else {
-    state.cart.push({ ...state.tempProduct, qty: 1, note: note });
-  }
-  optionsOverlay.classList.remove('open');
-  renderCart();
-};
-
-// Cash Modal Actions
-function openCashModal() {
-  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const total = subtotal + (subtotal * state.storeData.taxRate);
-  
-  document.getElementById('cashTotalDisplay').textContent = '$' + total.toFixed(2);
-  document.getElementById('cashTendered').value = '';
-  document.getElementById('cashChangeDisplay').textContent = '$0.00';
-  document.getElementById('btnFinalizeCash').disabled = true;
-  document.getElementById('cash-overlay').classList.add('open');
-}
-window.app.closeCash = () => document.getElementById('cash-overlay').classList.remove('open');
-
-async function processPayment(method) {
-  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const tax = subtotal * state.storeData.taxRate;
-  const total = subtotal + tax;
-
-  const order = {
-    id: "ORD-" + state.storeData.orderCounter,
-    items: [...state.cart],
-    customer: state.customerName,
-    subtotal, tax, total, method,
-    status: 'open', 
-    timestamp: new Date().toISOString()
-  };
-
-  // Update State
-  state.storeData.orderCounter++;
-  state.storeData.orders.push(order);
-  state.currentOrder = order;
-  
-  // Save
-  saveToCloud();
-
-  // Clear Cart & Show Receipt
-  state.cart = [];
-  state.customerName = '';
-  renderReceipt();
+    document.getElementById('pos-subtotal').textContent = `$${sub.toFixed(2)}`;
+    document.getElementById('pos-tax').textContent = `$${(sub*TAX_RATE).toFixed(2)}`;
+    document.getElementById('pos-total').textContent = `$${total.toFixed(2)}`;
 }
 
-function renderReceipt() {
-  const o = state.currentOrder;
-  const ws = document.getElementById('workspace');
-  ws.innerHTML = `
-    <div class="receipt-view">
-      <h2 style="color:#152149; margin-bottom:20px;">Payment Successful!</h2>
-      <div class="receipt-paper">
-        <div style="text-align:center; font-weight:bold; margin-bottom:10px;">RISING STAR CAFE</div>
-        <div style="border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:10px;">
-           Order: ${o.id}<br>
-           Date: ${new Date().toLocaleDateString()}<br>
-           Customer: ${o.customer}
-        </div>
-        ${o.items.map(i => `<div style="display:flex; justify-content:space-between;"><span>${i.qty} x ${i.name}</span><span>$${(i.price*i.qty).toFixed(2)}</span></div>`).join('')}
-        <div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:5px; text-align:right;">
-          <strong>Total: $${o.total.toFixed(2)}</strong><br>
-          <span style="font-size:12px; color:#666;">Paid via ${o.method}</span>
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="window.ui.switch('pos')">New Order</button>
-    </div>
-  `;
-}
-
-// --- SUB-VIEW: Barista ---
-function renderBarista() {
-  const ws = document.getElementById('workspace');
-  const openOrders = (state.storeData.orders || []).filter(o => o.status === 'open');
-
-  if (openOrders.length === 0) {
-    ws.innerHTML = `<div style="text-align:center; padding:50px; color:#888; width:100%;">No active orders. Kitchen is clear! 🧹</div>`;
-    return;
-  }
-
-  ws.innerHTML = `<div class="barista-grid">
-    ${openOrders.map(o => `
-      <div class="order-card">
-        <div class="order-header">
-          <span class="order-id">#${o.id.split('-')[1]}</span>
-          <span class="order-time">${new Date(o.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-        </div>
-        <div style="font-weight:bold; margin-bottom:5px;">${o.customer}</div>
-        <div class="order-items">
-          ${o.items.map(i => `<div class="order-item">⬜ <strong>${i.qty}</strong> ${i.name} <br><span style="font-size:11px;color:#666;margin-left:20px">${i.note || ''}</span></div>`).join('')}
-        </div>
-        <button class="btn-complete" onclick="window.barista.done('${o.id}')">✅ Complete</button>
-      </div>
-    `).join('')}
-  </div>`;
-}
-
-window.barista = {
-  done: (oid) => {
-    const order = state.storeData.orders.find(x => x.id === oid);
-    if(order) {
-      order.status = 'closed';
-      saveToCloud();
-      renderBarista();
-    }
-  }
-};
-
-// --- SUB-VIEW: Inventory ---
 function renderInventory() {
-  const ws = document.getElementById('workspace');
-  const products = state.storeData.products || [];
-  
-  // Basic Table
-  let html = `
-    <div style="padding:20px; overflow:auto;">
-      <h2 style="color:#152149;">Inventory</h2>
-      <table class="inv-table">
-        <thead>
-          <tr>
-             <th>Image</th>
-             <th>Name</th>
-             <th>Stock</th>
-             <th>Price</th>
-             <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-  
-  products.forEach((p, idx) => {
-    html += `
-      <tr>
-        <td>${p.img ? '📷' : ''}</td>
-        <td>${p.name}</td>
-        <td><span class="badge ${p.stock < 10 ? 'badge-red' : 'badge-green'}">${p.stock || 0}</span></td>
-        <td>$${p.price}</td>
-        <td>
-           <button class="btn-sm" onclick="alert('Stock edit for ${p.name} coming soon')">Edit</button>
-        </td>
-      </tr>
-    `;
-  });
-  
-  html += `</tbody></table></div>`;
-  ws.innerHTML = html;
+    const tbody = document.getElementById('inventory-body');
+    if(tbody) tbody.innerHTML = window.app.data.products.map(p => `
+        <tr>
+            <td><img src="${p.img}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;"></td>
+            <td>${p.name}</td>
+            <td>${p.cat}</td>
+            <td>$${p.price.toFixed(2)}</td>
+            <td><button class="btn-sm" onclick="window.app.openProductModal(${p.id})">Edit</button></td>
+        </tr>
+    `).join('');
 }
 
-// --- SUB-VIEW: Time Clock ---
 function renderTimeClock() {
-  const ws = document.getElementById('workspace');
-  ws.innerHTML = `
-    <div style="padding:40px; text-align:center;">
-      <h2 style="color:#152149;">Time Clock</h2>
-      <div style="font-size:40px; font-weight:bold; margin:20px 0; font-family:monospace;">
-        ${new Date().toLocaleTimeString()}
-      </div>
-      <div style="margin-bottom:20px;">Employee: <strong>${state.currentUser.name}</strong></div>
-      <button class="btn btn-primary" style="max-width:300px; margin:0 auto;" onclick="alert('Punched IN at ' + new Date().toLocaleTimeString())">👊 Punch In / Out</button>
-      
-      <div style="margin-top:40px; text-align:left; max-width:600px; margin-left:auto; margin-right:auto;">
-        <h3>Recent Activity</h3>
-        <ul style="color:#666;">
-           <li>Today: In at 8:00 AM</li>
-           <li>Yesterday: 8:00 AM - 3:30 PM</li>
-        </ul>
-      </div>
-    </div>
-  `;
+    const sel = document.getElementById('time-employee-select');
+    if(sel && window.app.data.employees) {
+        sel.innerHTML = '<option value="">Select your name...</option>' + 
+            window.app.data.employees.map(e => `<option value="${e.name}">${e.name} (${e.status || 'out'})</option>`).join('');
+    }
 }
 
-
-// --- INIT ---
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
+function renderBarista() {
+    const grid = document.getElementById('barista-grid');
+    const pending = window.app.data.orders.filter(o => o.status === 'Pending');
+    if(grid) grid.innerHTML = pending.length ? pending.map(o => `
+        <div style="background:white; padding:15px; border-left:5px solid var(--stormy-teal); margin-bottom:10px; border-radius:8px;">
+            <h3>#${o.id} ${o.customer}</h3>
+            <ul>${o.items.map(i => `<li>${i.qty}x ${i.name} ${i.options.join(', ')}</li>`).join('')}</ul>
+            <button class="btn-sm" onclick="this.parentElement.style.opacity=0.5">Ready</button>
+        </div>
+    `).join('') : '<p style="color:#888;">No pending orders</p>';
+}
