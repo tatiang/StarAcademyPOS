@@ -1,9 +1,9 @@
 // Rising Star Cafe POS — TEST build metadata
-// v1.77
+// v1.80
 (function(){
   window.RSCPOS = {
     appName: 'Rising Star Cafe POS',
-    version: 'v1.77',
+    version: 'v1.80',
     build: 'TEST_Gemini_FullSpec'
   };
 
