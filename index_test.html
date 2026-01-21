@@ -1,328 +1,378 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Star Academy POS v1.38 Test</title>
+/* Star Academy POS - v1.42 (Spec Compliant) */
+
+const APP_VERSION = "v1.42";
+const STORAGE_KEY = "star_academy_v1_42";
+
+// --- DATA MODEL (v1.42 Req #4) ---
+const DEFAULT_DATA = {
+    currentCashier: null,
+    cart: [],
+    products: [
+        { id: 1, name: "Coffee", price: 2.50, category: "Hot Drinks", stock: 50 },
+        { id: 2, name: "Latte",  price: 3.50, category: "Hot Drinks", stock: 40 },
+        { id: 3, name: "Muffin", price: 3.00, category: "Snacks",    stock: 20 },
+        { id: 4, name: "Tea",    price: 2.00, category: "Hot Drinks", stock: 30 }
+    ],
+    orders: [],
+    employees: [
+        { name: "Eloise", role: "Barista", status: "out" },
+        { name: "Jamil",  role: "Cashier", status: "out" }
+    ],
+    timeEntries: [],
+    bugReports: [],
+    orderCounter: 1001,
+    taxRate: 0.0925
+};
+
+// Temp State
+let tempProduct = null;
+let pinBuffer = "";
+let targetRole = "";
+let cashTendered = "";
+
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log(`Initializing ${APP_VERSION}...`);
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    // 1. Load Local Data First (Offline-First)
+    const stored = localStorage.getItem(STORAGE_KEY);
+    window.app.data = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_DATA));
     
-    <link rel="stylesheet" href="style_test.css">
-</head>
-<body>
+    // 2. Render Login Screen
+    initLoginScreen();
 
-<div id="login-overlay">
-    <div class="logo-area" style="border:none;">
-        <img src="images/StarAcademyLogo.png" alt="Star Academy" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-        <span class="logo-text" style="display:none; font-size:2rem;">STAR ACADEMY</span>
-    </div>
-    <div class="login-box">
-        <h2 id="store-title-login">Classroom Café Login</h2>
-        <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; height:20px;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting to cloud...
-        </div>
-        
-        <div class="login-grid" id="student-login-grid"></div>
-        
-        <div id="admin-divider" class="admin-divider"><span>Administration</span></div>
-        
-        <div id="admin-login-buttons" class="admin-buttons-row"></div>
-    </div>
-    <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.38 Test</div>
-</div>
+    // 3. Watchdog (Fix for "Stuck Connecting")
+    setTimeout(() => {
+        const statusEl = document.getElementById('connection-status');
+        if(statusEl && statusEl.innerText.includes('Connecting')) {
+            statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e74c3c"></i> Offline Mode';
+            statusEl.style.color = '#e74c3c';
+        }
+    }, 4000);
 
-<div class="app-wrapper">
-    <nav class="sidebar no-print">
-        <div class="logo-area">
-            <img src="images/StarAcademyLogo_notext.png" alt="Star Academy" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-            <span class="logo-text hidden">STAR ACADEMY</span>
-        </div>
-        <ul class="nav-links">
-            <li onclick="app.navigate('pos')" id="nav-pos" class="active"><i class="fa-solid fa-mug-hot"></i> POS</li>
-            <li onclick="app.navigate('barista')" id="nav-barista"><i class="fa-solid fa-bell"></i> Barista View</li>
-            <li onclick="app.navigate('dashboard')" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
-            <li onclick="app.navigate('inventory')" id="nav-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
-            <li onclick="app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
+    // 4. Start Clock
+    setInterval(() => {
+        const d = new Date();
+        const t = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if(document.getElementById('live-clock')) document.getElementById('live-clock').textContent = t;
+    }, 1000);
+});
+
+// --- GLOBAL APP OBJECT ---
+window.app = {
+    data: null, // Populated in init
+
+    // --- NAVIGATION ---
+    navigate: (viewId) => {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+        
+        const target = document.getElementById('view-' + viewId);
+        const nav = document.getElementById('nav-' + viewId);
+        if(target) target.classList.add('active');
+        if(nav) nav.classList.add('active');
+
+        // View Specific Renders
+        if(viewId === 'pos') renderPOS();
+        if(viewId === 'barista') renderBarista();
+        if(viewId === 'dashboard') renderDashboard();
+        if(viewId === 'inventory') renderInventory();
+        if(viewId === 'time') renderTimeClock();
+        if(viewId === 'manager') renderManager();
+    },
+
+    // --- LOGIN / SECURITY ---
+    login: (name) => {
+        window.app.data.currentCashier = name;
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${name}`;
+        window.app.navigate('pos');
+    },
+
+    logout: () => {
+        window.app.data.cart = [];
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.querySelectorAll('.nav-admin-link').forEach(el => el.style.display = 'none'); // Lock admin
+    },
+
+    promptPin: (role) => {
+        targetRole = role;
+        pinBuffer = "";
+        document.getElementById('pin-display').textContent = "";
+        document.getElementById('modal-pin').classList.add('open');
+    },
+
+    pinInput: (n) => {
+        if(pinBuffer.length < 4) {
+            pinBuffer += n;
+            document.getElementById('pin-display').textContent = "•".repeat(pinBuffer.length);
+        }
+    },
+
+    pinClear: () => { pinBuffer = ""; document.getElementById('pin-display').textContent = ""; },
+
+    pinSubmit: () => {
+        // v1.42 Spec PINS
+        const PINS = { 'Manager': '1234', 'IT Support': '9753' }; // Updated IT PIN
+        
+        if (PINS[targetRole] && pinBuffer === PINS[targetRole]) {
+            document.getElementById('modal-pin').classList.remove('open');
+            window.app.login(targetRole);
             
-            <li onclick="app.navigate('manager')" id="nav-manager" class="nav-admin-link hidden"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
-            <li onclick="app.navigate('it')" id="nav-it" class="nav-admin-link hidden"><i class="fa-solid fa-microchip"></i> IT Hub</li>
-        </ul>
-        <div class="sidebar-footer">
-            <div class="sidebar-version">v1.38 Test</div>
-            <button onclick="app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
-                <i class="fa-solid fa-sign-out-alt"></i> Sign Out
-            </button>
-        </div>
-    </nav>
+            // Unlock Admin Areas
+            document.querySelectorAll('.nav-admin-link').forEach(el => el.style.display = 'block');
+            if(targetRole === 'Manager') window.app.navigate('manager');
+            if(targetRole === 'IT Support') window.app.navigate('it');
+        } else {
+            alert("Incorrect PIN");
+            window.app.pinClear();
+        }
+    },
 
-    <div class="main-content">
-        <header class="top-bar no-print">
-            <div class="current-cashier-display" id="header-cashier">
-                <i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> Not Logged In
-            </div>
-            <div style="display:flex; align-items:center; gap:15px;">
-                <div id="cloud-status" title="Cloud Status">
-                    <div id="status-dot" class="status-dot online"></div>
-                    <span style="font-size:0.8rem">Cloud Sync</span>
-                </div>
-                <div id="live-clock">12:00 PM</div>
-            </div>
-        </header>
+    // --- POS LOGIC ---
+    addToCartPrecheck: (prodId) => {
+        tempProduct = window.app.data.products.find(p => p.id === prodId);
+        // Spec 8: Open Options Modal
+        document.getElementById('opt-product-name').textContent = tempProduct.name;
+        document.getElementById('opt-notes').value = "";
+        document.getElementById('modal-options').classList.add('open');
+    },
 
-        <section id="view-pos" class="view active">
-            <div class="pos-layout">
-                <div class="product-section">
-                    <div class="category-tabs" id="pos-categories"></div>
-                    <div class="product-grid" id="pos-grid"></div>
-                </div>
-                <div class="cart-panel">
-                    <div class="cart-header"><h3>Order #<span id="order-number"></span></h3></div>
-                    <div style="padding: 15px 15px 0;"><input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Required)"></div>
-                    <div class="cart-items" id="cart-list"><div style="padding:20px; text-align:center; color:#999;">Cart is empty</div></div>
-                    <div class="cart-totals">
-                        <div class="total-row"><span>Subtotal</span> <span id="pos-subtotal">$0.00</span></div>
-                        <div class="total-row"><span>Tax (<span id="tax-rate-display">9.25</span>%)</span> <span id="pos-tax">$0.00</span></div>
-                        <div class="total-row grand-total"><span>Total</span> <span id="pos-total">$0.00</span></div>
-                    </div>
-                    <div class="cart-actions">
-                        <button class="btn-pay btn-cash" onclick="app.validateAndPay('Cash')"><i class="fa-solid fa-money-bill"></i> CASH</button>
-                        <button class="btn-pay btn-card" onclick="app.validateAndPay('Card')"><i class="fa-regular fa-credit-card"></i> CARD</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-barista" class="view">
-            <h2 style="margin-bottom:20px; color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.loadFromCloud(true)" style="float:right"><i class="fa-solid fa-rotate"></i> Refresh</button></h2>
-            <div class="barista-grid" id="barista-grid"></div>
-        </section>
+    confirmAddToCart: () => {
+        const note = document.getElementById('opt-notes').value;
+        const item = {
+            ...tempProduct,
+            qty: 1,
+            note: note
+        };
         
-        <section id="view-dashboard" class="view">
-            <div class="dash-header"><h2>Dashboard</h2><span id="dash-date"></span></div>
-            <div class="stat-cards">
-                <div class="stat-card"><i class="fa-solid fa-dollar-sign stat-icon"></i><div class="stat-data"><h3>Revenue</h3><p id="stat-revenue">$0.00</p></div></div>
-                <div class="stat-card"><i class="fa-solid fa-receipt stat-icon"></i><div class="stat-data"><h3>Orders</h3><p id="stat-orders">0</p></div></div>
-                <div class="stat-card"><i class="fa-solid fa-box-open stat-icon" style="color:var(--danger)"></i><div class="stat-data"><h3>Low Stock</h3><p id="stat-low-stock">0</p></div></div>
-            </div>
-            <div class="dash-grid-2">
-                <div class="dash-panel">
-                    <h3>Popular Items</h3>
-                    <ul id="top-items-list" class="dash-list"></ul>
-                </div>
-                <div class="dash-panel">
-                    <h3>Recent Transactions</h3>
-                    <ul id="recent-orders-list" class="dash-list"></ul>
-                </div>
-            </div>
-        </section>
+        // Aggregation Logic (Spec 8)
+        const existing = window.app.data.cart.find(i => i.id === item.id && i.note === item.note);
+        if(existing) {
+            existing.qty++;
+        } else {
+            window.app.data.cart.push(item);
+        }
+        
+        document.getElementById('modal-options').classList.remove('open');
+        renderCart();
+        saveData();
+    },
 
-        <section id="view-inventory" class="view">
-            <div class="dash-header"></div>
-            <div class="inventory-container">
-                <table class="inv-table">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th onclick="app.sortInventory('name')" data-sort="name">Product <span class="sort-icon" id="inv-sort-name">⇅</span></th>
-                            <th onclick="app.sortInventory('cat')" data-sort="cat">Category <span class="sort-icon" id="inv-sort-cat">⇅</span></th>
-                            <th onclick="app.sortInventory('stock')" data-sort="stock">Stock <span class="sort-icon" id="inv-sort-stock">⇅</span></th>
-                            <th onclick="app.sortInventory('price')" data-sort="price">Price <span class="sort-icon" id="inv-sort-price">⇅</span></th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-body"></tbody>
-                </table>
-            </div>
-        </section>
+    removeFromCart: (idx) => {
+        window.app.data.cart.splice(idx, 1);
+        renderCart();
+        saveData();
+    },
 
-        <section id="view-time" class="view">
-            <div class="clock-header">
-                <div class="clock-time" id="big-clock">12:00 PM</div>
-                <div class="clock-date" id="big-date">Monday, January 1</div>
-            </div>
-            <div class="clock-controls">
-                <select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select>
-                <button class="btn-clock" style="background:var(--success)" onclick="app.clockIn()">Clock In</button>
-                <button class="btn-clock" style="background:var(--danger)" onclick="app.clockOut()">Clock Out</button>
-            </div>
-            <div class="stat-cards">
-                <div class="stat-card"><i class="fa-solid fa-users stat-icon"></i><div class="stat-data"><h3>Active</h3><p id="time-active-count">0</p></div></div>
-                <div class="stat-card"><i class="fa-solid fa-clock stat-icon" style="color:var(--clock-orange)"></i><div class="stat-data"><h3>Hours (Week)</h3><p id="time-hours-week">0.0</p></div></div>
-                <div class="stat-card"><i class="fa-regular fa-calendar stat-icon" style="color:#8e44ad"></i><div class="stat-data"><h3>Hours (Month)</h3><p id="time-hours-month">0.0</p></div></div>
-            </div>
-            <div class="active-workers" id="active-workers-list"></div>
-        </section>
+    validateAndPay: (type) => {
+        if(window.app.data.cart.length === 0) return alert("Cart is empty");
+        if(!document.getElementById('customer-name').value) return alert("Customer Name Required");
+        
+        if(type === 'Cash') {
+            openCashModal();
+        } else {
+            completeOrder(type);
+        }
+    },
 
-        <section id="view-manager" class="view" style="padding:0; overflow:hidden;">
-            <div class="manager-wrapper">
-                <aside class="manager-sidebar">
-                    <div class="man-header">Manager Hub</div>
-                    <ul class="man-nav">
-                        <li onclick="app.switchManagerTab('overview')" id="mtab-overview" class="active"><i class="fa-solid fa-chart-pie"></i> Overview</li>
-                        <li onclick="app.switchManagerTab('inventory')" id="mtab-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
-                        <li onclick="app.switchManagerTab('transactions')" id="mtab-transactions"><i class="fa-solid fa-receipt"></i> Transactions</li>
-                        <li onclick="app.switchManagerTab('users')" id="mtab-users"><i class="fa-solid fa-users-gear"></i> Users</li>
-                        <li onclick="app.switchManagerTab('settings')" id="mtab-settings"><i class="fa-solid fa-sliders"></i> Settings</li>
-                    </ul>
-                </aside>
-                
-                <main class="manager-content" id="manager-content-area">
-                    </main>
-            </div>
-        </section>
+    // --- CASH MODAL (Req #9) ---
+    cashInput: (val) => {
+        cashTendered += val;
+        updateCashUI();
+    },
+    cashClear: () => { cashTendered = ""; updateCashUI(); },
+    
+    finalizeCash: () => {
+        const total = getCartTotal();
+        const tendered = parseFloat(cashTendered || "0");
+        if(tendered >= total) {
+            completeOrder('Cash');
+            document.getElementById('modal-cash').classList.remove('open');
+        } else {
+            alert("Insufficient Funds");
+        }
+    },
 
-        <section id="view-it" class="view">
-            <div class="dash-header"><h2>IT Administration</h2></div>
-            <div class="manager-grid" style="grid-template-columns: 1fr 1fr;">
-                <div class="manager-box">
-                    <h3>System Health</h3>
-                    <p><strong>Database:</strong> <span id="it-db-status" class="badge">Checking...</span></p>
-                    <p><strong>Last Sync:</strong> <span id="it-last-sync">Just now</span></p>
-                    <p><strong>Storage Usage:</strong> <span id="it-storage">Calculating...</span></p>
-                    <hr>
-                    <button class="btn-sm" onclick="app.nuclearReset()" style="background:var(--danger); width:100%; margin-top:10px;">
-                        <i class="fa-solid fa-radiation"></i> WIPE LOCAL STORAGE
-                    </button>
-                </div>
-                <div class="manager-box">
-                    <h3>Raw Data Inspector</h3>
-                    <textarea id="it-raw-data" style="width:100%; height:200px; font-family:monospace; font-size:0.8rem; border:1px solid #ccc;"></textarea>
-                    <button class="btn-sm" onclick="document.getElementById('it-raw-data').value = JSON.stringify(app.data, null, 2)">Load Current State</button>
-                </div>
-            </div>
-        </section>
+    // --- MANAGER / IT ---
+    logBug: () => {
+        const msg = document.getElementById('bug-input').value;
+        if(msg) {
+            window.app.data.bugReports.push({ date: new Date().toISOString(), msg });
+            document.getElementById('bug-input').value = '';
+            renderManager();
+            saveData();
+        }
+    },
+    
+    saveEmployee: () => {
+        const name = document.getElementById('emp-name').value;
+        const role = document.getElementById('emp-role').value;
+        if(name) {
+            window.app.data.employees.push({ name, role, status: 'out' });
+            document.getElementById('modal-employee').classList.remove('open');
+            saveData();
+        }
+    },
 
-    </div>
-</div>
+    openEmployeeModal: () => document.getElementById('modal-employee').classList.add('open'),
+    
+    forceSync: () => alert("Syncing to Cloud... (Simulation)"),
+    wipeData: () => { if(confirm("Wipe all data?")) { localStorage.clear(); location.reload(); } },
 
-<div id="modal-pin" class="modal">
-    <div class="modal-content" style="width:320px; text-align:center;">
-        <h3>Enter PIN</h3>
-        <div id="pin-display" style="font-size:2rem; letter-spacing:5px; margin:20px 0; min-height:40px;"></div>
-        <div id="pin-error" style="color:var(--danger); min-height:20px; font-size:0.9rem;"></div>
-        <div class="pin-pad">
-            <button onclick="app.pinInput('1')">1</button><button onclick="app.pinInput('2')">2</button><button onclick="app.pinInput('3')">3</button>
-            <button onclick="app.pinInput('4')">4</button><button onclick="app.pinInput('5')">5</button><button onclick="app.pinInput('6')">6</button>
-            <button onclick="app.pinInput('7')">7</button><button onclick="app.pinInput('8')">8</button><button onclick="app.pinInput('9')">9</button>
-            <button onclick="app.pinClear()" style="background:#fcecec; color:#c0392b">C</button>
-            <button onclick="app.pinInput('0')">0</button>
-            <button onclick="app.pinSubmit()" style="background:#eafaf1; color:#27ae60">OK</button>
+    // --- SYSTEM ---
+    closeModal: (id) => document.getElementById(id).classList.remove('open'),
+    refreshUI: () => { renderPOS(); renderBarista(); } // Called by Firestore
+};
+
+// --- HELPER FUNCTIONS ---
+
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(window.app.data));
+    if(window.saveToCloud) window.saveToCloud(window.app.data, true);
+}
+
+function getCartTotal() {
+    const sub = window.app.data.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    return sub + (sub * window.app.data.taxRate);
+}
+
+function completeOrder(method) {
+    const order = {
+        id: window.app.data.orderCounter++,
+        customer: document.getElementById('customer-name').value,
+        items: [...window.app.data.cart],
+        total: getCartTotal(),
+        method: method,
+        status: "Pending",
+        time: new Date().toISOString()
+    };
+    window.app.data.orders.push(order);
+    window.app.data.cart = []; // Clear cart
+    document.getElementById('customer-name').value = '';
+    
+    saveData();
+    renderCart();
+    alert("Order Placed!");
+}
+
+function updateCashUI() {
+    const display = document.getElementById('calc-display');
+    const bar = document.getElementById('change-bar');
+    const total = getCartTotal();
+    const tenderVal = parseFloat(cashTendered || "0");
+    
+    display.textContent = `$${tenderVal.toFixed(2)}`;
+    document.getElementById('cash-total-due').textContent = `Total: $${total.toFixed(2)}`;
+    
+    if(tenderVal >= total) {
+        bar.classList.add('active');
+        bar.textContent = `Change Due: $${(tenderVal - total).toFixed(2)}`;
+    } else {
+        bar.classList.remove('active');
+        bar.textContent = "Change Due: $0.00";
+    }
+}
+
+function openCashModal() {
+    cashTendered = "";
+    updateCashUI();
+    document.getElementById('modal-cash').classList.add('open');
+}
+
+// --- RENDERERS ---
+
+function initLoginScreen() {
+    const grid = document.getElementById('student-login-grid');
+    // For demo, we use hardcoded students or from data
+    const students = ["Alex", "Brianna", "Jordan", "Casey"];
+    if(grid) grid.innerHTML = students.map(name => `
+        <div class="login-btn-wrap" onclick="window.app.login('${name}')" style="display:inline-block; margin:10px; text-align:center; cursor:pointer;">
+             <div style="width:60px; height:60px; background:#eee; border-radius:50%; margin:0 auto 5px; border:3px solid var(--golden-bronze);"></div>
+             <div style="font-weight:bold; color:var(--space-indigo);">${name}</div>
         </div>
-        <button class="btn-pay btn-train" onclick="app.closeModal('modal-pin')" style="margin-top:15px; width:100%">Cancel</button>
-    </div>
-</div>
-<div id="modal-receipt" class="modal">
-    <div class="modal-content" style="width:350px;">
-        <div id="receipt-content"></div>
-        <button class="btn-pay no-print" onclick="window.print()" style="margin-top:15px; width:100%">Print Receipt</button>
-        <button class="btn-pay btn-train no-print" onclick="app.closeModal('modal-receipt')" style="margin-top:10px; width:100%">Close</button>
-    </div>
-</div>
-<div id="modal-product" class="modal">
-    <div class="modal-content" style="max-width:800px; width:95%;">
-        <h3>Product Editor</h3>
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:300px;">
-                <div class="form-group"><label>Name</label><input type="text" id="prod-name" class="form-control"></div>
-                <div style="display:flex; gap:10px;">
-                    <div class="form-group" style="flex:1"><label>Category</label><input type="text" id="prod-cat" class="form-control"></div>
-                    <div class="form-group" style="flex:1"><label>Price ($)</label><input type="number" id="prod-price" class="form-control" step="0.01"></div>
-                    <div class="form-group" style="flex:1"><label>Stock</label><input type="number" id="prod-stock" class="form-control"></div>
-                </div>
-                
-                <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">
-                    <label style="display:flex; justify-content:space-between;">
-                        <span>Image URL</span>
-                        <div id="ai-status-indicator" class="ai-status">Ready</div>
-                    </label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="prod-img" class="form-control" placeholder="https://..." onchange="app.previewImage(this.value)">
-                        <button class="btn-sm" style="background:var(--barista-purple); white-space:nowrap;" onclick="app.generateAIImage()">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Gen
-                        </button>
-                    </div>
-                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-                        <img id="prod-img-preview" src="" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd; background:#fff;">
-                        <button class="btn-sm" onclick="app.downloadProdImage()" title="Download Image"><i class="fa-solid fa-download"></i></button>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="flex:1; min-width:300px; background:#f5f5f6; padding:15px; border-radius:8px;">
-                <label>Options / Modifiers</label>
-                <div id="prod-options-list" style="margin-bottom: 10px;"></div>
-                <button class="btn-sm" onclick="app.addProductOptionUI()">+ Add Option Group</button>
-            </div>
+    `).join('');
+}
+
+function renderPOS() {
+    const catDiv = document.getElementById('pos-categories');
+    const grid = document.getElementById('pos-grid');
+    
+    // Categories
+    const cats = [...new Set(window.app.data.products.map(p => p.category))];
+    if(catDiv) catDiv.innerHTML = cats.map(c => `<button class="btn-sm" style="margin-right:5px;">${c}</button>`).join('');
+    
+    // Products
+    if(grid) grid.innerHTML = window.app.data.products.map(p => `
+        <div class="product-card" onclick="window.app.addToCartPrecheck(${p.id})" style="background:white; padding:15px; border-radius:8px; border:1px solid #ddd; cursor:pointer;">
+            <h4>${p.name}</h4>
+            <div style="color:var(--golden-bronze); font-weight:bold;">$${p.price.toFixed(2)}</div>
         </div>
-        <div style="display:flex; gap:10px; margin-top: 20px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-product')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="app.saveProduct()">Save Product</button>
+    `).join('');
+    
+    renderCart();
+}
+
+function renderCart() {
+    const list = document.getElementById('cart-list');
+    const total = getCartTotal();
+    const sub = window.app.data.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    
+    if(list) list.innerHTML = window.app.data.cart.map((item, idx) => `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;">
+            <div>${item.name} x${item.qty} ${item.note ? '<br><small>'+item.note+'</small>' : ''}</div>
+            <div style="color:var(--danger); cursor:pointer;" onclick="window.app.removeFromCart(${idx})"><i class="fa-solid fa-trash"></i></div>
         </div>
-    </div>
-</div>
-<div id="modal-employee" class="modal">
-    <div class="modal-content">
-        <h3 id="emp-modal-title">Add/Edit Employee</h3>
-        <div class="form-group"><label>Name</label><input type="text" id="emp-name" class="form-control"></div>
-        <div class="form-group"><label>Role</label>
-            <select id="emp-role" class="form-control">
-                <option>Cashier</option>
-                <option>Barista</option>
-                <option>Inventory</option>
-                <option>Manager</option>
-                <option>IT Admin</option>
-                <option>Floater</option>
-            </select>
+    `).join('');
+    
+    document.getElementById('pos-subtotal').textContent = `$${sub.toFixed(2)}`;
+    document.getElementById('pos-tax').textContent = `$${(sub * window.app.data.taxRate).toFixed(2)}`;
+    document.getElementById('pos-total').textContent = `$${total.toFixed(2)}`;
+}
+
+function renderBarista() {
+    const grid = document.getElementById('barista-grid');
+    const pending = window.app.data.orders.filter(o => o.status === 'Pending');
+    
+    if(grid) grid.innerHTML = pending.length === 0 ? '<p>No pending orders</p>' : pending.map(o => `
+        <div style="background:white; padding:15px; border-radius:8px; border-left:5px solid var(--stormy-teal); margin-bottom:10px;">
+            <h3>Order #${o.id} <small>(${o.customer})</small></h3>
+            <ul>${o.items.map(i => `<li>${i.qty}x ${i.name} ${i.note ? '('+i.note+')' : ''}</li>`).join('')}</ul>
+            <button class="btn-sm" onclick="this.parentElement.style.opacity='0.5'; setTimeout(()=>window.app.refreshUI(), 500);">Mark Ready</button>
         </div>
-        <div class="form-group"><label>Photo URL</label><input type="text" id="emp-img-url" class="form-control" placeholder="https://..."></div>
-        <div class="upload-options">
-           <input type="file" id="emp-img-file" accept="image/*" onchange="app.handleImageUpload(this, 'emp-img-url')">
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-employee')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="app.saveEmployee()">Save</button>
-        </div>
-    </div>
-</div>
-<div id="modal-bug" class="modal">
-    <div class="modal-content">
-        <h3>Report Bug / Request Feature</h3>
-        <div class="form-group">
-            <label>Type</label>
-            <select id="bug-type" class="form-control">
-                <option value="Bug">Bug (Something is broken)</option>
-                <option value="Feature">Feature (New idea)</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Description</label>
-            <textarea id="bug-desc" class="form-control" rows="4" placeholder="Describe the issue or idea..."></textarea>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="app.closeModal('modal-bug')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="app.submitBugReport()">Submit</button>
-        </div>
-    </div>
-</div>
-<div id="modal-cash" class="modal">
-    <div class="modal-content" style="width:320px;">
-        <h3>Cash Tendered</h3>
-        <div id="calc-display" class="calc-display">$0.00</div>
-        <div class="calc-grid">
-            <button class="calc-btn" onclick="app.calcInput('1')">1</button><button class="calc-btn" onclick="app.calcInput('2')">2</button><button class="calc-btn" onclick="app.calcInput('3')">3</button>
-            <button class="calc-btn" onclick="app.calcInput('4')">4</button><button class="calc-btn" onclick="app.calcInput('5')">5</button><button class="calc-btn" onclick="app.calcInput('6')">6</button>
-            <button class="calc-btn" onclick="app.calcInput('7')">7</button><button class="calc-btn" onclick="app.calcInput('8')">8</button><button class="calc-btn" onclick="app.calcInput('9')">9</button>
-            <button class="calc-btn" onclick="app.calcClear()">C</button><button class="calc-btn" onclick="app.calcInput('0')">0</button><button class="calc-btn" onclick="app.calcInput('.')">.</button>
-        </div>
-        <div style="display:grid; gap:10px; grid-template-columns: 1fr 1fr 1fr; margin-bottom:10px;">
-            <button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcExact()">Exact</button>
-            <button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcNext(5)">$5</button>
-            <button class="calc-btn" style="font-size:1rem; background:#e0e0e0" onclick="app.calcNext(10)">$10</button>
-        </div>
-        <div id="change-result" class="change-result" style="display:none; margin-bottom:15px;">
-            Change Due: <span id="change-amt" style="font-weight:bold">$0.
+    `).join('');
+}
+
+function renderDashboard() {
+    const revenue = window.app.data.orders.reduce((sum, o) => sum + o.total, 0);
+    document.getElementById('dash-revenue').textContent = `$${revenue.toFixed(2)}`;
+    document.getElementById('dash-orders').textContent = window.app.data.orders.length;
+    
+    const tbody = document.getElementById('dashboard-body');
+    if(tbody) tbody.innerHTML = window.app.data.orders.slice(-5).reverse().map(o => `
+        <tr><td>${o.id}</td><td>${o.customer}</td><td>$${o.total.toFixed(2)}</td><td>${o.status}</td><td><button>Receipt</button></td></tr>
+    `).join('');
+}
+
+function renderInventory() {
+    const tbody = document.getElementById('inventory-body');
+    if(tbody) tbody.innerHTML = window.app.data.products.map(p => `
+        <tr>
+            <td><div style="width:30px; height:30px; background:#ddd;"></div></td>
+            <td>${p.name}</td>
+            <td>${p.category}</td>
+            <td><span class="${p.stock < 10 ? 'badge-low' : 'badge-ok'}">${p.stock}</span></td>
+            <td><button class="btn-sm">Edit</button></td>
+        </tr>
+    `).join('');
+}
+
+function renderManager() {
+    const list = document.getElementById('bug-list');
+    if(list) list.innerHTML = window.app.data.bugReports.map(b => `<li><small>${b.date}</small>: ${b.msg}</li>`).join('');
+}
+
+function renderTimeClock() {
+    const sel = document.getElementById('time-employee-select');
+    if(sel) sel.innerHTML = '<option value="">Select...</option>' + window.app.data.employees.map(e => `<option>${e.name}</option>`).join('');
+}
