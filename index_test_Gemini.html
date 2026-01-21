@@ -1,88 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>v1.77 Rising Star Cafe POS</title>
-  
-  <link rel="stylesheet" href="css/style_test_Gemini.css" />
-  <script src="js/version_test_Gemini.js"></script>
-  <script type="module" src="js/firestore_test_Gemini.js"></script>
-  <script type="module" src="js/app_test_Gemini.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Star Academy POS v1.80</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style_test_Gemini.css">
 </head>
 <body>
-  <header class="app-header">
-    <div class="brand-title" style="color:white; text-align:center; padding-top:40px; font-weight:700; letter-spacing:1px; font-size:42px;">
-      RISING STAR CAFE
+
+<div id="login-overlay">
+    <div class="logo-area" style="border:none;">
+        <div style="font-size:3rem; color:white; font-weight:bold; letter-spacing:2px; margin-bottom:20px;">
+            <i class="fa-solid fa-star"></i> STAR ACADEMY
+        </div>
     </div>
-    <div style="color:#CB9832; text-align:center; letter-spacing:3px; font-weight:600; font-size:14px; margin-top:5px;">POS SYSTEM</div>
-  </header>
+    <div class="login-box">
+        <h2>Classroom Café Login</h2>
+        <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; height:20px;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting to cloud...
+        </div>
+        
+        <button class="btn-pay" style="width:100%; margin-bottom:20px; background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2);" onclick="window.app.startKioskMode()">
+            <i class="fa-solid fa-tablet-screen-button"></i> Customer Ordering (Kiosk)
+        </button>
 
-  <main id="main-view" class="card" role="main">
-    <div class="status-row">Booting System v1.77...</div>
-  </main>
-
-  <div id="modal-overlay" class="modal-overlay">
-    <div class="pin-modal">
-      <h2 id="pinName" style="margin:0; color:#152149; font-size:20px; font-weight:bold;">Login</h2>
-      <p style="margin:5px 0 20px; color:#64748b; font-size:14px;">Enter Access PIN</p>
-      <div id="pinDisplay" class="pin-display">_ _ _ _</div>
-      <div class="pin-pad">
-        <button onclick="window.app.handlePin('1')">1</button>
-        <button onclick="window.app.handlePin('2')">2</button>
-        <button onclick="window.app.handlePin('3')">3</button>
-        <button onclick="window.app.handlePin('4')">4</button>
-        <button onclick="window.app.handlePin('5')">5</button>
-        <button onclick="window.app.handlePin('6')">6</button>
-        <button onclick="window.app.handlePin('7')">7</button>
-        <button onclick="window.app.handlePin('8')">8</button>
-        <button onclick="window.app.handlePin('9')">9</button>
-        <button onclick="window.app.handlePin('C')" style="color:#ef4444">C</button>
-        <button onclick="window.app.handlePin('0')">0</button>
-        <button onclick="window.app.handlePin('GO')" style="background:#10b981; color:white">➜</button>
-      </div>
-      <button class="btn-close-modal" onclick="window.app.closeModal()">Cancel</button>
+        <div class="login-grid" id="student-login-grid"></div>
+        <div class="admin-divider"><span>ADMINISTRATION</span></div>
+        <div class="admin-buttons-row">
+            <div class="admin-login-btn" onclick="window.app.promptPin('Manager')"><i class="fa-solid fa-user-tie"></i> Manager</div>
+            <div class="admin-login-btn" onclick="window.app.promptPin('IT Support')"><i class="fa-solid fa-microchip"></i> IT Support</div>
+        </div>
     </div>
-  </div>
+    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.80</div>
+</div>
 
-  <div id="options-overlay" class="modal-overlay">
-    <div class="options-modal">
-      <h2 id="optTitle">Product Options</h2>
-      <div class="opt-content">
-        <label style="display:block; text-align:left; font-weight:bold; margin-bottom:5px;">Custom Note:</label>
-        <textarea id="optNote" class="form-input" rows="3" placeholder="e.g. Extra hot, no foam..."></textarea>
-      </div>
-      <div class="opt-actions">
-        <button class="btn btn-ghost" onclick="window.app.closeOptions()">Cancel</button>
-        <button class="btn btn-primary" onclick="window.app.confirmOptions()">Add to Order</button>
-      </div>
+<div class="app-wrapper">
+    <nav class="sidebar no-print">
+        <div class="logo-area">
+            <span class="logo-text hidden">STAR ACADEMY</span>
+        </div>
+        <ul class="nav-links">
+            <li onclick="window.app.navigate('pos')" id="nav-pos" class="active"><i class="fa-solid fa-mug-hot"></i> POS</li>
+            <li onclick="window.app.navigate('barista')" id="nav-barista"><i class="fa-solid fa-bell"></i> Barista View</li>
+            <li onclick="window.app.navigate('dashboard')" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
+            <li onclick="window.app.navigate('inventory')" id="nav-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
+            <li onclick="window.app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
+            
+            <li onclick="window.app.navigate('manager')" id="nav-manager" class="nav-admin-link" style="display:none; border-top:1px solid rgba(255,255,255,0.1); margin-top:10px; padding-top:10px;"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
+            <li onclick="window.app.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="sidebar-version">v1.80</div>
+            <button onclick="window.app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
+                <i class="fa-solid fa-sign-out-alt"></i> Sign Out
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <header class="top-bar no-print">
+            <div class="current-cashier-display" id="header-cashier">
+                <i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> Not Logged In
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div id="cloud-status" title="Cloud Status">
+                    <div id="status-dot" class="status-dot online"></div>
+                    <span style="font-size:0.8rem">Cloud</span>
+                </div>
+                <div id="live-clock">12:00 PM</div>
+            </div>
+        </header>
+
+        <section id="view-pos" class="view active">
+            <div class="pos-layout">
+                <div class="product-section">
+                    <div class="product-grid" id="pos-grid"></div>
+                </div>
+                <div class="cart-panel">
+                    <div class="cart-header">
+                        <h3>Order #<span id="order-number"></span></h3>
+                        <input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Required)" style="margin-top:5px; font-size:0.9rem;">
+                    </div>
+                    <div class="cart-items" id="cart-list"><div style="padding:20px; text-align:center; color:#999;">Cart is empty</div></div>
+                    <div class="cart-totals">
+                        <div class="total-row"><span>Subtotal</span> <span id="pos-subtotal">$0.00</span></div>
+                        <div class="total-row"><span>Tax (9.25%)</span> <span id="pos-tax">$0.00</span></div>
+                        <div class="total-row grand-total"><span>Total</span> <span id="pos-total">$0.00</span></div>
+                    </div>
+                    <div class="cart-actions">
+                        <button class="btn-pay btn-cash" onclick="window.app.validateAndPay('Cash')"><i class="fa-solid fa-money-bill"></i> CASH</button>
+                        <button class="btn-pay btn-card" onclick="window.app.validateAndPay('Card')"><i class="fa-regular fa-credit-card"></i> CARD</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-barista" class="view"><h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
+        <section id="view-dashboard" class="view"><h2>Dashboard</h2><div class="mgr-grid"><div class="mgr-card"><h3>Revenue</h3><div class="value" id="dash-revenue">$0.00</div></div><div class="mgr-card"><h3>Orders</h3><div class="value" id="dash-orders">0</div></div></div></section>
+        
+        <section id="view-inventory" class="view">
+             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                 <h2>Inventory</h2>
+                 <button class="btn-pay btn-gold" style="width:auto; padding: 10px 20px;" onclick="window.app.openProductModal()">+ Add Product</button>
+             </div>
+             <table class="staff-table">
+                <thead><tr><th>Img</th><th>Product</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
+                <tbody id="inventory-body"></tbody>
+             </table>
+        </section>
+
+        <section id="view-time" class="view">
+            <h2>Time Clock</h2>
+            <div class="clock-controls" style="background:white; padding:20px; border-radius:12px; margin-top:20px;">
+                <select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select>
+                <div style="margin-top:15px;">
+                    <button class="btn-clock" style="background:var(--success)" onclick="window.app.clockIn()">Clock In</button>
+                    <button class="btn-clock" style="background:var(--danger)" onclick="window.app.clockOut()">Clock Out</button>
+                </div>
+                <div style="margin-top:20px;" id="active-employees-list"></div>
+            </div>
+        </section>
+
+        <section id="view-customer" class="view">
+            <h1 style="text-align:center; margin-top:50px;">Kiosk Mode Active</h1>
+            <button class="btn-sm" style="position:absolute; top:20px; right:20px;" onclick="window.app.exitKioskMode()">Exit</button>
+        </section>
     </div>
-  </div>
+</div>
 
-  <div id="cash-overlay" class="modal-overlay">
-    <div class="cash-modal">
-      <h2>Cash Payment</h2>
-      <div class="cash-row">
-        <span>Total Due:</span>
-        <span id="cashTotalDisplay" style="font-weight:bold;">$0.00</span>
-      </div>
-      <div class="cash-row">
-        <span>Tendered:</span>
-        <input type="number" id="cashTendered" class="cash-input" placeholder="0.00" oninput="window.pos.calcChange()">
-      </div>
-      <div class="cash-change-box" id="cashChangeBox">
-        <span>Change Due:</span>
-        <span id="cashChangeDisplay">$0.00</span>
-      </div>
-      <div class="opt-actions">
-        <button class="btn btn-ghost" onclick="window.app.closeCash()">Cancel</button>
-        <button id="btnFinalizeCash" class="btn btn-success" disabled onclick="window.pos.finalizeCash()">Finalize</button>
-      </div>
+<div id="modal-pin" class="modal"><div class="modal-content" style="width:300px;"><h3>Enter PIN</h3><div id="pin-display" style="font-size: 2rem; letter-spacing: 5px; text-align: center; margin: 15px 0; background: #eee; padding: 10px;"></div><div id="pin-pad-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;"><button class="pin-btn" onclick="window.app.pinInput('1')">1</button><button class="pin-btn" onclick="window.app.pinInput('2')">2</button><button class="pin-btn" onclick="window.app.pinInput('3')">3</button><button class="pin-btn" onclick="window.app.pinInput('4')">4</button><button class="pin-btn" onclick="window.app.pinInput('5')">5</button><button class="pin-btn" onclick="window.app.pinInput('6')">6</button><button class="pin-btn" onclick="window.app.pinInput('7')">7</button><button class="pin-btn" onclick="window.app.pinInput('8')">8</button><button class="pin-btn" onclick="window.app.pinInput('9')">9</button><button class="pin-btn" onclick="window.app.pinClear()" style="background:#e74c3c; color:white;">C</button><button class="pin-btn" onclick="window.app.pinInput('0')">0</button><button class="pin-btn" onclick="window.app.pinSubmit()" style="background:#2ecc71; color:white;">OK</button></div></div></div>
+
+<div id="modal-options" class="modal">
+    <div class="modal-content">
+        <h3 id="opt-product-name">Product Options</h3>
+        <div id="opt-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; margin: 15px 0;"></div>
+        <textarea id="opt-notes" class="form-control" placeholder="Other notes..." style="height:60px;"></textarea>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-options')">Cancel</button>
+            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.confirmAddToCart()">Add to Cart</button>
+        </div>
     </div>
-  </div>
+</div>
 
-  <footer class="footer">
-    <div id="footerBuild" style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:12px;"></div>
-  </footer>
+<div id="modal-product" class="modal">
+    <div class="modal-content">
+        <h3>Edit Product</h3>
+        <input type="hidden" id="edit-prod-id">
+        <input id="edit-prod-name" class="form-control" placeholder="Name">
+        <input id="edit-prod-price" class="form-control" placeholder="Price" type="number" step="0.01">
+        <input id="edit-prod-img" class="form-control" placeholder="Image URL">
+        
+        <div class="ai-box" style="margin:10px 0; border:1px dashed #ccc; padding:10px; border-radius:8px; text-align:center;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--barista-purple)"></i>
+            <span style="font-size:0.9rem; color:#666;">AI Image Generator</span>
+            <br>
+            <button class="btn-sm" style="margin-top:5px; background:var(--barista-purple); color:white;" onclick="window.app.generateAIImage()">
+                Generate from Name
+            </button>
+        </div>
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button>
+            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-cash" class="modal">
+    <div class="modal-content">
+        <h3>Cash Payment</h3>
+        <div class="total-display-large" id="cash-total-due">$0.00</div>
+        <div id="calc-display" style="font-size:1.5rem; text-align:right; margin-bottom:10px; border-bottom:2px solid #333; height:40px;">$0.00</div>
+        <div class="calc-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+            <button class="calc-btn" onclick="window.app.cashInput('1')">1</button><button class="calc-btn" onclick="window.app.cashInput('2')">2</button><button class="calc-btn" onclick="window.app.cashInput('3')">3</button>
+            <button class="calc-btn" onclick="window.app.cashInput('4')">4</button><button class="calc-btn" onclick="window.app.cashInput('5')">5</button><button class="calc-btn" onclick="window.app.cashInput('6')">6</button>
+            <button class="calc-btn" onclick="window.app.cashInput('7')">7</button><button class="calc-btn" onclick="window.app.cashInput('8')">8</button><button class="calc-btn" onclick="window.app.cashInput('9')">9</button>
+            <button class="calc-btn" onclick="window.app.cashInput('.')">.</button><button class="calc-btn" onclick="window.app.cashInput('0')">0</button><button class="calc-btn" onclick="window.app.cashClear()">C</button>
+        </div>
+        <div id="change-bar" class="change-bar">Change Due: $0.00</div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-cash')">Cancel</button>
+            <button class="btn-pay btn-success" style="flex:1; background:var(--success);" onclick="window.app.finalizeCash()">Finalize</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="app_test_Gemini.js"></script>
+<script type="module" src="firestore_test_Gemini.js"></script>
 </body>
 </html>
