@@ -1,319 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Star Academy POS v1.86</title>
+/* Firestore Integration v1.86 (Gemini - Compat Mode) */
+
+// NOTE: This uses the global 'firebase' object loaded in index.html via script tags.
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
+  authDomain: "star-academy-cafe-pos.firebaseapp.com",
+  projectId: "star-academy-cafe-pos",
+  storageBucket: "star-academy-cafe-pos.firebasestorage.app",
+  messagingSenderId: "148643314098",
+  appId: "1:148643314098:web:fd730b7d111f5fd374ccab"
+};
+
+// Initialize Variables
+let db = null;
+let docRef = null;
+let backupRef = null;
+
+// Attempt Connection
+try {
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        docRef = db.collection("stores").doc("classroom_cafe_main");
+        backupRef = db.collection("backups");
+        console.log("Firebase Initialized (Compat Mode)");
+    } else {
+        console.warn("Firebase SDK not found. App running in Offline Mode.");
+    }
+} catch(e) {
+    console.error("Firebase Initialization Error:", e);
+}
+
+// --- CLOUD SYNC FUNCTION ---
+// Handles saving data to the main document OR creating a timestamped backup
+window.saveToCloud = async (data, silent = false, isBackup = false) => {
+    if(!db || !docRef) return;
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    const dot = document.getElementById('status-dot');
     
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-    <link rel="stylesheet" href="css/style_test_Gemini.css">
-</head>
-<body>
-
-<div id="print-area"></div>
-
-<div id="login-overlay">
-    <div class="logo-area" style="border:none;">
-        <div style="font-size:3rem; color:white; font-weight:bold; letter-spacing:2px; margin-bottom:20px;">
-            <i class="fa-solid fa-star"></i> STAR ACADEMY
-        </div>
-    </div>
-    <div class="login-box">
-        <h2>Classroom Café Login</h2>
-        <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; min-height:20px;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting...
-        </div>
-        
-        <button class="btn-pay" style="width:100%; margin-bottom:20px; background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2);" onclick="window.app.startKioskMode()">
-            <i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode
-        </button>
-
-        <div class="login-grid" id="student-login-grid">
-            <div style="color:#999; padding:20px;">Loading Students...</div>
-        </div>
-        
-        <div class="admin-divider"><span>ADMINISTRATION</span></div>
-        <div class="admin-buttons-row">
-            <div class="admin-login-btn" onclick="window.app.promptPin('Manager')"><i class="fa-solid fa-user-tie"></i> Manager</div>
-            <div class="admin-login-btn" onclick="window.app.promptPin('IT Support')"><i class="fa-solid fa-microchip"></i> IT Support</div>
-        </div>
-    </div>
+    // UI Feedback (Blink Orange if manual save)
+    if(!silent && dot && !isBackup) dot.className = 'status-dot error'; 
     
-    <div style="position:absolute; bottom:20px; right:20px; opacity:0.5; cursor:pointer; color:white; font-size:0.8rem;" onclick="if(confirm('Reset all app data? This fixes login issues.')){localStorage.clear(); location.reload();}">
-        <i class="fa-solid fa-rotate-right"></i> System Reset
-    </div>
-    
-    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.86</div>
-</div>
-
-<div class="app-wrapper">
-    <nav class="sidebar no-print">
-        <div class="logo-area">
-            <span class="logo-text hidden">STAR ACADEMY</span>
-        </div>
-        <ul class="nav-links">
-            <li onclick="window.app.navigate('pos')" id="nav-pos" class="active"><i class="fa-solid fa-mug-hot"></i> POS</li>
-            <li onclick="window.app.navigate('barista')" id="nav-barista"><i class="fa-solid fa-bell"></i> Barista View</li>
-            <li onclick="window.app.navigate('dashboard')" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
-            <li onclick="window.app.navigate('inventory')" id="nav-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
-            <li onclick="window.app.navigate('time')" id="nav-time"><i class="fa-solid fa-clock"></i> Time Clock</li>
+    try {
+        if(isBackup && backupRef) {
+            // --- BACKUP LOGIC ---
+            const status = document.getElementById('backup-status');
+            if(status) status.innerText = "Backing up...";
             
-            <li onclick="window.app.navigate('manager')" id="nav-manager" class="nav-admin-link" style="display:none; border-top:1px solid rgba(255,255,255,0.1); margin-top:10px; padding-top:10px;"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
-            <li onclick="window.app.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
-        </ul>
-        <div class="sidebar-footer">
-            <div class="sidebar-version">v1.86</div>
-            <button onclick="window.app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
-                <i class="fa-solid fa-sign-out-alt"></i> Sign Out
-            </button>
-        </div>
-    </nav>
-
-    <div class="main-content">
-        <header class="top-bar no-print">
-            <div class="current-cashier-display" id="header-cashier">
-                <i class="fa-solid fa-user-circle" style="margin-right: 10px;"></i> Not Logged In
-            </div>
-            <div style="display:flex; align-items:center; gap:15px;">
-                <div id="cloud-status" title="Cloud Status">
-                    <div id="status-dot" class="status-dot online"></div>
-                    <span style="font-size:0.8rem">Cloud</span>
-                </div>
-                <div id="live-clock">12:00 PM</div>
-            </div>
-        </header>
-
-        <section id="view-pos" class="view active">
-            <div class="pos-layout">
-                <div class="product-section">
-                    <div class="category-tabs" id="pos-categories"></div>
-                    <div class="product-grid" id="pos-grid"></div>
-                </div>
-                <div class="cart-panel">
-                    <div class="cart-header">
-                        <h3>Order #<span id="order-number"></span></h3>
-                        <input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Required)" style="margin-top:5px; font-size:0.9rem;">
-                    </div>
-                    <div class="cart-items" id="cart-list"></div>
-                    <div class="cart-totals">
-                        <div class="total-row"><span>Subtotal</span> <span id="pos-subtotal">$0.00</span></div>
-                        <div class="total-row"><span>Tax (9.25%)</span> <span id="pos-tax">$0.00</span></div>
-                        <div class="total-row grand-total"><span>Total</span> <span id="pos-total">$0.00</span></div>
-                    </div>
-                    <div class="cart-actions">
-                        <button class="btn-pay btn-cash" onclick="window.app.validateAndPay('Cash')"><i class="fa-solid fa-money-bill"></i> CASH</button>
-                        <button class="btn-pay btn-card" onclick="window.app.validateAndPay('Card')"><i class="fa-regular fa-credit-card"></i> CARD</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-manager" class="view">
-            <h2 style="color:var(--space-indigo); margin-bottom:20px;">Manager Hub</h2>
-            <div class="mgr-tabs">
-                <button class="mgr-tab active" onclick="window.app.switchMgrTab('staff')">Staff & Roles</button>
-                <button class="mgr-tab" onclick="window.app.switchMgrTab('menu')">Menu Management</button>
-                <button class="mgr-tab" onclick="window.app.switchMgrTab('data')">Data & Reports</button>
-            </div>
-
-            <div id="mgr-sub-staff" class="mgr-subview active">
-                <div class="mgr-split">
-                    <div class="mgr-box">
-                        <div class="box-header"><h3>Employees</h3><button class="btn-sm btn-gold" onclick="window.app.editEmployee()">+ Add New</button></div>
-                        <table class="staff-table"><thead><tr><th>Name</th><th>Role</th><th>Action</th></tr></thead><tbody id="mgr-employee-list"></tbody></table>
-                    </div>
-                    <div class="mgr-box">
-                        <div class="box-header"><h3>Roles</h3><button class="btn-sm btn-gold" onclick="window.app.editRole()">+ Add Role</button></div>
-                        <table class="staff-table"><thead><tr><th>Role Name</th><th>Action</th></tr></thead><tbody id="mgr-role-list"></tbody></table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="mgr-sub-menu" class="mgr-subview">
-                <div class="mgr-split">
-                    <div class="mgr-box" style="flex:2">
-                        <div class="box-header"><h3>Products</h3><button class="btn-sm btn-gold" onclick="window.app.editProduct()">+ Add Product</button></div>
-                        <table class="staff-table"><thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Category</th><th>Action</th></tr></thead><tbody id="mgr-product-list"></tbody></table>
-                    </div>
-                    <div class="mgr-box" style="flex:1">
-                        <div class="box-header"><h3>Categories</h3><button class="btn-sm btn-gold" onclick="window.app.editCategory()">+ Add Category</button></div>
-                        <ul id="mgr-cat-list" style="list-style:none; padding:0;"></ul>
-                    </div>
-                </div>
-            </div>
-
-            <div id="mgr-sub-data" class="mgr-subview">
-                <div class="mgr-grid">
-                    <div class="mgr-card">
-                        <h3>Backups</h3>
-                        <p>Cloud backups run automatically every hour.</p>
-                        <button class="btn-pay btn-card" onclick="window.saveToCloud(window.app.data, false, true)">Backup Now</button>
-                        <div id="backup-status" style="margin-top:10px; font-size:0.8rem; color:#666;"></div>
-                    </div>
-                    <div class="mgr-card">
-                        <h3>Reports</h3>
-                        <button class="btn-pay" style="margin-bottom:10px;" onclick="window.app.printTimesheet()">Print Timesheets</button>
-                        <button class="btn-pay" onclick="window.app.viewReceipts()">View/Print Receipts</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-barista" class="view">
-            <h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2>
-            <div class="barista-grid" id="barista-grid"></div>
-        </section>
+            await backupRef.add({
+                data: data,
+                timestamp: new Date().toISOString(),
+                version: "v1.86",
+                type: "auto-hourly"
+            });
+            
+            if(status) status.innerText = "Last Backup: " + new Date().toLocaleTimeString();
+            console.log("✅ Backup Created Successfully");
+        } else {
+            // --- REGULAR SYNC ---
+            await docRef.set(data);
+            if(!silent && dot) setTimeout(() => dot.className = 'status-dot online', 500);
+        }
+    } catch(e) {
+        console.error("Cloud Save/Backup Failed", e);
+        if(dot && !isBackup) dot.className = 'status-dot error';
         
-        <section id="view-dashboard" class="view">
-            <h2>Dashboard</h2>
-            <div class="mgr-grid">
-                <div class="mgr-card"><h3>Revenue</h3><div class="value" id="dash-revenue">$0.00</div></div>
-                <div class="mgr-card"><h3>Orders</h3><div class="value" id="dash-orders">0</div></div>
-            </div>
-        </section>
+        // Update UI to show error
+        const status = document.getElementById('backup-status');
+        if(status && isBackup) status.innerText = "Backup Failed (Check Console)";
+    }
+};
+
+// --- AUTOMATIC HOURLY BACKUP ---
+setInterval(() => {
+    if(window.app && window.app.data) {
+        console.log("⏰ Triggering Hourly Backup...");
+        window.saveToCloud(window.app.data, true, true);
+    }
+}, 3600000); // 3600000 ms = 1 Hour
+
+// --- REAL-TIME LISTENER ---
+// Listens for changes from other devices (e.g., Manager updates menu)
+if(docRef) {
+    docRef.onSnapshot((doc) => {
+        const statusEl = document.getElementById('connection-status');
+        const dot = document.getElementById('status-dot');
         
-        <section id="view-inventory" class="view">
-            <h2>Inventory View</h2>
-            <table class="staff-table"><thead><tr><th>Product</th><th>Stock Status</th></tr></thead><tbody id="inventory-body"></tbody></table>
-       </section>
+        if (doc.exists) {
+            const cloudData = doc.data();
+            
+            if(window.app && window.app.data) {
+                console.log("☁️ Cloud Update Received");
+                
+                // 1. Sync Employees (Priority)
+                if(cloudData.employees && Array.isArray(cloudData.employees)) {
+                    window.app.data.employees = cloudData.employees;
+                }
+                
+                // 2. Sync Products/Categories (Optional: Un-comment to force sync menu across devices)
+                if(cloudData.products) window.app.data.products = cloudData.products;
+                if(cloudData.categories) window.app.data.categories = cloudData.categories;
+                if(cloudData.roles) window.app.data.roles = cloudData.roles;
 
-        <section id="view-time" class="view">
-            <h2>Time Clock</h2>
-            <div class="clock-controls" style="background:white; padding:20px; border-radius:12px; margin-top:20px;">
-                <select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select>
-                <div style="margin-top:15px;">
-                    <button class="btn-clock" style="background:var(--success)" onclick="window.app.clockIn()">Clock In</button>
-                    <button class="btn-clock" style="background:var(--danger)" onclick="window.app.clockOut()">Clock Out</button>
-                </div>
-            </div>
-        </section>
+                // Refresh UI to show new data
+                window.app.refreshUI();
+            }
+            
+            // Update Connection Status Indicators
+            if(statusEl) statusEl.innerHTML = ''; // Clear "Connecting..." text
+            if(dot) dot.className = 'status-dot online';
+        }
+    }, (error) => {
+        const statusEl = document.getElementById('connection-status');
+        const dot = document.getElementById('status-dot');
         
-        <section id="view-it" class="view">
-             <h2>IT Hub</h2>
-             <p>System Version: v1.86</p>
-             <button class="btn-sm" style="background:var(--danger); color:white" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
-        </section>
-
-        <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0;">
-            <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.exitKioskMode()">Exit</button>
-            <div style="text-align:center; margin-top:40px;">
-                <h1>Customer Kiosk</h1>
-                <p>Please select your items below</p>
-                <div id="kiosk-grid" class="product-grid" style="padding:20px;"></div>
-            </div>
-        </section>
-    </div>
-</div>
-
-<div id="modal-pin" class="modal">
-    <div class="modal-content" style="width:300px;">
-        <h3>Enter PIN</h3>
-        <div id="pin-display"></div>
-        <div id="pin-pad-grid">
-            <button class="pin-btn" onclick="window.app.pinInput('1')">1</button><button class="pin-btn" onclick="window.app.pinInput('2')">2</button><button class="pin-btn" onclick="window.app.pinInput('3')">3</button>
-            <button class="pin-btn" onclick="window.app.pinInput('4')">4</button><button class="pin-btn" onclick="window.app.pinInput('5')">5</button><button class="pin-btn" onclick="window.app.pinInput('6')">6</button>
-            <button class="pin-btn" onclick="window.app.pinInput('7')">7</button><button class="pin-btn" onclick="window.app.pinInput('8')">8</button><button class="pin-btn" onclick="window.app.pinInput('9')">9</button>
-            <button class="pin-btn" onclick="window.app.pinClear()" style="background:#e74c3c; color:white;">C</button><button class="pin-btn" onclick="window.app.pinInput('0')">0</button><button class="pin-btn" onclick="window.app.pinSubmit()" style="background:#2ecc71; color:white;">OK</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-options" class="modal">
-    <div class="modal-content">
-        <h3 id="opt-product-name">Product Options</h3>
-        <div id="opt-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; margin: 15px 0;"></div>
-        <textarea id="opt-notes" class="form-control" placeholder="Other notes..." style="height:60px;"></textarea>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-options')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.confirmAddToCart()">Add to Cart</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-cash" class="modal">
-    <div class="modal-content">
-        <h3>Cash Payment</h3>
-        <div class="total-display-large" id="cash-total-due">$0.00</div>
-        <div id="calc-display">$0.00</div>
-        <div class="calc-grid">
-            <button class="calc-btn" onclick="window.app.cashInput('1')">1</button><button class="calc-btn" onclick="window.app.cashInput('2')">2</button><button class="calc-btn" onclick="window.app.cashInput('3')">3</button>
-            <button class="calc-btn" onclick="window.app.cashInput('4')">4</button><button class="calc-btn" onclick="window.app.cashInput('5')">5</button><button class="calc-btn" onclick="window.app.cashInput('6')">6</button>
-            <button class="calc-btn" onclick="window.app.cashInput('7')">7</button><button class="calc-btn" onclick="window.app.cashInput('8')">8</button><button class="calc-btn" onclick="window.app.cashInput('9')">9</button>
-            <button class="calc-btn" onclick="window.app.cashInput('.')">.</button><button class="calc-btn" onclick="window.app.cashInput('0')">0</button><button class="calc-btn" onclick="window.app.cashClear()">C</button>
-        </div>
-        <div id="change-bar" class="change-bar">Change Due: $0.00</div>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-cash')">Cancel</button>
-            <button class="btn-pay btn-success" style="flex:1; background:var(--success);" onclick="window.app.finalizeCash()">Finalize</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-generic" class="modal">
-    <div class="modal-content">
-        <h3 id="gen-modal-title">Edit Item</h3>
-        <div id="gen-modal-body"></div>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-generic')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" id="gen-save-btn">Save</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-product" class="modal">
-    <div class="modal-content">
-        <h3>Product Editor</h3>
-        <input type="hidden" id="edit-prod-id">
-        <label>Product Name</label>
-        <input id="edit-prod-name" class="form-control" placeholder="Name">
-        <div style="display:flex; gap:5px;">
-            <div style="flex:1"><label>Price</label><input id="edit-prod-price" class="form-control" placeholder="0.00" type="number" step="0.01"></div>
-            <div style="flex:1"><label>Category</label><select id="edit-prod-cat" class="form-control"></select></div>
-        </div>
-        <label>Options (comma separated)</label>
-        <input id="edit-prod-opts" class="form-control" placeholder="e.g. Cream, Sugar">
-        <label>Image URL</label>
-        <input id="edit-prod-img" class="form-control" placeholder="https://...">
+        console.error("🔥 Firestore Listen Error:", error);
         
-        <div class="ai-box" style="margin:10px 0; border:1px solid #ddd; padding:15px; border-radius:8px; background:#f9f9f9;">
-            <div style="font-weight:bold; color:var(--space-indigo); margin-bottom:10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Image Tools</div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-sm" style="flex:1; background:var(--barista-purple); color:white; border:none;" onclick="window.app.copyAIPrompt()">
-                    <i class="fa-solid fa-copy"></i> Copy Prompt
-                </button>
-                <button class="btn-sm" style="flex:1; background:#ccc; color:#333; border:none;" onclick="window.app.generateAIImage()">
-                    <i class="fa-solid fa-bolt"></i> Instant Draft
-                </button>
-            </div>
-            <div style="font-size:0.75rem; color:#666; margin-top:8px;">
-                <strong>Copy Prompt:</strong> Copies text to paste into Firefly/Gemini/ChatGPT.<br>
-                <strong>Instant Draft:</strong> Uses free low-res generator.
-            </div>
-        </div>
-        
-        <div style="display:flex; gap:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-receipts" class="modal">
-    <div class="modal-content">
-        <h3>Order History</h3>
-        <div id="receipt-list" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:10px;"></div>
-        <button class="btn-pay btn-train" style="margin-top:10px; width:100%" onclick="window.app.closeModal('modal-receipts')">Close</button>
-    </div>
-</div>
-
-<script src="js/app_test_Gemini.js"></script>
-<script src="js/firestore_test_Gemini.js"></script>
-
-</body>
-</html>
+        if(statusEl) {
+            statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e74c3c"></i> Offline Mode';
+            statusEl.style.color = '#e74c3c';
+        }
+        if(dot) dot.className = 'status-dot error';
+    });
+}
