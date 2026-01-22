@@ -1,7 +1,7 @@
-/* Firestore Integration v1.80 (Gemini) */
+/* Firestore Integration v1.80 (Gemini - Compat Mode) */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// NOTE: This uses the global 'firebase' object loaded in index.html
+// It works without requiring "type=module" or a local server.
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
@@ -12,18 +12,17 @@ const firebaseConfig = {
   appId: "1:148643314098:web:fd730b7d111f5fd374ccab"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const docRef = doc(db, "stores", "classroom_cafe_main");
-
-let unsubscribe = null;
+// Initialize via Global Namespace
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const docRef = db.collection("stores").doc("classroom_cafe_main");
 
 // --- CLOUD SYNC ---
 window.saveToCloud = async (data, silent = false) => {
     const dot = document.getElementById('status-dot');
-    if(!silent && dot) dot.className = 'status-dot error'; // Temp blink
+    if(!silent && dot) dot.className = 'status-dot error'; // Blink
     try {
-        await setDoc(docRef, data);
+        await docRef.set(data);
         if(!silent && dot) setTimeout(() => dot.className = 'status-dot online', 500);
     } catch(e) {
         console.error("Save failed", e);
@@ -31,19 +30,21 @@ window.saveToCloud = async (data, silent = false) => {
     }
 };
 
-// Start Listener
-unsubscribe = onSnapshot(docRef, (doc) => {
+// --- LISTENER ---
+docRef.onSnapshot((doc) => {
     const statusEl = document.getElementById('connection-status');
     const dot = document.getElementById('status-dot');
     
-    if (doc.exists()) {
+    if (doc.exists) {
         const cloudData = doc.data();
         if(window.app && window.app.data) {
             // Prioritize Employees from Cloud
             if(cloudData.employees && cloudData.employees.length > 0) {
                 window.app.data.employees = cloudData.employees;
             }
-            // Sync other criticals if needed, or merge
+            // Sync entire product list if needed (optional - careful not to overwrite local work too fast)
+            // window.app.data.products = cloudData.products; 
+            
             window.app.refreshUI();
         }
         
