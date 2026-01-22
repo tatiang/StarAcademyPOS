@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Star Academy POS v1.80</title>
+    <title>Star Academy POS v1.85</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style_test_Gemini.css">
-
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="css/style_test_Gemini.css">
 </head>
 <body>
+
+<div id="print-area"></div>
 
 <div id="login-overlay">
     <div class="logo-area" style="border:none;">
@@ -32,7 +35,7 @@
         </button>
 
         <div class="login-grid" id="student-login-grid">
-            <div style="color:#999; padding:20px;">Loading Students...</div>
+            <div style="color:#999; padding:20px;">Loading...</div>
         </div>
         
         <div class="admin-divider"><span>ADMINISTRATION</span></div>
@@ -41,7 +44,7 @@
             <div class="admin-login-btn" onclick="window.app.promptPin('IT Support')"><i class="fa-solid fa-microchip"></i> IT Support</div>
         </div>
     </div>
-    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.80</div>
+    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.85</div>
 </div>
 
 <div class="app-wrapper">
@@ -60,7 +63,7 @@
             <li onclick="window.app.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.80</div>
+            <div class="sidebar-version">v1.85</div>
             <button onclick="window.app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -84,6 +87,7 @@
         <section id="view-pos" class="view active">
             <div class="pos-layout">
                 <div class="product-section">
+                    <div class="category-tabs" id="pos-categories"></div>
                     <div class="product-grid" id="pos-grid"></div>
                 </div>
                 <div class="cart-panel">
@@ -105,6 +109,79 @@
             </div>
         </section>
 
+        <section id="view-manager" class="view">
+            <h2 style="color:var(--space-indigo); margin-bottom:20px;">Manager Hub</h2>
+            
+            <div class="mgr-tabs">
+                <button class="mgr-tab active" onclick="window.app.switchMgrTab('staff')">Staff & Roles</button>
+                <button class="mgr-tab" onclick="window.app.switchMgrTab('menu')">Menu Management</button>
+                <button class="mgr-tab" onclick="window.app.switchMgrTab('data')">Data & Reports</button>
+            </div>
+
+            <div id="mgr-sub-staff" class="mgr-subview active">
+                <div class="mgr-split">
+                    <div class="mgr-box">
+                        <div class="box-header">
+                            <h3>Employees</h3>
+                            <button class="btn-sm btn-gold" onclick="window.app.editEmployee()">+ Add New</button>
+                        </div>
+                        <table class="staff-table">
+                            <thead><tr><th>Name</th><th>Role</th><th>Action</th></tr></thead>
+                            <tbody id="mgr-employee-list"></tbody>
+                        </table>
+                    </div>
+                    <div class="mgr-box">
+                        <div class="box-header">
+                            <h3>Roles</h3>
+                            <button class="btn-sm btn-gold" onclick="window.app.editRole()">+ Add Role</button>
+                        </div>
+                        <table class="staff-table">
+                            <thead><tr><th>Role Name</th><th>Action</th></tr></thead>
+                            <tbody id="mgr-role-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mgr-sub-menu" class="mgr-subview">
+                <div class="mgr-split">
+                    <div class="mgr-box" style="flex:2">
+                        <div class="box-header">
+                            <h3>Products</h3>
+                            <button class="btn-sm btn-gold" onclick="window.app.editProduct()">+ Add Product</button>
+                        </div>
+                        <table class="staff-table">
+                            <thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Category</th><th>Action</th></tr></thead>
+                            <tbody id="mgr-product-list"></tbody>
+                        </table>
+                    </div>
+                    <div class="mgr-box" style="flex:1">
+                        <div class="box-header">
+                            <h3>Categories</h3>
+                            <button class="btn-sm btn-gold" onclick="window.app.editCategory()">+ Add Category</button>
+                        </div>
+                        <ul id="mgr-cat-list" style="list-style:none; padding:0;"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mgr-sub-data" class="mgr-subview">
+                <div class="mgr-grid">
+                    <div class="mgr-card">
+                        <h3>Backups</h3>
+                        <p>Cloud backups run automatically every hour.</p>
+                        <button class="btn-pay btn-card" onclick="window.saveToCloud(window.app.data, false, true)">Backup Now</button>
+                        <div id="backup-status" style="margin-top:10px; font-size:0.8rem; color:#666;"></div>
+                    </div>
+                    <div class="mgr-card">
+                        <h3>Reports</h3>
+                        <button class="btn-pay" style="margin-bottom:10px;" onclick="window.app.printTimesheet()">Print Timesheets</button>
+                        <button class="btn-pay" onclick="window.app.viewReceipts()">View/Print Receipts</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="view-barista" class="view">
             <h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2>
             <div class="barista-grid" id="barista-grid"></div>
@@ -119,15 +196,12 @@
         </section>
         
         <section id="view-inventory" class="view">
-             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                 <h2>Inventory & Products</h2>
-                 <button class="btn-pay btn-gold" style="width:auto; padding: 10px 20px;" onclick="window.app.openProductModal()">+ Add Product</button>
-             </div>
-             <table class="staff-table">
-                <thead><tr><th>Img</th><th>Product</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
-                <tbody id="inventory-body"></tbody>
-             </table>
-        </section>
+            <h2>Inventory View</h2>
+            <table class="staff-table">
+               <thead><tr><th>Product</th><th>Stock Status</th></tr></thead>
+               <tbody id="inventory-body"></tbody>
+            </table>
+       </section>
 
         <section id="view-time" class="view">
             <h2>Time Clock</h2>
@@ -137,15 +211,20 @@
                     <button class="btn-clock" style="background:var(--success)" onclick="window.app.clockIn()">Clock In</button>
                     <button class="btn-clock" style="background:var(--danger)" onclick="window.app.clockOut()">Clock Out</button>
                 </div>
-                <div style="margin-top:20px;" id="active-employees-list"></div>
             </div>
+        </section>
+        
+        <section id="view-it" class="view">
+             <h2>IT Hub</h2>
+             <p>System Version: v1.85</p>
+             <button class="btn-sm" style="background:var(--danger); color:white" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
         </section>
 
         <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0;">
             <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.exitKioskMode()">Exit</button>
             <div style="text-align:center; margin-top:40px;">
                 <h1>Customer Kiosk</h1>
-                <p>Please select your items below (Work in Progress)</p>
+                <p>Please select your items below</p>
                 <div id="kiosk-grid" class="product-grid" style="padding:20px;"></div>
             </div>
         </section>
@@ -166,30 +245,6 @@
     </div>
 </div>
 
-<div id="modal-product" class="modal">
-    <div class="modal-content">
-        <h3>Edit Product</h3>
-        <input type="hidden" id="edit-prod-id">
-        <input id="edit-prod-name" class="form-control" placeholder="Name">
-        <input id="edit-prod-price" class="form-control" placeholder="Price" type="number" step="0.01">
-        <input id="edit-prod-img" class="form-control" placeholder="Image URL">
-        
-        <div class="ai-box" style="margin:10px 0; border:1px dashed #ccc; padding:10px; border-radius:8px; text-align:center;">
-            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--barista-purple)"></i>
-            <span style="font-size:0.9rem; color:#666;">AI Image Generator</span>
-            <br>
-            <button class="btn-sm" style="margin-top:5px; background:var(--barista-purple); color:white;" onclick="window.app.generateAIImage()">
-                Generate from Name
-            </button>
-        </div>
-        
-        <div style="display:flex; gap:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button>
-        </div>
-    </div>
-</div>
-
 <div id="modal-cash" class="modal">
     <div class="modal-content">
         <h3>Cash Payment</h3>
@@ -206,6 +261,49 @@
             <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-cash')">Cancel</button>
             <button class="btn-pay btn-success" style="flex:1; background:var(--success);" onclick="window.app.finalizeCash()">Finalize</button>
         </div>
+    </div>
+</div>
+
+<div id="modal-generic" class="modal">
+    <div class="modal-content">
+        <h3 id="gen-modal-title">Edit Item</h3>
+        <div id="gen-modal-body"></div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-generic')">Cancel</button>
+            <button class="btn-pay btn-gold" style="flex:1" id="gen-save-btn">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-product" class="modal">
+    <div class="modal-content">
+        <h3>Product Editor</h3>
+        <input type="hidden" id="edit-prod-id">
+        <input id="edit-prod-name" class="form-control" placeholder="Name">
+        <div style="display:flex; gap:5px;">
+            <input id="edit-prod-price" class="form-control" placeholder="Price" type="number" step="0.01">
+            <select id="edit-prod-cat" class="form-control"></select>
+        </div>
+        <input id="edit-prod-opts" class="form-control" placeholder="Options (comma separated)">
+        <input id="edit-prod-img" class="form-control" placeholder="Image URL">
+        <div class="ai-box" style="margin:10px 0; border:1px dashed #ccc; padding:10px; border-radius:8px; text-align:center;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--barista-purple)"></i>
+            <button class="btn-sm" style="margin-top:5px; background:var(--barista-purple); color:white;" onclick="window.app.generateAIImage()">
+                Generate AI Image
+            </button>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button>
+            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-receipts" class="modal">
+    <div class="modal-content">
+        <h3>Order History</h3>
+        <div id="receipt-list" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:10px;"></div>
+        <button class="btn-pay btn-train" style="margin-top:10px; width:100%" onclick="window.app.closeModal('modal-receipts')">Close</button>
     </div>
 </div>
 
