@@ -1,10 +1,10 @@
-/* Star Academy POS v1.85 (Manager Hub Expansion) */
+/* Star Academy POS v1.86 */
 
-const APP_VERSION = "v1.85";
-const STORAGE_KEY = "star_pos_v185_data";
+const APP_VERSION = "v1.86";
+const STORAGE_KEY = "star_pos_v186_data";
 const TAX_RATE = 0.0925;
 
-// --- DATA MODEL ---
+// --- DEFAULT DATA (Fallback) ---
 const DEFAULT_PRODUCTS = [
     { id: 1, name: "Coffee", price: 2.50, cat: "Hot Drinks", opts: ["Cream", "Sugar"], img: "https://image.pollinations.ai/prompt/hot%20black%20coffee%20cup%20white%20background?nologo=true" },
     { id: 2, name: "Hot Chocolate", price: 3.00, cat: "Hot Drinks", opts: ["Whipped Cream"], img: "https://image.pollinations.ai/prompt/hot%20chocolate%20mug%20whipped%20cream%20white%20background?nologo=true" },
@@ -28,7 +28,7 @@ let tempOptions = [];
 let pinBuffer = "";
 let targetRole = "";
 let cashTendered = "";
-let editingId = null; // For edits
+let editingId = null;
 
 // --- GLOBAL APP OBJECT ---
 window.app = {
@@ -43,46 +43,51 @@ window.app = {
         if(viewEl) viewEl.classList.add('active');
         if(navEl) navEl.classList.add('active');
         
-        // Refresh specific views
         if(view === 'manager') this.switchMgrTab('staff'); 
         if(view === 'pos') this.renderPOS();
         if(view === 'inventory') this.renderInventory();
     },
 
-    // Manager Sub-Tabs
+    // Manager Tabs
     switchMgrTab: function(tab) {
         document.querySelectorAll('.mgr-subview').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.mgr-tab').forEach(el => el.classList.remove('active'));
-        document.getElementById('mgr-sub-' + tab).classList.add('active');
-        // Find the button that called this, but since we pass string, we manually set active class logic in HTML or here
-        // Simple fix: remove all active classes from buttons, add to clicked (logic simplified for brevity)
+        const sub = document.getElementById('mgr-sub-' + tab);
+        if(sub) sub.classList.add('active');
         
+        // Find button index to highlight (simple approach)
+        const tabs = ['staff', 'menu', 'data'];
+        const btns = document.querySelectorAll('.mgr-tab');
+        btns.forEach((b, i) => { if(tabs[i] === tab) b.classList.add('active'); });
+
         if(tab === 'staff') { this.renderMgrStaff(); }
         if(tab === 'menu') { this.renderMgrMenu(); }
     },
 
     // --- CRUD: STAFF ---
     renderMgrStaff: function() {
-        // Employees
         const empList = document.getElementById('mgr-employee-list');
-        if(empList) empList.innerHTML = this.data.employees.map(e => `
-            <tr>
-                <td>${e.name}</td><td>${e.role}</td>
-                <td>
-                    <button class="btn-sm" onclick="window.app.editEmployee('${e.name}')">Edit</button>
-                    <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteEmployee('${e.name}')">X</button>
-                </td>
-            </tr>
-        `).join('');
+        if(empList && this.data.employees) {
+            empList.innerHTML = this.data.employees.map(e => `
+                <tr>
+                    <td>${e.name}</td><td>${e.role}</td>
+                    <td>
+                        <button class="btn-sm" onclick="window.app.editEmployee('${e.name}')">Edit</button>
+                        <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteEmployee('${e.name}')">X</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
-        // Roles
         const roleList = document.getElementById('mgr-role-list');
-        if(roleList) roleList.innerHTML = this.data.roles.map(r => `
-            <tr>
-                <td>${r}</td>
-                <td>${ (r==='Manager' || r==='IT Support') ? '<small>System</small>' : `<button class="btn-sm" onclick="window.app.deleteRole('${r}')">X</button>` }</td>
-            </tr>
-        `).join('');
+        if(roleList && this.data.roles) {
+            roleList.innerHTML = this.data.roles.map(r => `
+                <tr>
+                    <td>${r}</td>
+                    <td>${ (r==='Manager' || r==='IT Support') ? '<small>System</small>' : `<button class="btn-sm" onclick="window.app.deleteRole('${r}')">X</button>` }</td>
+                </tr>
+            `).join('');
+        }
     },
 
     editEmployee: function(name = null) {
@@ -138,39 +143,41 @@ window.app = {
     // --- CRUD: MENU ---
     renderMgrMenu: function() {
         const prodList = document.getElementById('mgr-product-list');
-        if(prodList) prodList.innerHTML = this.data.products.map(p => `
-            <tr>
-                <td><img src="${p.img}" width="30" height="30" style="object-fit:cover; border-radius:4px"></td>
-                <td>${p.name}</td>
-                <td>$${p.price.toFixed(2)}</td>
-                <td>${p.cat}</td>
-                <td>
-                    <button class="btn-sm" onclick="window.app.editProduct(${p.id})">Edit</button>
-                    <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteProduct(${p.id})">X</button>
-                </td>
-            </tr>
-        `).join('');
+        if(prodList && this.data.products) {
+            prodList.innerHTML = this.data.products.map(p => `
+                <tr>
+                    <td><img src="${p.img}" width="30" height="30" style="object-fit:cover; border-radius:4px"></td>
+                    <td>${p.name}</td>
+                    <td>$${p.price.toFixed(2)}</td>
+                    <td>${p.cat}</td>
+                    <td>
+                        <button class="btn-sm" onclick="window.app.editProduct(${p.id})">Edit</button>
+                        <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteProduct(${p.id})">X</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
         const catList = document.getElementById('mgr-cat-list');
-        if(catList) catList.innerHTML = this.data.categories.map(c => `
-            <li style="padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                ${c} <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteCategory('${c}')">X</button>
-            </li>
-        `).join('');
+        if(catList && this.data.categories) {
+            catList.innerHTML = this.data.categories.map(c => `
+                <li style="padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                    ${c} <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteCategory('${c}')">X</button>
+                </li>
+            `).join('');
+        }
     },
 
     editProduct: function(id = null) {
         editingId = id;
         const p = id ? this.data.products.find(x => x.id === id) : { name:'', price:'', img:'', cat: this.data.categories[0], opts:[] };
         
-        // Populate specific Product Modal
         document.getElementById('edit-prod-id').value = id || '';
         document.getElementById('edit-prod-name').value = p.name;
         document.getElementById('edit-prod-price').value = p.price;
         document.getElementById('edit-prod-img').value = p.img || '';
         document.getElementById('edit-prod-opts').value = p.opts ? p.opts.join(', ') : '';
         
-        // Cats
         const catSel = document.getElementById('edit-prod-cat');
         catSel.innerHTML = this.data.categories.map(c => `<option ${c===p.cat?'selected':''}>${c}</option>`).join('');
         
@@ -178,7 +185,7 @@ window.app = {
     },
 
     saveProduct: function() {
-        const id = document.getElementById('edit-prod-id').value; // string
+        const id = document.getElementById('edit-prod-id').value;
         const name = document.getElementById('edit-prod-name').value;
         const price = parseFloat(document.getElementById('edit-prod-price').value);
         const cat = document.getElementById('edit-prod-cat').value;
@@ -225,11 +232,27 @@ window.app = {
         }
     },
 
+    // --- AI TOOLS ---
     generateAIImage: function() {
+        // Option 1: Quick Draft (Pollinations)
         const name = document.getElementById('edit-prod-name').value;
-        if(!name) return alert("Enter name first");
+        if(!name) return alert("Enter Product Name first");
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(name + ' food white background')}?nologo=true`;
         document.getElementById('edit-prod-img').value = url;
+    },
+    
+    copyAIPrompt: function() {
+        // Option 2: Professional Prompt for Firefly/Gemini/ChatGPT
+        const name = document.getElementById('edit-prod-name').value;
+        if(!name) return alert("Enter Product Name first");
+        
+        const prompt = `Professional food photography of ${name}, centered, isolated on a pure white background, high resolution, studio lighting, delicious and appetizing, commercial style --v 6.0`;
+        
+        navigator.clipboard.writeText(prompt).then(() => {
+            alert("Prompt Copied to Clipboard!\n\nPaste this into Adobe Firefly, Gemini, or ChatGPT.\nThen copy the image link and paste it here.");
+        }).catch(err => {
+            alert("Could not copy text. Please select manually: " + prompt);
+        });
     },
 
     // --- DATA & PRINTING ---
@@ -281,16 +304,15 @@ window.app = {
         setTimeout(() => area.innerHTML = '', 1000);
     },
 
-    // --- GENERIC MODAL UTILS ---
     openGenericModal: function(title, bodyHtml, saveCallback) {
         document.getElementById('gen-modal-title').innerText = title;
         document.getElementById('gen-modal-body').innerHTML = bodyHtml;
         const btn = document.getElementById('gen-save-btn');
-        btn.onclick = saveCallback; // Assign logic dynamically
+        btn.onclick = saveCallback;
         document.getElementById('modal-generic').classList.add('open');
     },
 
-    // --- EXISTING POS LOGIC (Preserved) ---
+    // --- CORE LOGIC (Login/POS) ---
     login: function(name) {
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${name}`;
@@ -304,7 +326,7 @@ window.app = {
     promptPin: function(role) {
         targetRole = role;
         pinBuffer = "";
-        document.getElementById('pin-display').textContent = "";
+        document.getElementById('pin-display').textContent = "Enter PIN";
         document.getElementById('modal-pin').classList.add('open');
     },
     pinInput: function(n) {
@@ -313,7 +335,7 @@ window.app = {
             document.getElementById('pin-display').textContent = "•".repeat(pinBuffer.length);
         }
     },
-    pinClear: function() { pinBuffer = ""; document.getElementById('pin-display').textContent = ""; },
+    pinClear: function() { pinBuffer = ""; document.getElementById('pin-display').textContent = "Enter PIN"; },
     pinSubmit: function() {
         const PINS = { 'Manager': '1234', 'IT Support': '9753' };
         if(PINS[targetRole] && pinBuffer === PINS[targetRole]) {
@@ -334,7 +356,7 @@ window.app = {
     },
     exitKioskMode: function() { this.navigate('pos'); this.logout(); },
     
-    // Cart/POS Logic
+    // Cart logic
     addToCartPrecheck: function(id) {
         tempProduct = this.data.products.find(p => p.id === id);
         tempOptions = [];
@@ -386,18 +408,16 @@ window.app = {
     
     // UI Renderers
     renderPOS: function() {
-        // Categories
         const catContainer = document.getElementById('pos-categories');
         if(catContainer) {
-            // Add 'All' button and category buttons
             let cats = ['All', ...this.data.categories];
             catContainer.innerHTML = cats.map(c => 
                 `<button class="btn-sm" style="margin-right:5px; margin-bottom:5px;" onclick="window.app.filterPos('${c}')">${c}</button>`
             ).join('');
         }
-        this.filterPos('All');
+        // If grid is empty, fill it (initial load)
+        if(document.getElementById('pos-grid').innerHTML === "") this.filterPos('All');
         
-        // Cart
         const list = document.getElementById('cart-list');
         const sub = this.data.cart.reduce((s,i) => s + (i.price * i.qty), 0);
         const total = sub + (sub * TAX_RATE);
@@ -416,7 +436,7 @@ window.app = {
         const prods = (cat === 'All') ? this.data.products : this.data.products.filter(p => p.cat === cat);
         grid.innerHTML = prods.map(p => `
             <div class="product-card" onclick="window.app.addToCartPrecheck(${p.id})">
-                <img src="${p.img}" class="prod-img" onerror="this.src='https://placehold.co/150x100?text=${p.name}'">
+                <img src="${p.img}" class="prod-img" onerror="this.src='https://placehold.co/150x100?text=No+Img'">
                 <div class="prod-info"><h4>${p.name}</h4><div>$${p.price.toFixed(2)}</div></div>
             </div>
         `).join('');
@@ -427,15 +447,18 @@ window.app = {
     },
     refreshUI: function() { 
         this.renderPOS(); 
-        // Update login grid
         const lg = document.getElementById('student-login-grid');
         if(lg) {
             const list = (this.data.employees && this.data.employees.length>0) ? this.data.employees : [{name:'Student 1'}, {name:'Student 2'}];
             lg.innerHTML = list.map(e => `<div onclick="window.app.login('${e.name}')" style="display:inline-block; margin:10px; cursor:pointer;"><div style="width:60px; height:60px; background:#eee; border-radius:50%; margin:0 auto; border:3px solid var(--golden-bronze); overflow:hidden;">${e.img ? `<img src="${e.img}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div><div style="font-weight:bold; color:var(--space-indigo); font-size:0.9rem;">${e.name}</div></div>`).join('');
         }
-        // Update time clock
         const ts = document.getElementById('time-employee-select');
         if(ts) ts.innerHTML = '<option value="">Select...</option>' + this.data.employees.map(e => `<option value="${e.name}">${e.name} (${e.status||'out'})</option>`).join('');
+        
+        // Update Dashboard Stats
+        const rev = this.data.orders.reduce((s,o) => s + o.total, 0);
+        if(document.getElementById('dash-revenue')) document.getElementById('dash-revenue').textContent = `$${rev.toFixed(2)}`;
+        if(document.getElementById('dash-orders')) document.getElementById('dash-orders').textContent = this.data.orders.length;
     }
 };
 
@@ -468,4 +491,38 @@ function updateCashUI() {
     document.getElementById('cash-total-due').textContent = `Total: $${total.toFixed(2)}`;
     const bar = document.getElementById('change-bar');
     if(val >= total) { bar.classList.add('active'); bar.textContent = `Change Due: $${(val - total).toFixed(2)}`; }
-    else { bar.classList.remove('active'); bar.textContent = "Change Due: $0.
+    else { bar.classList.remove('active'); bar.textContent = "Change Due: $0.00"; }
+}
+function handleClock(type) {
+    const name = document.getElementById('time-employee-select').value;
+    if(!name) return alert("Select Name");
+    const emp = window.app.data.employees.find(e => e.name === name);
+    if(emp) { emp.status = type; alert(`${name} Clocked ${type.toUpperCase()}`); saveData(); window.app.refreshUI(); }
+}
+
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log(`System Loaded: ${APP_VERSION}`);
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if(stored) {
+            window.app.data = JSON.parse(stored);
+        } else {
+            window.app.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+    } catch(e) {
+        console.error("Data Corruption", e);
+        window.app.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    }
+    
+    // Safety Checks
+    if(!window.app.data.products) window.app.data.products = DEFAULT_PRODUCTS;
+    if(!window.app.data.categories) window.app.data.categories = DEFAULT_DATA.categories;
+    
+    window.app.refreshUI();
+    
+    setInterval(() => {
+        const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if(document.getElementById('live-clock')) document.getElementById('live-clock').textContent = t;
+    }, 1000);
+});
