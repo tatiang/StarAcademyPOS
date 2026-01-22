@@ -69,6 +69,7 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 /* Form Elements */
 .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; }
 .btn-sm { padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
+.btn-clock { padding: 15px; border: none; border-radius: 8px; color: white; cursor: pointer; width: 48%; }
 .opt-chip { display: inline-block; padding: 8px 12px; background: #eee; border-radius: 20px; margin-right: 5px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; font-size: 0.9rem; }
 .opt-chip.selected { background: var(--golden-bronze); color: white; border-color: var(--golden-bronze); }
 
@@ -87,3 +88,9 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 .calc-btn:active { background: #ddd; }
 .change-bar { background: #eee; padding: 10px; text-align: center; margin-top: 15px; border-radius: 6px; font-weight: bold; color: #999; }
 .change-bar.active { background: var(--success); color: white; }
+
+/* Dashboard */
+.mgr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.mgr-card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.mgr-card h3 { margin: 0 0 10px 0; color: #666; font-size: 0.9rem; text-transform: uppercase; }
+.mgr-card .value { font-size: 2rem; font-weight: bold; color: var(--space-indigo); }
