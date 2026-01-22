@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Star Academy POS v1.80</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style_test_Gemini.css">
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -19,7 +23,7 @@
     </div>
     <div class="login-box">
         <h2>Classroom Café Login</h2>
-        <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; height:20px;">
+        <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; min-height:20px;">
             <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting to cloud...
         </div>
         
@@ -27,7 +31,10 @@
             <i class="fa-solid fa-tablet-screen-button"></i> Customer Ordering (Kiosk)
         </button>
 
-        <div class="login-grid" id="student-login-grid"></div>
+        <div class="login-grid" id="student-login-grid">
+            <div style="color:#999; padding:20px;">Loading Students...</div>
+        </div>
+        
         <div class="admin-divider"><span>ADMINISTRATION</span></div>
         <div class="admin-buttons-row">
             <div class="admin-login-btn" onclick="window.app.promptPin('Manager')"><i class="fa-solid fa-user-tie"></i> Manager</div>
@@ -98,12 +105,22 @@
             </div>
         </section>
 
-        <section id="view-barista" class="view"><h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
-        <section id="view-dashboard" class="view"><h2>Dashboard</h2><div class="mgr-grid"><div class="mgr-card"><h3>Revenue</h3><div class="value" id="dash-revenue">$0.00</div></div><div class="mgr-card"><h3>Orders</h3><div class="value" id="dash-orders">0</div></div></div></section>
+        <section id="view-barista" class="view">
+            <h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2>
+            <div class="barista-grid" id="barista-grid"></div>
+        </section>
+        
+        <section id="view-dashboard" class="view">
+            <h2>Dashboard</h2>
+            <div class="mgr-grid">
+                <div class="mgr-card"><h3>Revenue</h3><div class="value" id="dash-revenue">$0.00</div></div>
+                <div class="mgr-card"><h3>Orders</h3><div class="value" id="dash-orders">0</div></div>
+            </div>
+        </section>
         
         <section id="view-inventory" class="view">
              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                 <h2>Inventory</h2>
+                 <h2>Inventory & Products</h2>
                  <button class="btn-pay btn-gold" style="width:auto; padding: 10px 20px;" onclick="window.app.openProductModal()">+ Add Product</button>
              </div>
              <table class="staff-table">
@@ -124,9 +141,13 @@
             </div>
         </section>
 
-        <section id="view-customer" class="view">
-            <h1 style="text-align:center; margin-top:50px;">Kiosk Mode Active</h1>
-            <button class="btn-sm" style="position:absolute; top:20px; right:20px;" onclick="window.app.exitKioskMode()">Exit</button>
+        <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0;">
+            <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.exitKioskMode()">Exit</button>
+            <div style="text-align:center; margin-top:40px;">
+                <h1>Customer Kiosk</h1>
+                <p>Please select your items below (Work in Progress)</p>
+                <div id="kiosk-grid" class="product-grid" style="padding:20px;"></div>
+            </div>
         </section>
     </div>
 </div>
@@ -188,7 +209,8 @@
     </div>
 </div>
 
-<script type="module" src="app_test_Gemini.js"></script>
-<script type="module" src="firestore_test_Gemini.js"></script>
+<script src="app_test_Gemini.js"></script>
+<script src="firestore_test_Gemini.js"></script>
+
 </body>
 </html>
