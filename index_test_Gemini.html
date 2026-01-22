@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Star Academy POS v1.85</title>
+    <title>Star Academy POS v1.86</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -27,15 +27,15 @@
     <div class="login-box">
         <h2>Classroom Café Login</h2>
         <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; min-height:20px;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting to cloud...
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting...
         </div>
         
         <button class="btn-pay" style="width:100%; margin-bottom:20px; background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2);" onclick="window.app.startKioskMode()">
-            <i class="fa-solid fa-tablet-screen-button"></i> Customer Ordering (Kiosk)
+            <i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode
         </button>
 
         <div class="login-grid" id="student-login-grid">
-            <div style="color:#999; padding:20px;">Loading...</div>
+            <div style="color:#999; padding:20px;">Loading Students...</div>
         </div>
         
         <div class="admin-divider"><span>ADMINISTRATION</span></div>
@@ -44,7 +44,12 @@
             <div class="admin-login-btn" onclick="window.app.promptPin('IT Support')"><i class="fa-solid fa-microchip"></i> IT Support</div>
         </div>
     </div>
-    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.85</div>
+    
+    <div style="position:absolute; bottom:20px; right:20px; opacity:0.5; cursor:pointer; color:white; font-size:0.8rem;" onclick="if(confirm('Reset all app data? This fixes login issues.')){localStorage.clear(); location.reload();}">
+        <i class="fa-solid fa-rotate-right"></i> System Reset
+    </div>
+    
+    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.86</div>
 </div>
 
 <div class="app-wrapper">
@@ -63,7 +68,7 @@
             <li onclick="window.app.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.85</div>
+            <div class="sidebar-version">v1.86</div>
             <button onclick="window.app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -95,7 +100,7 @@
                         <h3>Order #<span id="order-number"></span></h3>
                         <input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Required)" style="margin-top:5px; font-size:0.9rem;">
                     </div>
-                    <div class="cart-items" id="cart-list"><div style="padding:20px; text-align:center; color:#999;">Cart is empty</div></div>
+                    <div class="cart-items" id="cart-list"></div>
                     <div class="cart-totals">
                         <div class="total-row"><span>Subtotal</span> <span id="pos-subtotal">$0.00</span></div>
                         <div class="total-row"><span>Tax (9.25%)</span> <span id="pos-tax">$0.00</span></div>
@@ -111,7 +116,6 @@
 
         <section id="view-manager" class="view">
             <h2 style="color:var(--space-indigo); margin-bottom:20px;">Manager Hub</h2>
-            
             <div class="mgr-tabs">
                 <button class="mgr-tab active" onclick="window.app.switchMgrTab('staff')">Staff & Roles</button>
                 <button class="mgr-tab" onclick="window.app.switchMgrTab('menu')">Menu Management</button>
@@ -121,24 +125,12 @@
             <div id="mgr-sub-staff" class="mgr-subview active">
                 <div class="mgr-split">
                     <div class="mgr-box">
-                        <div class="box-header">
-                            <h3>Employees</h3>
-                            <button class="btn-sm btn-gold" onclick="window.app.editEmployee()">+ Add New</button>
-                        </div>
-                        <table class="staff-table">
-                            <thead><tr><th>Name</th><th>Role</th><th>Action</th></tr></thead>
-                            <tbody id="mgr-employee-list"></tbody>
-                        </table>
+                        <div class="box-header"><h3>Employees</h3><button class="btn-sm btn-gold" onclick="window.app.editEmployee()">+ Add New</button></div>
+                        <table class="staff-table"><thead><tr><th>Name</th><th>Role</th><th>Action</th></tr></thead><tbody id="mgr-employee-list"></tbody></table>
                     </div>
                     <div class="mgr-box">
-                        <div class="box-header">
-                            <h3>Roles</h3>
-                            <button class="btn-sm btn-gold" onclick="window.app.editRole()">+ Add Role</button>
-                        </div>
-                        <table class="staff-table">
-                            <thead><tr><th>Role Name</th><th>Action</th></tr></thead>
-                            <tbody id="mgr-role-list"></tbody>
-                        </table>
+                        <div class="box-header"><h3>Roles</h3><button class="btn-sm btn-gold" onclick="window.app.editRole()">+ Add Role</button></div>
+                        <table class="staff-table"><thead><tr><th>Role Name</th><th>Action</th></tr></thead><tbody id="mgr-role-list"></tbody></table>
                     </div>
                 </div>
             </div>
@@ -146,20 +138,11 @@
             <div id="mgr-sub-menu" class="mgr-subview">
                 <div class="mgr-split">
                     <div class="mgr-box" style="flex:2">
-                        <div class="box-header">
-                            <h3>Products</h3>
-                            <button class="btn-sm btn-gold" onclick="window.app.editProduct()">+ Add Product</button>
-                        </div>
-                        <table class="staff-table">
-                            <thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Category</th><th>Action</th></tr></thead>
-                            <tbody id="mgr-product-list"></tbody>
-                        </table>
+                        <div class="box-header"><h3>Products</h3><button class="btn-sm btn-gold" onclick="window.app.editProduct()">+ Add Product</button></div>
+                        <table class="staff-table"><thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Category</th><th>Action</th></tr></thead><tbody id="mgr-product-list"></tbody></table>
                     </div>
                     <div class="mgr-box" style="flex:1">
-                        <div class="box-header">
-                            <h3>Categories</h3>
-                            <button class="btn-sm btn-gold" onclick="window.app.editCategory()">+ Add Category</button>
-                        </div>
+                        <div class="box-header"><h3>Categories</h3><button class="btn-sm btn-gold" onclick="window.app.editCategory()">+ Add Category</button></div>
                         <ul id="mgr-cat-list" style="list-style:none; padding:0;"></ul>
                     </div>
                 </div>
@@ -197,10 +180,7 @@
         
         <section id="view-inventory" class="view">
             <h2>Inventory View</h2>
-            <table class="staff-table">
-               <thead><tr><th>Product</th><th>Stock Status</th></tr></thead>
-               <tbody id="inventory-body"></tbody>
-            </table>
+            <table class="staff-table"><thead><tr><th>Product</th><th>Stock Status</th></tr></thead><tbody id="inventory-body"></tbody></table>
        </section>
 
         <section id="view-time" class="view">
@@ -216,7 +196,7 @@
         
         <section id="view-it" class="view">
              <h2>IT Hub</h2>
-             <p>System Version: v1.85</p>
+             <p>System Version: v1.86</p>
              <button class="btn-sm" style="background:var(--danger); color:white" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
         </section>
 
@@ -231,7 +211,18 @@
     </div>
 </div>
 
-<div id="modal-pin" class="modal"><div class="modal-content" style="width:300px;"><h3>Enter PIN</h3><div id="pin-display" style="font-size: 2rem; letter-spacing: 5px; text-align: center; margin: 15px 0; background: #eee; padding: 10px;"></div><div id="pin-pad-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;"><button class="pin-btn" onclick="window.app.pinInput('1')">1</button><button class="pin-btn" onclick="window.app.pinInput('2')">2</button><button class="pin-btn" onclick="window.app.pinInput('3')">3</button><button class="pin-btn" onclick="window.app.pinInput('4')">4</button><button class="pin-btn" onclick="window.app.pinInput('5')">5</button><button class="pin-btn" onclick="window.app.pinInput('6')">6</button><button class="pin-btn" onclick="window.app.pinInput('7')">7</button><button class="pin-btn" onclick="window.app.pinInput('8')">8</button><button class="pin-btn" onclick="window.app.pinInput('9')">9</button><button class="pin-btn" onclick="window.app.pinClear()" style="background:#e74c3c; color:white;">C</button><button class="pin-btn" onclick="window.app.pinInput('0')">0</button><button class="pin-btn" onclick="window.app.pinSubmit()" style="background:#2ecc71; color:white;">OK</button></div></div></div>
+<div id="modal-pin" class="modal">
+    <div class="modal-content" style="width:300px;">
+        <h3>Enter PIN</h3>
+        <div id="pin-display"></div>
+        <div id="pin-pad-grid">
+            <button class="pin-btn" onclick="window.app.pinInput('1')">1</button><button class="pin-btn" onclick="window.app.pinInput('2')">2</button><button class="pin-btn" onclick="window.app.pinInput('3')">3</button>
+            <button class="pin-btn" onclick="window.app.pinInput('4')">4</button><button class="pin-btn" onclick="window.app.pinInput('5')">5</button><button class="pin-btn" onclick="window.app.pinInput('6')">6</button>
+            <button class="pin-btn" onclick="window.app.pinInput('7')">7</button><button class="pin-btn" onclick="window.app.pinInput('8')">8</button><button class="pin-btn" onclick="window.app.pinInput('9')">9</button>
+            <button class="pin-btn" onclick="window.app.pinClear()" style="background:#e74c3c; color:white;">C</button><button class="pin-btn" onclick="window.app.pinInput('0')">0</button><button class="pin-btn" onclick="window.app.pinSubmit()" style="background:#2ecc71; color:white;">OK</button>
+        </div>
+    </div>
+</div>
 
 <div id="modal-options" class="modal">
     <div class="modal-content">
@@ -249,8 +240,8 @@
     <div class="modal-content">
         <h3>Cash Payment</h3>
         <div class="total-display-large" id="cash-total-due">$0.00</div>
-        <div id="calc-display" style="font-size:1.5rem; text-align:right; margin-bottom:10px; border-bottom:2px solid #333; height:40px;">$0.00</div>
-        <div class="calc-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+        <div id="calc-display">$0.00</div>
+        <div class="calc-grid">
             <button class="calc-btn" onclick="window.app.cashInput('1')">1</button><button class="calc-btn" onclick="window.app.cashInput('2')">2</button><button class="calc-btn" onclick="window.app.cashInput('3')">3</button>
             <button class="calc-btn" onclick="window.app.cashInput('4')">4</button><button class="calc-btn" onclick="window.app.cashInput('5')">5</button><button class="calc-btn" onclick="window.app.cashInput('6')">6</button>
             <button class="calc-btn" onclick="window.app.cashInput('7')">7</button><button class="calc-btn" onclick="window.app.cashInput('8')">8</button><button class="calc-btn" onclick="window.app.cashInput('9')">9</button>
@@ -279,19 +270,33 @@
     <div class="modal-content">
         <h3>Product Editor</h3>
         <input type="hidden" id="edit-prod-id">
+        <label>Product Name</label>
         <input id="edit-prod-name" class="form-control" placeholder="Name">
         <div style="display:flex; gap:5px;">
-            <input id="edit-prod-price" class="form-control" placeholder="Price" type="number" step="0.01">
-            <select id="edit-prod-cat" class="form-control"></select>
+            <div style="flex:1"><label>Price</label><input id="edit-prod-price" class="form-control" placeholder="0.00" type="number" step="0.01"></div>
+            <div style="flex:1"><label>Category</label><select id="edit-prod-cat" class="form-control"></select></div>
         </div>
-        <input id="edit-prod-opts" class="form-control" placeholder="Options (comma separated)">
-        <input id="edit-prod-img" class="form-control" placeholder="Image URL">
-        <div class="ai-box" style="margin:10px 0; border:1px dashed #ccc; padding:10px; border-radius:8px; text-align:center;">
-            <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--barista-purple)"></i>
-            <button class="btn-sm" style="margin-top:5px; background:var(--barista-purple); color:white;" onclick="window.app.generateAIImage()">
-                Generate AI Image
-            </button>
+        <label>Options (comma separated)</label>
+        <input id="edit-prod-opts" class="form-control" placeholder="e.g. Cream, Sugar">
+        <label>Image URL</label>
+        <input id="edit-prod-img" class="form-control" placeholder="https://...">
+        
+        <div class="ai-box" style="margin:10px 0; border:1px solid #ddd; padding:15px; border-radius:8px; background:#f9f9f9;">
+            <div style="font-weight:bold; color:var(--space-indigo); margin-bottom:10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Image Tools</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-sm" style="flex:1; background:var(--barista-purple); color:white; border:none;" onclick="window.app.copyAIPrompt()">
+                    <i class="fa-solid fa-copy"></i> Copy Prompt
+                </button>
+                <button class="btn-sm" style="flex:1; background:#ccc; color:#333; border:none;" onclick="window.app.generateAIImage()">
+                    <i class="fa-solid fa-bolt"></i> Instant Draft
+                </button>
+            </div>
+            <div style="font-size:0.75rem; color:#666; margin-top:8px;">
+                <strong>Copy Prompt:</strong> Copies text to paste into Firefly/Gemini/ChatGPT.<br>
+                <strong>Instant Draft:</strong> Uses free low-res generator.
+            </div>
         </div>
+        
         <div style="display:flex; gap:10px;">
             <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button>
             <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button>
