@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Star Academy POS v1.88</title>
+    <title>Star Academy POS v1.90</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -49,7 +49,7 @@
         <i class="fa-solid fa-life-ring"></i> Reset Data
     </div>
     
-    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.88</div>
+    <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v1.90</div>
 </div>
 
 <div class="app-wrapper">
@@ -68,7 +68,7 @@
             <li onclick="window.app.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
         </ul>
         <div class="sidebar-footer">
-            <div class="sidebar-version">v1.88</div>
+            <div class="sidebar-version">v1.90</div>
             <button onclick="window.app.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%;">
                 <i class="fa-solid fa-sign-out-alt"></i> Sign Out
             </button>
@@ -151,88 +151,26 @@
             <div id="mgr-sub-data" class="mgr-subview">
                 <div class="mgr-grid">
                     <div class="mgr-card">
-                        <h3>Cloud & Backups</h3>
-                        <p>Auto-backup runs every 60 mins.</p>
+                        <h3>Backups</h3>
+                        <p>Cloud backups run automatically every hour.</p>
                         <button class="btn-pay btn-card" onclick="window.saveToCloud(window.app.data, false, true)">Backup Now</button>
                         <div id="backup-status" style="margin-top:10px; font-size:0.8rem; color:#666;"></div>
                     </div>
                     <div class="mgr-card">
-                        <h3>Reporting</h3>
-                        <button class="btn-pay" style="margin-bottom:10px;" onclick="window.app.printTimesheet()">Print Timesheets (PDF)</button>
+                        <h3>Reports</h3>
+                        <button class="btn-pay" style="margin-bottom:10px;" onclick="window.app.printTimesheet()">Print Timesheets</button>
                         <button class="btn-pay" onclick="window.app.viewReceipts()">View/Print Receipts</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="view-barista" class="view">
-            <h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2>
-            <div class="barista-grid" id="barista-grid"></div>
-        </section>
-        
-        <section id="view-dashboard" class="view">
-            <h2>Dashboard</h2>
-            <div class="mgr-grid">
-                <div class="mgr-card"><h3>Revenue</h3><div class="value" id="dash-revenue">$0.00</div></div>
-                <div class="mgr-card"><h3>Orders</h3><div class="value" id="dash-orders">0</div></div>
-            </div>
-        </section>
-        
-        <section id="view-inventory" class="view">
-            <h2>Inventory View</h2>
-            <table class="staff-table"><thead><tr><th>Product</th><th>Stock Status</th></tr></thead><tbody id="inventory-body"></tbody></table>
-       </section>
-
-        <section id="view-time" class="view">
-            <h2>Time Clock</h2>
-            <div class="clock-controls" style="background:white; padding:20px; border-radius:12px; margin-top:20px;">
-                <select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select>
-                <div style="margin-top:15px;">
-                    <button class="btn-clock" style="background:var(--success)" onclick="window.app.clockIn()">Clock In</button>
-                    <button class="btn-clock" style="background:var(--danger)" onclick="window.app.clockOut()">Clock Out</button>
-                </div>
-            </div>
-        </section>
-        
-        <section id="view-it" class="view">
-             <h2>IT Hub</h2>
-             <p>System Version: v1.88</p>
-             <button class="btn-sm" style="background:var(--danger); color:white" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
-        </section>
-
-        <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0;">
-            <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.exitKioskMode()">Exit</button>
-            <div style="text-align:center; margin-top:40px;">
-                <h1>Customer Kiosk</h1>
-                <p>Please select your items below</p>
-                <div id="kiosk-grid" class="product-grid" style="padding:20px;"></div>
-            </div>
-        </section>
-    </div>
-</div>
-
-<div id="modal-pin" class="modal">
-    <div class="modal-content" style="width:300px;">
-        <h3>Enter PIN</h3>
-        <div id="pin-display"></div>
-        <div id="pin-pad-grid">
-            <button class="pin-btn" onclick="window.app.pinInput('1')">1</button><button class="pin-btn" onclick="window.app.pinInput('2')">2</button><button class="pin-btn" onclick="window.app.pinInput('3')">3</button>
-            <button class="pin-btn" onclick="window.app.pinInput('4')">4</button><button class="pin-btn" onclick="window.app.pinInput('5')">5</button><button class="pin-btn" onclick="window.app.pinInput('6')">6</button>
-            <button class="pin-btn" onclick="window.app.pinInput('7')">7</button><button class="pin-btn" onclick="window.app.pinInput('8')">8</button><button class="pin-btn" onclick="window.app.pinInput('9')">9</button>
-            <button class="pin-btn" onclick="window.app.pinClear()" style="background:#e74c3c; color:white;">C</button><button class="pin-btn" onclick="window.app.pinInput('0')">0</button><button class="pin-btn" onclick="window.app.pinSubmit()" style="background:#2ecc71; color:white;">OK</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-options" class="modal">
-    <div class="modal-content">
-        <h3 id="opt-product-name">Product Options</h3>
-        <div id="opt-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; margin: 15px 0;"></div>
-        <textarea id="opt-notes" class="form-control" placeholder="Other notes..." style="height:60px;"></textarea>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-options')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.confirmAddToCart()">Add to Cart</button>
-        </div>
+        <section id="view-barista" class="view"><h2 style="color:var(--space-indigo);">☕ Barista Queue <button class="btn-sm" onclick="window.app.refreshUI()" style="float:right">Refresh</button></h2><div class="barista-grid" id="barista-grid"></div></section>
+        <section id="view-dashboard" class="view"><h2>Dashboard</h2><div class="mgr-grid"><div class="mgr-card"><h3>Revenue</h3><div class="value" id="dash-revenue">$0.00</div></div><div class="mgr-card"><h3>Orders</h3><div class="value" id="dash-orders">0</div></div></div></section>
+        <section id="view-inventory" class="view"><h2>Inventory View</h2><table class="staff-table"><thead><tr><th>Product</th><th>Stock Status</th></tr></thead><tbody id="inventory-body"></tbody></table></section>
+        <section id="view-time" class="view"><h2>Time Clock</h2><div class="clock-controls" style="background:white; padding:20px; border-radius:12px; margin-top:20px;"><select id="time-employee-select" class="clock-select"><option value="">Select your name...</option></select><div style="margin-top:15px;"><button class="btn-clock" style="background:var(--success)" onclick="window.app.clockIn()">Clock In</button><button class="btn-clock" style="background:var(--danger)" onclick="window.app.clockOut()">Clock Out</button></div></div></section>
+        <section id="view-it" class="view"><h2>IT Hub</h2><p>System Version: v1.90</p><button class="btn-sm" style="background:var(--danger); color:white" onclick="localStorage.clear(); location.reload()">Factory Reset</button></section>
+        <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0;"><button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.exitKioskMode()">Exit</button><div style="text-align:center; margin-top:40px;"><h1>Customer Kiosk</h1><p>Please select your items below</p><div id="kiosk-grid" class="product-grid" style="padding:20px;"></div></div></section>
     </div>
 </div>
 
@@ -241,13 +179,24 @@
         <h3>Cash Payment</h3>
         <div class="total-display-large" id="cash-total-due">$0.00</div>
         <div id="calc-display">$0.00</div>
+        
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.addCash(5)">+$5</button>
+            <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.addCash(10)">+$10</button>
+            <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.addCash(20)">+$20</button>
+        </div>
+
         <div class="calc-grid">
             <button class="calc-btn" onclick="window.app.cashInput('1')">1</button><button class="calc-btn" onclick="window.app.cashInput('2')">2</button><button class="calc-btn" onclick="window.app.cashInput('3')">3</button>
             <button class="calc-btn" onclick="window.app.cashInput('4')">4</button><button class="calc-btn" onclick="window.app.cashInput('5')">5</button><button class="calc-btn" onclick="window.app.cashInput('6')">6</button>
             <button class="calc-btn" onclick="window.app.cashInput('7')">7</button><button class="calc-btn" onclick="window.app.cashInput('8')">8</button><button class="calc-btn" onclick="window.app.cashInput('9')">9</button>
             <button class="calc-btn" onclick="window.app.cashInput('.')">.</button><button class="calc-btn" onclick="window.app.cashInput('0')">0</button><button class="calc-btn" onclick="window.app.cashClear()">C</button>
         </div>
-        <div id="change-bar" class="change-bar">Change Due: $0.00</div>
+        
+        <div id="change-display-box" class="change-display-box">
+            Change: $0.00
+        </div>
+        
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-cash')">Cancel</button>
             <button class="btn-pay btn-success" style="flex:1; background:var(--success);" onclick="window.app.finalizeCash()">Finalize</button>
@@ -255,55 +204,51 @@
     </div>
 </div>
 
-<div id="modal-generic" class="modal">
-    <div class="modal-content">
-        <h3 id="gen-modal-title">Edit Item</h3>
-        <div id="gen-modal-body"></div>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-generic')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" id="gen-save-btn">Save</button>
+<div id="modal-card" class="modal">
+    <div class="modal-content" style="width:400px;">
+        <div style="text-align:center; margin-bottom:15px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/Square_Inc_Logo.png" alt="Square" style="height:30px; opacity:0.8;">
+            <h3 style="margin-top:5px;">Card Terminal</h3>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+            <button class="btn-sm" style="flex:1" onclick="document.getElementById('card-mode-swipe').style.display='block'; document.getElementById('card-mode-manual').style.display='none';">Swipe</button>
+            <button class="btn-sm" style="flex:1" onclick="document.getElementById('card-mode-swipe').style.display='none'; document.getElementById('card-mode-manual').style.display='block';">Manual Entry</button>
+        </div>
+
+        <div id="card-mode-swipe">
+            <div class="swipe-track" onclick="window.app.simulateSwipe()">
+                <div id="swipe-anim" class="swipe-anim">SLIDE CARD HERE &rarr;</div>
+            </div>
+            <p style="text-align:center; color:#888; font-size:0.8rem;">Click track to simulate swipe</p>
+        </div>
+
+        <div id="card-mode-manual" style="display:none;">
+            <input type="tel" id="cc-num" class="form-control" placeholder="Card Number (0000 0000 0000 0000)">
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="cc-exp" class="form-control" placeholder="MM/YY">
+                <input type="tel" id="cc-cvv" class="form-control" placeholder="CVV">
+            </div>
+        </div>
+
+        <div id="card-msg" style="text-align:center; color:var(--success); font-weight:bold; height:20px; margin:10px 0;"></div>
+
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-card')">Cancel</button>
+            <button id="btn-process-card" class="btn-pay btn-card" style="flex:1; opacity:0.5; pointer-events:none;" onclick="window.app.finalizeCard()">Process</button>
         </div>
     </div>
 </div>
 
-<div id="modal-product" class="modal">
-    <div class="modal-content">
-        <h3>Product Editor</h3>
-        <input type="hidden" id="edit-prod-id">
-        <label>Product Name</label>
-        <input id="edit-prod-name" class="form-control" placeholder="Name">
-        <div style="display:flex; gap:5px;">
-            <div style="flex:1"><label>Price</label><input id="edit-prod-price" class="form-control" placeholder="0.00" type="number" step="0.01"></div>
-            <div style="flex:1"><label>Category</label><select id="edit-prod-cat" class="form-control"></select></div>
-        </div>
-        <label>Options (comma separated)</label>
-        <input id="edit-prod-opts" class="form-control" placeholder="e.g. Cream, Sugar">
-        
-        <label>Image URL or AI</label>
-        <div style="display:flex; gap:5px;">
-            <input id="edit-prod-img" class="form-control" placeholder="https://..." onchange="window.app.updateImagePreview()">
-            <button class="btn-sm" style="background:var(--barista-purple); color:white;" onclick="window.app.generateAIImage()">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> AI
-            </button>
-        </div>
-        <div id="img-preview-box" style="width:100%; height:150px; background:#f0f0f0; border-radius:8px; margin:10px 0; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#999;">
-            <span>No Image Preview</span>
-        </div>
-        
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button>
-            <button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button>
-        </div>
-    </div>
-</div>
+<div id="modal-pin" class="modal"><div class="modal-content" style="width:300px;"><h3>Enter PIN</h3><div id="pin-display"></div><div id="pin-pad-grid"><button class="pin-btn" onclick="window.app.pinInput('1')">1</button><button class="pin-btn" onclick="window.app.pinInput('2')">2</button><button class="pin-btn" onclick="window.app.pinInput('3')">3</button><button class="pin-btn" onclick="window.app.pinInput('4')">4</button><button class="pin-btn" onclick="window.app.pinInput('5')">5</button><button class="pin-btn" onclick="window.app.pinInput('6')">6</button><button class="pin-btn" onclick="window.app.pinInput('7')">7</button><button class="pin-btn" onclick="window.app.pinInput('8')">8</button><button class="pin-btn" onclick="window.app.pinInput('9')">9</button><button class="pin-btn" onclick="window.app.pinClear()" style="background:#e74c3c; color:white;">C</button><button class="pin-btn" onclick="window.app.pinInput('0')">0</button><button class="pin-btn" onclick="window.app.pinSubmit()" style="background:#2ecc71; color:white;">OK</button></div></div></div>
 
-<div id="modal-receipts" class="modal">
-    <div class="modal-content">
-        <h3>Order History</h3>
-        <div id="receipt-list" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:10px;"></div>
-        <button class="btn-pay btn-train" style="margin-top:10px; width:100%" onclick="window.app.closeModal('modal-receipts')">Close</button>
-    </div>
-</div>
+<div id="modal-options" class="modal"><div class="modal-content"><h3 id="opt-product-name">Product Options</h3><div id="opt-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; margin: 15px 0;"></div><textarea id="opt-notes" class="form-control" placeholder="Other notes..." style="height:60px;"></textarea><div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-options')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="window.app.confirmAddToCart()">Add to Cart</button></div></div></div>
+
+<div id="modal-generic" class="modal"><div class="modal-content"><h3 id="gen-modal-title">Edit Item</h3><div id="gen-modal-body"></div><div style="display:flex; gap:10px; margin-top:15px;"><button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-generic')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" id="gen-save-btn">Save</button></div></div></div>
+
+<div id="modal-product" class="modal"><div class="modal-content"><h3>Product Editor</h3><input type="hidden" id="edit-prod-id"><label>Product Name</label><input id="edit-prod-name" class="form-control" placeholder="Name"><div style="display:flex; gap:5px;"><div style="flex:1"><label>Price</label><input id="edit-prod-price" class="form-control" placeholder="0.00" type="number" step="0.01"></div><div style="flex:1"><label>Category</label><select id="edit-prod-cat" class="form-control"></select></div></div><label>Options (comma separated)</label><input id="edit-prod-opts" class="form-control" placeholder="e.g. Cream, Sugar"><label>Image URL or AI</label><div style="display:flex; gap:5px;"><input id="edit-prod-img" class="form-control" placeholder="https://..." onchange="window.app.updateImagePreview()"><button class="btn-sm" style="background:var(--barista-purple); color:white;" onclick="window.app.generateAIImage()"><i class="fa-solid fa-wand-magic-sparkles"></i> AI</button></div><div id="img-preview-box" style="width:100%; height:150px; background:#f0f0f0; border-radius:8px; margin:10px 0; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#999;"><span>No Image Preview</span></div><div style="display:flex; gap:10px; margin-top:15px;"><button class="btn-pay btn-train" style="flex:1" onclick="window.app.closeModal('modal-product')">Cancel</button><button class="btn-pay btn-gold" style="flex:1" onclick="window.app.saveProduct()">Save</button></div></div></div>
+
+<div id="modal-receipts" class="modal"><div class="modal-content"><h3>Order History</h3><div id="receipt-list" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:10px;"></div><button class="btn-pay btn-train" style="margin-top:10px; width:100%" onclick="window.app.closeModal('modal-receipts')">Close</button></div></div>
 
 <script src="js/app_test_Gemini.js"></script>
 <script src="js/firestore_test_Gemini.js"></script>
