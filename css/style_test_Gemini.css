@@ -57,7 +57,9 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 
 /* Cart */
 .cart-items { flex: 1; overflow-y: auto; margin: 10px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
-.cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 0.9rem; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 0.9rem; }
+.cart-qty-controls { display:flex; align-items:center; gap:5px; background:#f4f4f4; border-radius:4px; padding:2px; }
+.cart-qty-btn { width:24px; height:24px; border:none; background:white; cursor:pointer; font-weight:bold; border-radius:3px; }
 .cart-totals .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; color: #666; }
 .cart-totals .grand-total { font-size: 1.2rem; font-weight: bold; color: var(--space-indigo); margin-top: 10px; border-top: 2px solid #333; padding-top: 10px; }
 .cart-actions { display: flex; gap: 10px; margin-top: 15px; }
@@ -101,14 +103,31 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 .staff-table th, .staff-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
 .staff-table th { background: #f4f4f4; color: #666; font-size: 0.85rem; text-transform: uppercase; }
 
-/* Calculator */
+/* Calculator / Cash Modal */
 .calc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 .calc-btn { padding: 15px; font-size: 1.2rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
 .calc-btn:active { background: #ddd; }
 #calc-display { font-size:1.5rem; text-align:right; margin-bottom:10px; border-bottom:2px solid #333; height:40px; padding: 5px;}
 .total-display-large { font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 10px; color: var(--space-indigo); }
-.change-bar { background: #eee; padding: 10px; text-align: center; margin-top: 15px; border-radius: 6px; font-weight: bold; color: #999; }
-.change-bar.active { background: var(--success); color: white; }
+
+/* Change Display (v1.90 Redesign) */
+.change-display-box { 
+    background: transparent; 
+    border: 2px solid #ddd; 
+    padding: 15px; 
+    text-align: center; 
+    margin-top: 20px; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    font-size: 1.2rem; 
+    color: var(--text-dark);
+}
+
+/* Card Swipe Simulation */
+.swipe-track { width: 100%; height: 60px; background: #eee; border-radius: 8px; position: relative; margin: 20px 0; cursor: pointer; overflow: hidden; border: 2px dashed #ccc; }
+.swipe-anim { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; transition: all 1s; }
+.swipe-track.swiped .swipe-anim { transform: translateX(100%); opacity: 0; }
+.swipe-track.swiped { background: #d4edda; border-style: solid; border-color: var(--success); }
 
 /* Dashboard/Manager Stats */
 .mgr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
