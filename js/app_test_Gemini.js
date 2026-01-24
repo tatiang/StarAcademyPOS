@@ -1,7 +1,7 @@
-/* Star Academy POS v1.90 (Cash/Card Enhancements) */
+/* Star Academy POS v1.91 (Fixes & Robustness) */
 
-const APP_VERSION = "v1.90";
-const STORAGE_KEY = "star_pos_v190_data";
+const APP_VERSION = "v1.91";
+const STORAGE_KEY = "star_pos_v191_data";
 const TAX_RATE = 0.0925;
 
 const DEFAULT_PRODUCTS = [
@@ -28,9 +28,8 @@ let pinBuffer = "";
 let targetRole = "";
 let cashTendered = "";
 let editingId = null;
-let cardVerified = false; // State for card simulation
+let cardVerified = false;
 
-// --- GLOBAL APP OBJECT ---
 window.app = {
     data: null,
 
@@ -51,7 +50,7 @@ window.app = {
     // --- POS & CART ---
     renderPOS: function() {
         const catContainer = document.getElementById('pos-categories');
-        if(catContainer && catContainer.innerHTML === "") { // Only init if empty
+        if(catContainer && catContainer.innerHTML === "") {
             let cats = ['All', ...this.data.categories];
             catContainer.innerHTML = cats.map(c => 
                 `<button class="btn-sm" style="margin-right:5px; margin-bottom:5px;" onclick="window.app.filterPos('${c}')">${c}</button>`
@@ -135,7 +134,6 @@ window.app = {
         const finalOptions = [...tempOptions];
         if(note) finalOptions.push(note);
         const item = { ...tempProduct, qty: 1, options: finalOptions };
-        // Aggregate if identical
         const existing = this.data.cart.find(i => i.id === item.id && JSON.stringify(i.options) === JSON.stringify(item.options));
         if(existing) existing.qty++; else this.data.cart.push(item);
         document.getElementById('modal-options').classList.remove('open');
@@ -152,11 +150,11 @@ window.app = {
         
         if(method === 'Cash') { 
             cashTendered = ""; 
-            updateCashUI(); 
+            // FIX: Open modal FIRST, then try to update UI.
             document.getElementById('modal-cash').classList.add('open'); 
+            try { updateCashUI(); } catch(e) { console.error("UI Update Error", e); }
         } else if (method === 'Card') {
             cardVerified = false;
-            // Reset UI
             document.querySelector('.swipe-track').classList.remove('swiped');
             document.getElementById('card-msg').textContent = "";
             document.getElementById('btn-process-card').style.opacity = "0.5";
@@ -164,7 +162,6 @@ window.app = {
             document.getElementById('cc-num').value = "";
             document.getElementById('cc-exp').value = "";
             document.getElementById('cc-cvv').value = "";
-            
             document.getElementById('modal-card').classList.add('open');
         }
     },
@@ -196,7 +193,6 @@ window.app = {
         }, 1000);
     },
     finalizeCard: function() {
-        // If not swiped, check manual inputs
         if(!cardVerified) {
             const num = document.getElementById('cc-num').value;
             const exp = document.getElementById('cc-exp').value;
@@ -207,14 +203,13 @@ window.app = {
                 return alert("Please swipe card or enter valid details.");
             }
         }
-        
         if(cardVerified) {
             completeOrder('Card');
             document.getElementById('modal-card').classList.remove('open');
         }
     },
 
-    // --- OTHER LOGIC (Manager, Login, etc. - maintained from v1.89) ---
+    // --- MANAGER & OTHER ---
     switchMgrTab: function(tab) {
         document.querySelectorAll('.mgr-subview').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.mgr-tab').forEach(el => el.classList.remove('active'));
@@ -246,9 +241,6 @@ window.app = {
             catList.innerHTML = this.data.categories.map(c => `<li style="padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">${c} <button class="btn-sm" style="color:var(--danger)" onclick="window.app.deleteCategory('${c}')">X</button></li>`).join('');
         }
     },
-    // ... (editEmployee, deleteEmployee, editRole, deleteRole, editProduct, saveProduct, deleteProduct, editCategory, deleteCategory logic remains same as v1.89) ...
-    // Note: I am including the full functions below to ensure the file works standalone.
-    
     editEmployee: function(name = null) {
         const emp = name ? this.data.employees.find(e => e.name === name) : null;
         editingId = name;
@@ -399,11 +391,25 @@ function completeOrder(method) {
 function updateCashUI() {
     const total = getCartTotal();
     const val = parseFloat(cashTendered || "0");
-    document.getElementById('calc-display').textContent = `$${val.toFixed(2)}`;
-    document.getElementById('cash-total-due').textContent = `Total: $${total.toFixed(2)}`;
+    const display = document.getElementById('calc-display');
+    const totalDue = document.getElementById('cash-total-due');
     const bar = document.getElementById('change-display-box');
-    if(val >= total) { bar.style.background = "#d4edda"; bar.style.color = "#155724"; bar.textContent = `Change Due: $${(val - total).toFixed(2)}`; }
-    else { bar.style.background = "transparent"; bar.style.color = "#333"; bar.textContent = "Change Due: $0.00"; }
+
+    // Robust Null Checks
+    if(display) display.textContent = `$${val.toFixed(2)}`;
+    if(totalDue) totalDue.textContent = `Total: $${total.toFixed(2)}`;
+    
+    if(bar) {
+        if(val >= total) { 
+            bar.style.background = "#d4edda"; 
+            bar.style.color = "#155724"; 
+            bar.textContent = `Change Due: $${(val - total).toFixed(2)}`; 
+        } else { 
+            bar.style.background = "transparent"; 
+            bar.style.color = "#333"; 
+            bar.textContent = "Change Due: $0.00"; 
+        }
+    }
 }
 function handleClock(type) {
     const name = document.getElementById('time-employee-select').value;
