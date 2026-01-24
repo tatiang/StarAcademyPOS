@@ -1,7 +1,7 @@
-/* Star Academy POS v1.92 (Firestore Sync & Visual Timeclock) */
+/* Star Academy POS v1.93 (Retry Sync & Aggressive UI Fix) */
 
-const APP_VERSION = "v1.92";
-const STORAGE_KEY = "star_pos_v192_data";
+const APP_VERSION = "v1.93";
+const STORAGE_KEY = "star_pos_v193_data";
 const TAX_RATE = 0.0925;
 
 const DEFAULT_PRODUCTS = [
@@ -14,7 +14,7 @@ const DEFAULT_DATA = {
     products: DEFAULT_PRODUCTS,
     categories: ["Hot Drinks", "Cold Drinks", "Snacks"],
     roles: ["Manager", "IT Support", "Barista", "Cashier"],
-    employees: [], 
+    employees: [], // Will sync from cloud
     cart: [],
     orders: [],
     timeEntries: [],
@@ -29,7 +29,7 @@ let targetRole = "";
 let cashTendered = "";
 let editingId = null;
 let cardVerified = false;
-let selectedTimeClockUser = null; // New for v1.92
+let selectedTimeClockUser = null; 
 
 window.app = {
     data: null,
@@ -47,34 +47,59 @@ window.app = {
         if(view === 'pos') this.renderPOS();
         if(view === 'inventory') this.renderInventory();
         if(view === 'barista') this.renderBarista();
-        if(view === 'timeclock') this.renderTimeClock(); // New Renderer
+        if(view === 'timeclock') this.renderTimeClock();
     },
 
-    // --- CLOUD SYNC (New in v1.92) ---
-    syncData: async function() {
-        console.log("Attempting Cloud Sync...");
+    // --- CLOUD SYNC (Enhanced for v1.93) ---
+    // Retries 5 times (once per second) to wait for Firestore file to load
+    syncData: async function(attempts = 5) {
         const statusEl = document.getElementById('cloud-status-indicator');
         if(statusEl) statusEl.textContent = "Syncing...";
-        
+        console.log(`Sync Attempt: ${6 - attempts}/5`);
+
         if (typeof window.fetchCloudData === "function") {
             try {
                 const cloudData = await window.fetchCloudData();
                 if (cloudData) {
-                    // Update only critical data to avoid overwriting local session state like 'cart'
-                    if(cloudData.products) this.data.products = cloudData.products;
-                    if(cloudData.employees) this.data.employees = cloudData.employees;
+                    console.log("Cloud Data Received:", cloudData);
+                    
+                    // Merge strategies
+                    if(cloudData.products && cloudData.products.length > 0) {
+                        this.data.products = cloudData.products;
+                    }
+                    if(cloudData.employees && cloudData.employees.length > 0) {
+                        this.data.employees = cloudData.employees;
+                    } else {
+                        // Fallback if cloud has no employees yet
+                        if(this.data.employees.length === 0) {
+                             this.data.employees = [{name: 'Manager', role: 'Manager', status: 'out'}];
+                        }
+                    }
                     if(cloudData.categories) this.data.categories = cloudData.categories;
-                    console.log("Cloud Data Synced Successfully");
+                    
                     saveData();
                     this.refreshUI();
+                    if(statusEl) statusEl.textContent = "Online";
+                    return;
                 }
             } catch (err) {
-                console.error("Cloud Sync Failed:", err);
+                console.error("Cloud Sync Error:", err);
             }
         } else {
-            console.warn("No 'window.fetchCloudData' found. Running in offline/local mode.");
+            console.warn("fetchCloudData not ready yet.");
         }
-        if(statusEl) statusEl.textContent = "Online";
+
+        if(attempts > 0) {
+            setTimeout(() => this.syncData(attempts - 1), 1000);
+        } else {
+            if(statusEl) statusEl.textContent = "Offline (Local)";
+            console.log("Giving up on Cloud Sync. Using Local Data.");
+            // Ensure we at least have a manager if empty
+            if(this.data.employees.length === 0) {
+                this.data.employees = [{name: 'Manager', role: 'Manager', status: 'out'}];
+                this.refreshUI();
+            }
+        }
     },
 
     // --- POS & CART ---
@@ -358,7 +383,7 @@ window.app = {
         document.getElementById('login-overlay').style.display = 'none'; 
         document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${name}`; 
         this.navigate('pos'); 
-        this.syncData(); // TRIGGER CLOUD SYNC ON LOGIN
+        this.syncData(5); // Trigger sync on login, 5 attempts
     },
     logout: function() { this.data.cart = []; document.getElementById('login-overlay').style.display = 'flex'; document.querySelectorAll('.nav-admin-link').forEach(el => el.style.display = 'none'); },
     promptPin: function(role) { targetRole = role; pinBuffer = ""; document.getElementById('pin-display').textContent = "Enter PIN"; document.getElementById('modal-pin').classList.add('open'); },
@@ -376,20 +401,51 @@ window.app = {
     startKioskMode: function() { this.navigate('kiosk'); const grid = document.getElementById('kiosk-grid'); if(grid) grid.innerHTML = this.data.products.map(p => `<div class="product-card" onclick="alert('Please ask a cashier.')"><img src="${p.img}" class="prod-img"><h4>${p.name}</h4><div>$${p.price.toFixed(2)}</div></div>`).join(''); },
     exitKioskMode: function() { this.navigate('pos'); this.logout(); },
     
-    // --- REDESIGNED TIMECLOCK (v1.92) ---
+    // --- REDESIGNED TIMECLOCK (v1.93 Aggressive Replacement) ---
     renderTimeClock: function() {
-        const container = document.getElementById('time-clock-container');
-        // If container doesn't exist, we must create it dynamically to replace the old one
-        // This handles cases where HTML wasn't updated
-        const oldContainer = document.querySelector('#view-timeclock .card');
-        if(oldContainer) {
-            oldContainer.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`;
+        // 1. Identify the container. 
+        // Logic: The original HTML probably has a select box with ID 'time-employee-select' inside a Card.
+        // We want to wipe that Card's content and replace it with our Grid.
+        
+        let container = document.getElementById('time-clock-grid');
+        
+        if (!container) {
+            // Attempt to find the OLD element and hijack its parent
+            const oldSelect = document.getElementById('time-employee-select');
+            if (oldSelect) {
+                // Found the old dropdown! Let's get its parent container (likely the .card-body or .card)
+                const parent = oldSelect.closest('.card');
+                if(parent) {
+                    // Wipe the old UI
+                    parent.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`;
+                    container = document.getElementById('time-clock-grid');
+                }
+            } else {
+                // Fallback: Try to find by View ID
+                const view = document.getElementById('view-timeclock');
+                if(view) {
+                    const card = view.querySelector('.card');
+                    if(card) {
+                        card.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`;
+                        container = document.getElementById('time-clock-grid');
+                    }
+                }
+            }
         }
 
-        const grid = document.getElementById('time-clock-grid');
-        if(!grid) return;
+        // If we still can't find/create the container, abort to prevent crash
+        if(!container) {
+            console.error("Could not find Time Clock container to render.");
+            return;
+        }
 
-        grid.innerHTML = this.data.employees.map((e, index) => {
+        // Render the Grid
+        if(this.data.employees.length === 0) {
+            container.innerHTML = `<p style="text-align:center; color:#666;">No employees found. <br>Syncing from cloud...</p>`;
+            return;
+        }
+
+        container.innerHTML = this.data.employees.map((e, index) => {
             const statusClass = (e.status === 'in') ? 'status-in' : 'status-out';
             const statusText = (e.status === 'in') ? 'CLOCKED IN' : 'CLOCKED OUT';
             return `
@@ -425,7 +481,6 @@ window.app = {
             </div>
         `;
         this.openGenericModal("Time Clock Action", html, null);
-        // Hide default save button in modal for this view
         document.getElementById('gen-save-btn').style.display = 'none';
     },
 
@@ -433,7 +488,6 @@ window.app = {
         if(!selectedTimeClockUser) return;
         selectedTimeClockUser.status = action;
         
-        // Log entry
         this.data.timeEntries = this.data.timeEntries || [];
         this.data.timeEntries.push({
             name: selectedTimeClockUser.name,
@@ -443,10 +497,11 @@ window.app = {
 
         saveData();
         this.closeModal('modal-generic');
-        document.getElementById('gen-save-btn').style.display = 'inline-block'; // Restore btn
+        document.getElementById('gen-save-btn').style.display = 'inline-block';
         alert(`${selectedTimeClockUser.name} Clocked ${action.toUpperCase()}`);
         this.renderTimeClock();
-        this.syncData(); // Push changes if needed
+        // Try to save status back to cloud if possible
+        if(window.saveToCloud) window.saveToCloud(this.data);
     },
 
     closeModal: function(id) { document.getElementById(id).classList.remove('open'); },
@@ -476,11 +531,14 @@ window.app = {
         const lg = document.getElementById('student-login-grid');
         if(lg) {
             if(!this.data.employees || this.data.employees.length === 0) {
-                lg.innerHTML = `<button class="btn-sm" onclick="window.app.data.employees=[{name:'Admin',role:'Manager',img:''}].concat(window.app.data.employees||[]); window.app.refreshUI();">Initialize Admin User</button>`;
+                // Wait for sync, but show something
+                lg.innerHTML = `<p>Loading users...</p>`;
             } else {
                 lg.innerHTML = this.data.employees.map(e => `<div onclick="window.app.login('${e.name}')" style="display:inline-block; margin:10px; cursor:pointer; text-align:center;"><div style="width:60px; height:60px; background:#eee; border-radius:50%; margin:0 auto; border:3px solid var(--golden-bronze); overflow:hidden;">${e.img ? `<img src="${e.img}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div><div style="font-weight:bold; color:var(--space-indigo); font-size:0.9rem;">${e.name}</div></div>`).join('');
             }
         }
+        
+        // Update stats
         const rev = this.data.orders.reduce((s,o) => s + o.total, 0);
         if(document.getElementById('dash-revenue')) document.getElementById('dash-revenue').textContent = `$${rev.toFixed(2)}`;
         if(document.getElementById('dash-orders')) document.getElementById('dash-orders').textContent = this.data.orders.length;
@@ -535,14 +593,14 @@ function injectStyles() {
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log(`System Loaded: ${APP_VERSION}`);
-    injectStyles(); // Load CSS for Timeclock
+    injectStyles(); 
     try { const stored = localStorage.getItem(STORAGE_KEY); window.app.data = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_DATA)); } catch(e) { window.app.data = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
     if(!window.app.data.products) window.app.data.products = DEFAULT_PRODUCTS;
     if(!window.app.data.categories) window.app.data.categories = DEFAULT_DATA.categories;
     if(!window.app.data.employees) window.app.data.employees = []; 
-    
-    // Initial Sync
-    setTimeout(() => window.app.syncData(), 1000); 
+
+    // Initial Sync with Retry
+    window.app.syncData(5); 
 
     window.app.refreshUI();
     setInterval(() => { const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); if(document.getElementById('live-clock')) document.getElementById('live-clock').textContent = t; }, 1000);
