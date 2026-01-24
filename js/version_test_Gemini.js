@@ -1,22 +1,16 @@
-// Rising Star Cafe POS — TEST build metadata
-// v1.90 / v1.91
-(function(){
-  window.RSCPOS = {
-    appName: 'Rising Star Cafe POS',
-    version: 'v1.90 / v1.91',
-    build: 'TEST_Gemini_FullSpec'
-  };
+/* Star Academy Version Control */
 
-  function render(){
-    var el = document.getElementById('versionLabel');
-    if (el) el.textContent = window.RSCPOS.version + ' (' + window.RSCPOS.build + ')';
-    var footer = document.getElementById('footerBuild');
-    if (footer) footer.textContent = window.RSCPOS.appName + ' — ' + window.RSCPOS.version + ' (' + window.RSCPOS.build + ')';
-  }
+const CURRENT_VERSION = "v1.93";
+const BUILD_DATE = new Date().toLocaleDateString();
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', render);
-  } else {
-    render();
-  }
-})();
+console.log(`Version Controller: Loaded ${CURRENT_VERSION}`);
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Update login screen
+    const vDisplay = document.getElementById('version-display');
+    if(vDisplay) vDisplay.textContent = `(${CURRENT_VERSION})`;
+
+    // Update IT screen
+    const itDisplay = document.getElementById('it-version-display');
+    if(itDisplay) itDisplay.textContent = `${CURRENT_VERSION} [Build: ${BUILD_DATE}]`;
+});
