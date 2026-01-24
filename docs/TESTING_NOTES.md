@@ -1,3 +1,13 @@
+# Testing Notes
+
+## v1.94 Testing
+- Verified IT Hub loads correctly.
+- Confirmed 'docs/' files load into the modal.
+- Checked Firestore sync resilience.
+
+## Known Issues
+- If running via "file://" protocol, documentation fetching might be blocked by browser security (CORS). Use "Live Server" or a local host.-
+
 ### v.157
 —————————
 Renamed firebase-init to firestore_v1.57.js (as requested).
