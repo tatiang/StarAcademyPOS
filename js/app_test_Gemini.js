@@ -1,7 +1,7 @@
-/* Star Academy POS v1.91 (Fixes & Robustness) */
+/* Star Academy POS v1.92 (Firestore Sync & Visual Timeclock) */
 
-const APP_VERSION = "v1.91";
-const STORAGE_KEY = "star_pos_v191_data";
+const APP_VERSION = "v1.92";
+const STORAGE_KEY = "star_pos_v192_data";
 const TAX_RATE = 0.0925;
 
 const DEFAULT_PRODUCTS = [
@@ -29,10 +29,12 @@ let targetRole = "";
 let cashTendered = "";
 let editingId = null;
 let cardVerified = false;
+let selectedTimeClockUser = null; // New for v1.92
 
 window.app = {
     data: null,
 
+    // --- NAVIGATION & INIT ---
     navigate: function(view) {
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
@@ -45,6 +47,34 @@ window.app = {
         if(view === 'pos') this.renderPOS();
         if(view === 'inventory') this.renderInventory();
         if(view === 'barista') this.renderBarista();
+        if(view === 'timeclock') this.renderTimeClock(); // New Renderer
+    },
+
+    // --- CLOUD SYNC (New in v1.92) ---
+    syncData: async function() {
+        console.log("Attempting Cloud Sync...");
+        const statusEl = document.getElementById('cloud-status-indicator');
+        if(statusEl) statusEl.textContent = "Syncing...";
+        
+        if (typeof window.fetchCloudData === "function") {
+            try {
+                const cloudData = await window.fetchCloudData();
+                if (cloudData) {
+                    // Update only critical data to avoid overwriting local session state like 'cart'
+                    if(cloudData.products) this.data.products = cloudData.products;
+                    if(cloudData.employees) this.data.employees = cloudData.employees;
+                    if(cloudData.categories) this.data.categories = cloudData.categories;
+                    console.log("Cloud Data Synced Successfully");
+                    saveData();
+                    this.refreshUI();
+                }
+            } catch (err) {
+                console.error("Cloud Sync Failed:", err);
+            }
+        } else {
+            console.warn("No 'window.fetchCloudData' found. Running in offline/local mode.");
+        }
+        if(statusEl) statusEl.textContent = "Online";
     },
 
     // --- POS & CART ---
@@ -150,7 +180,6 @@ window.app = {
         
         if(method === 'Cash') { 
             cashTendered = ""; 
-            // FIX: Open modal FIRST, then try to update UI.
             document.getElementById('modal-cash').classList.add('open'); 
             try { updateCashUI(); } catch(e) { console.error("UI Update Error", e); }
         } else if (method === 'Card') {
@@ -325,7 +354,12 @@ window.app = {
     },
 
     // Login/System
-    login: function(name) { document.getElementById('login-overlay').style.display = 'none'; document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${name}`; this.navigate('pos'); },
+    login: function(name) { 
+        document.getElementById('login-overlay').style.display = 'none'; 
+        document.getElementById('header-cashier').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${name}`; 
+        this.navigate('pos'); 
+        this.syncData(); // TRIGGER CLOUD SYNC ON LOGIN
+    },
     logout: function() { this.data.cart = []; document.getElementById('login-overlay').style.display = 'flex'; document.querySelectorAll('.nav-admin-link').forEach(el => el.style.display = 'none'); },
     promptPin: function(role) { targetRole = role; pinBuffer = ""; document.getElementById('pin-display').textContent = "Enter PIN"; document.getElementById('modal-pin').classList.add('open'); },
     pinInput: function(n) { if(pinBuffer.length < 4) { pinBuffer += n; document.getElementById('pin-display').textContent = "•".repeat(pinBuffer.length); } },
@@ -341,8 +375,80 @@ window.app = {
     },
     startKioskMode: function() { this.navigate('kiosk'); const grid = document.getElementById('kiosk-grid'); if(grid) grid.innerHTML = this.data.products.map(p => `<div class="product-card" onclick="alert('Please ask a cashier.')"><img src="${p.img}" class="prod-img"><h4>${p.name}</h4><div>$${p.price.toFixed(2)}</div></div>`).join(''); },
     exitKioskMode: function() { this.navigate('pos'); this.logout(); },
-    clockIn: function() { handleClock('in'); },
-    clockOut: function() { handleClock('out'); },
+    
+    // --- REDESIGNED TIMECLOCK (v1.92) ---
+    renderTimeClock: function() {
+        const container = document.getElementById('time-clock-container');
+        // If container doesn't exist, we must create it dynamically to replace the old one
+        // This handles cases where HTML wasn't updated
+        const oldContainer = document.querySelector('#view-timeclock .card');
+        if(oldContainer) {
+            oldContainer.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`;
+        }
+
+        const grid = document.getElementById('time-clock-grid');
+        if(!grid) return;
+
+        grid.innerHTML = this.data.employees.map((e, index) => {
+            const statusClass = (e.status === 'in') ? 'status-in' : 'status-out';
+            const statusText = (e.status === 'in') ? 'CLOCKED IN' : 'CLOCKED OUT';
+            return `
+            <div class="tc-card ${statusClass}" onclick="window.app.selectTimeClockUser(${index})">
+                <div class="tc-avatar">
+                    ${e.img ? `<img src="${e.img}">` : `<div class="tc-initials">${e.name.substring(0,1)}</div>`}
+                </div>
+                <div class="tc-info">
+                    <h3>${e.name}</h3>
+                    <div class="tc-badge">${statusText}</div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    },
+    
+    selectTimeClockUser: function(index) {
+        selectedTimeClockUser = this.data.employees[index];
+        const status = selectedTimeClockUser.status || 'out';
+        
+        const html = `
+            <div style="text-align:center;">
+                <div class="tc-avatar large" style="margin:0 auto 15px auto; width:100px; height:100px; font-size:3rem; line-height:100px;">
+                     ${selectedTimeClockUser.img ? `<img src="${selectedTimeClockUser.img}">` : selectedTimeClockUser.name.substring(0,1)}
+                </div>
+                <h3>${selectedTimeClockUser.name}</h3>
+                <p>Currently: <strong>${status.toUpperCase()}</strong></p>
+                <hr>
+                <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                    <button class="btn" style="background:var(--success); color:white; flex:1;" onclick="window.app.processTimeClock('in')">Clock IN</button>
+                    <button class="btn" style="background:var(--danger); color:white; flex:1;" onclick="window.app.processTimeClock('out')">Clock OUT</button>
+                </div>
+            </div>
+        `;
+        this.openGenericModal("Time Clock Action", html, null);
+        // Hide default save button in modal for this view
+        document.getElementById('gen-save-btn').style.display = 'none';
+    },
+
+    processTimeClock: function(action) {
+        if(!selectedTimeClockUser) return;
+        selectedTimeClockUser.status = action;
+        
+        // Log entry
+        this.data.timeEntries = this.data.timeEntries || [];
+        this.data.timeEntries.push({
+            name: selectedTimeClockUser.name,
+            action: action,
+            time: new Date().toISOString()
+        });
+
+        saveData();
+        this.closeModal('modal-generic');
+        document.getElementById('gen-save-btn').style.display = 'inline-block'; // Restore btn
+        alert(`${selectedTimeClockUser.name} Clocked ${action.toUpperCase()}`);
+        this.renderTimeClock();
+        this.syncData(); // Push changes if needed
+    },
+
     closeModal: function(id) { document.getElementById(id).classList.remove('open'); },
     
     // Printing
@@ -350,7 +456,13 @@ window.app = {
     viewReceipts: function() { const list = document.getElementById('receipt-list'); list.innerHTML = this.data.orders.slice().reverse().map(o => `<div style="border-bottom:1px solid #eee; padding:10px; display:flex; justify-content:space-between;"><div><strong>#${o.id}</strong> ${o.customer}</div><div>$${o.total.toFixed(2)} <button class="btn-sm" onclick="window.app.printReceipt(${o.id})">Print</button></div></div>`).join(''); document.getElementById('modal-receipts').classList.add('open'); },
     printReceipt: function(id) { const o = this.data.orders.find(x => x.id === id); if(!o) return; const html = `<div style="text-align:center; font-family:monospace;"><h2>STAR ACADEMY</h2><p>Order #${o.id}</p><p>${new Date(o.time).toLocaleString()}</p><hr>${o.items.map(i => `<div style="display:flex; justify-content:space-between;"><span>${i.qty} ${i.name}</span><span>$${(i.price*i.qty).toFixed(2)}</span></div>`).join('')}<hr><h3>Total: $${o.total.toFixed(2)}</h3><p>Customer: ${o.customer}</p></div>`; this.printHTML(html); },
     printHTML: function(htmlContent) { const area = document.getElementById('print-area'); area.innerHTML = htmlContent; window.print(); setTimeout(() => area.innerHTML = '', 1000); },
-    openGenericModal: function(title, bodyHtml, saveCallback) { document.getElementById('gen-modal-title').innerText = title; document.getElementById('gen-modal-body').innerHTML = bodyHtml; const btn = document.getElementById('gen-save-btn'); btn.onclick = saveCallback; document.getElementById('modal-generic').classList.add('open'); },
+    openGenericModal: function(title, bodyHtml, saveCallback) { 
+        document.getElementById('gen-modal-title').innerText = title; 
+        document.getElementById('gen-modal-body').innerHTML = bodyHtml; 
+        const btn = document.getElementById('gen-save-btn'); 
+        if(saveCallback) { btn.onclick = saveCallback; btn.style.display='inline-block'; } else { btn.style.display='none'; }
+        document.getElementById('modal-generic').classList.add('open'); 
+    },
 
     // Renderers
     renderInventory: function() { const tbody = document.getElementById('inventory-body'); if(tbody) tbody.innerHTML = this.data.products.map(p => `<tr><td>${p.name}</td><td>OK</td></tr>`).join(''); },
@@ -369,9 +481,6 @@ window.app = {
                 lg.innerHTML = this.data.employees.map(e => `<div onclick="window.app.login('${e.name}')" style="display:inline-block; margin:10px; cursor:pointer; text-align:center;"><div style="width:60px; height:60px; background:#eee; border-radius:50%; margin:0 auto; border:3px solid var(--golden-bronze); overflow:hidden;">${e.img ? `<img src="${e.img}" style="width:100%;height:100%;object-fit:cover;">` : ''}</div><div style="font-weight:bold; color:var(--space-indigo); font-size:0.9rem;">${e.name}</div></div>`).join('');
             }
         }
-        const ts = document.getElementById('time-employee-select');
-        if(ts) ts.innerHTML = '<option value="">Select...</option>' + this.data.employees.map(e => `<option value="${e.name}">${e.name} (${e.status||'out'})</option>`).join('');
-        
         const rev = this.data.orders.reduce((s,o) => s + o.total, 0);
         if(document.getElementById('dash-revenue')) document.getElementById('dash-revenue').textContent = `$${rev.toFixed(2)}`;
         if(document.getElementById('dash-orders')) document.getElementById('dash-orders').textContent = this.data.orders.length;
@@ -379,7 +488,10 @@ window.app = {
 };
 
 // --- HELPERS ---
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(window.app.data)); if(window.saveToCloud) window.saveToCloud(window.app.data, true); }
+function saveData() { 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(window.app.data)); 
+    if(window.saveToCloud) window.saveToCloud(window.app.data, true); 
+}
 function getCartTotal() { const sub = window.app.data.cart.reduce((s,i) => s + (i.price * i.qty), 0); return sub + (sub * TAX_RATE); }
 function completeOrder(method) {
     window.app.data.orders.push({ id: window.app.data.orderCounter++, customer: document.getElementById('customer-name').value, items: [...window.app.data.cart], total: getCartTotal(), status: "Pending", time: new Date().toISOString() });
@@ -394,37 +506,44 @@ function updateCashUI() {
     const display = document.getElementById('calc-display');
     const totalDue = document.getElementById('cash-total-due');
     const bar = document.getElementById('change-display-box');
-
-    // Robust Null Checks
     if(display) display.textContent = `$${val.toFixed(2)}`;
     if(totalDue) totalDue.textContent = `Total: $${total.toFixed(2)}`;
-    
     if(bar) {
-        if(val >= total) { 
-            bar.style.background = "#d4edda"; 
-            bar.style.color = "#155724"; 
-            bar.textContent = `Change Due: $${(val - total).toFixed(2)}`; 
-        } else { 
-            bar.style.background = "transparent"; 
-            bar.style.color = "#333"; 
-            bar.textContent = "Change Due: $0.00"; 
-        }
+        if(val >= total) { bar.style.background = "#d4edda"; bar.style.color = "#155724"; bar.textContent = `Change Due: $${(val - total).toFixed(2)}`; } 
+        else { bar.style.background = "transparent"; bar.style.color = "#333"; bar.textContent = "Change Due: $0.00"; }
     }
 }
-function handleClock(type) {
-    const name = document.getElementById('time-employee-select').value;
-    if(!name) return alert("Select Name");
-    const emp = window.app.data.employees.find(e => e.name === name);
-    if(emp) { emp.status = type; alert(`${name} Clocked ${type.toUpperCase()}`); saveData(); window.app.refreshUI(); }
+function injectStyles() {
+    const css = `
+    .tc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 20px; }
+    .tc-card { background: white; border: 2px solid #eee; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: transform 0.2s; }
+    .tc-card:hover { transform: translateY(-3px); border-color: var(--golden-bronze); }
+    .tc-card.status-in { border-bottom: 5px solid var(--success); }
+    .tc-card.status-out { border-bottom: 5px solid #ccc; opacity: 0.8; }
+    .tc-avatar { width: 60px; height: 60px; background: #f0f0f0; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; display:flex; align-items:center; justify-content:center; }
+    .tc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .tc-initials { font-weight: bold; font-size: 1.5rem; color: #888; }
+    .tc-badge { font-size: 0.75rem; font-weight: bold; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+    .status-in .tc-badge { background: #d4edda; color: #155724; }
+    .status-out .tc-badge { background: #f8f9fa; color: #666; }
+    `;
+    const style = document.createElement('style');
+    style.innerHTML = css;
+    document.head.appendChild(style);
 }
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log(`System Loaded: ${APP_VERSION}`);
+    injectStyles(); // Load CSS for Timeclock
     try { const stored = localStorage.getItem(STORAGE_KEY); window.app.data = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_DATA)); } catch(e) { window.app.data = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
     if(!window.app.data.products) window.app.data.products = DEFAULT_PRODUCTS;
     if(!window.app.data.categories) window.app.data.categories = DEFAULT_DATA.categories;
     if(!window.app.data.employees) window.app.data.employees = []; 
+    
+    // Initial Sync
+    setTimeout(() => window.app.syncData(), 1000); 
+
     window.app.refreshUI();
     setInterval(() => { const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); if(document.getElementById('live-clock')) document.getElementById('live-clock').textContent = t; }, 1000);
 });
