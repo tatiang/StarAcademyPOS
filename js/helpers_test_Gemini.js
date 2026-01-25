@@ -1,4 +1,4 @@
-/* FILE: helpers_test_Gemini.js
+/* FILE: js/helpers_test_Gemini.js
    PURPOSE: Useful tools used across the entire app.
 */
 
@@ -13,15 +13,18 @@ window.app.helpers = {
     openModal: (id) => {
         const el = document.getElementById(id);
         if(el) {
-            el.classList.add('open');
-            el.style.display = 'flex'; // Ensures it's visible
+            el.classList.add('open'); // Adds the class that forces it visible
+            el.style.display = 'flex';
         }
     },
 
     // Tool: Closes a popup window
     closeModal: (id) => {
         const el = document.getElementById(id);
-        if(el) el.style.display = 'none';
+        if(el) {
+            el.classList.remove('open'); // <--- THIS IS THE CRITICAL FIX
+            el.style.display = 'none';
+        }
     },
 
     // Tool: Creates a generic "Are you sure?" popup on the fly
@@ -41,16 +44,16 @@ window.app.helpers = {
 
         // Add click actions to the buttons we just made
         document.getElementById('gen-cancel-btn').onclick = () => {
-            modal.style.display = 'none';
+            window.app.helpers.closeModal('modal-generic');
         };
 
         if(onConfirm) {
             document.getElementById('gen-confirm-btn').onclick = () => {
                 onConfirm();
-                modal.style.display = 'none';
+                window.app.helpers.closeModal('modal-generic');
             };
         }
 
-        modal.style.display = 'flex';
+        window.app.helpers.openModal('modal-generic');
     }
 };
