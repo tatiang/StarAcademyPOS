@@ -1,6 +1,6 @@
 /* Star Academy Version Control */
 
-const CURRENT_VERSION = "v1.88";
+const CURRENT_VERSION = "v1.94";
 const BUILD_DATE = new Date().toLocaleDateString();
 
 console.log(`Version Controller: Loaded ${CURRENT_VERSION}`);
