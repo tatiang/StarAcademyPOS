@@ -44,3 +44,12 @@ window.app.defaults = {
     roles: ["Manager", "IT Support", "Barista", "Cashier"],
     employees: [] // We expect this to sync from the cloud
 };
+
+// --- FIX: ADDED MISSING ARRAYS HERE ---
+    
+    // These were missing, causing the crash:
+    cart: [],
+    orders: [],
+    timeEntries: [],
+    orderCounter: 1001
+};
