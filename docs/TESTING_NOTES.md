@@ -1,5 +1,11 @@
 # Testing Notes
 
+### v1.95
+—————————
+Redesigned Time Clock: Replaced dropdown with visual Employee Grid.
+Added "Smart Prompt" to AI Generator: Specifically fixes "Water" to show bottles/cups instead of scenery.
+Verified IT Hub Documentation Viewer.
+
 ### v1.94
 —————————
 Added IT Hub Dashboard (PIN: 9753) for system management.
