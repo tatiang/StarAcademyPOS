@@ -1,9 +1,11 @@
 # Testing Notes
 
-## v1.94 Testing
-- Verified IT Hub loads correctly.
-- Confirmed 'docs/' files load into the modal.
-- Checked Firestore sync resilience.
+### v1.94
+—————————
+Added IT Hub Dashboard (PIN: 9753) for system management.
+Added Documentation Viewer to read .md files inside the app.
+Implemented "Force Redraw" on Time Clock to fix stuck dropdown menus.
+Added Cloud Sync Retry (5 attempts) to fix race conditions on load.
 
 ## Known Issues
 - If running via "file://" protocol, documentation fetching might be blocked by browser security (CORS). Use "Live Server" or a local host.-
