@@ -1,7 +1,7 @@
-/* Star Academy POS v1.95 (Time Clock Grid & Smart AI) */
+/* Star Academy POS v1.96 (Time Clock Grid & Smart AI 1.614:1) */
 
-const APP_VERSION = "v1.95";
-const STORAGE_KEY = "star_pos_v195_data";
+const APP_VERSION = "v1.96";
+const STORAGE_KEY = "star_pos_v196_data";
 const TAX_RATE = 0.0925;
 
 const DEFAULT_PRODUCTS = [
@@ -47,7 +47,10 @@ window.app = {
         if(view === 'pos') this.renderPOS();
         if(view === 'inventory') this.renderInventory();
         if(view === 'barista') this.renderBarista();
-        if(view === 'timeclock') this.renderTimeClock();
+        
+        // FIX for v1.96: Correctly call time clock render when 'time' view is requested
+        if(view === 'time') this.renderTimeClock();
+        
         if(view === 'it') this.renderIT();
     },
 
@@ -139,7 +142,8 @@ window.app = {
                 `<button class="btn-sm" style="margin-right:5px; margin-bottom:5px;" onclick="window.app.filterPos('${c}')">${c}</button>`
             ).join('');
         }
-        if(document.getElementById('pos-grid').innerHTML === "") this.filterPos('All');
+        
+        this.filterPos('All');
         this.renderCart();
     },
 
@@ -283,21 +287,20 @@ window.app = {
     editCategory: function() { this.openGenericModal("Add Category", `<div class="form-group"><label>Category Name</label><input id="gen-input-1" class="form-control"></div>`, () => { const c = document.getElementById('gen-input-1').value; if(c && !this.data.categories.includes(c)) { this.data.categories.push(c); saveData(); this.renderMgrMenu(); this.closeModal('modal-generic'); } }); },
     deleteCategory: function(c) { if(confirm("Delete?")) { this.data.categories = this.data.categories.filter(x => x !== c); saveData(); this.renderMgrMenu(); } },
     
-    // --- SMART AI IMAGE GENERATOR (UPDATED) ---
+    // --- SMART AI IMAGE GENERATOR (UPDATED for 1.614:1) ---
     generateAIImage: function() {
         const name = document.getElementById('edit-prod-name').value;
         if(!name) return alert("Enter Product Name first");
         
         let prompt = name;
-        // Fix for "Water" to avoid oceans/lakes
         if(name.toLowerCase().includes('water')) {
             prompt = "fresh bottled water clear plastic bottle white background product photography";
         } else {
-            // General food enhancement
             prompt = `${name} delicious food drink white background isolated high resolution`;
         }
 
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+        // 1.614:1 Ratio = 807x500
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=807&height=500&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
         document.getElementById('edit-prod-img').value = url;
         this.updateImagePreview(); 
     },
@@ -320,40 +323,30 @@ window.app = {
     startKioskMode: function() { this.navigate('kiosk'); const grid = document.getElementById('kiosk-grid'); if(grid) grid.innerHTML = this.data.products.map(p => `<div class="product-card" onclick="alert('Please ask a cashier.')"><img src="${p.img}" class="prod-img"><h4>${p.name}</h4><div>$${p.price.toFixed(2)}</div></div>`).join(''); },
     exitKioskMode: function() { this.navigate('pos'); this.logout(); },
     
-    // --- TIMECLOCK (VISUAL GRID) ---
+    // --- TIMECLOCK ---
     renderTimeClock: function() {
         let container = document.getElementById('time-clock-grid');
         if (!container) {
-            // Aggressive finder logic to remove old select menus if present
             const oldSelect = document.getElementById('time-employee-select');
             if (oldSelect) { const parent = oldSelect.closest('.card'); if(parent) { parent.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`; container = document.getElementById('time-clock-grid'); } }
             else { const view = document.getElementById('view-timeclock'); if(view) { const card = view.querySelector('.card'); if(card) { card.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`; container = document.getElementById('time-clock-grid'); } } }
         }
         if(!container) return;
         if(this.data.employees.length === 0) { container.innerHTML = `<p style="text-align:center; color:#666;">No employees found. <br>Syncing from cloud...</p>`; return; }
-        
         container.innerHTML = this.data.employees.map((e, index) => {
             return `<div class="tc-card ${e.status === 'in' ? 'status-in' : 'status-out'}" onclick="window.app.selectTimeClockUser(${index})"><div class="tc-avatar">${e.img ? `<img src="${e.img}">` : `<div class="tc-initials">${e.name.substring(0,1)}</div>`}</div><div class="tc-info"><h3>${e.name}</h3><div class="tc-badge">${e.status === 'in' ? 'CLOCKED IN' : 'CLOCKED OUT'}</div></div></div>`;
         }).join('');
     },
     selectTimeClockUser: function(index) {
-        selectedTimeClockUser = this.data.employees[index]; 
-        const status = selectedTimeClockUser.status || 'out';
-        
-        document.getElementById('tc-modal-title').innerText = selectedTimeClockUser.name;
-        document.getElementById('tc-modal-status').innerText = `Current Status: ${status.toUpperCase()}`;
-        document.getElementById('modal-time-action').classList.add('open');
+        selectedTimeClockUser = this.data.employees[index]; const status = selectedTimeClockUser.status || 'out';
+        const html = `<div style="text-align:center;"><div class="tc-avatar large" style="margin:0 auto 15px auto; width:100px; height:100px; font-size:3rem; line-height:100px;">${selectedTimeClockUser.img ? `<img src="${selectedTimeClockUser.img}">` : selectedTimeClockUser.name.substring(0,1)}</div><h3>${selectedTimeClockUser.name}</h3><p>Currently: <strong>${status.toUpperCase()}</strong></p><hr><div style="display:flex; gap:10px; justify-content:center; margin-top:20px;"><button class="btn" style="background:var(--success); color:white; flex:1;" onclick="window.app.processTimeClock('in')">Clock IN</button><button class="btn" style="background:var(--danger); color:white; flex:1;" onclick="window.app.processTimeClock('out')">Clock OUT</button></div></div>`;
+        this.openGenericModal("Time Clock Action", html, null); document.getElementById('gen-save-btn').style.display = 'none';
     },
     processTimeClock: function(action) {
-        if(!selectedTimeClockUser) return; 
-        selectedTimeClockUser.status = action;
-        this.data.timeEntries = this.data.timeEntries || []; 
-        this.data.timeEntries.push({ name: selectedTimeClockUser.name, action: action, time: new Date().toISOString() });
-        saveData(); 
-        this.closeModal('modal-time-action'); 
-        alert(`${selectedTimeClockUser.name} Clocked ${action.toUpperCase()}`); 
-        this.renderTimeClock(); 
-        if(window.saveToCloud) window.saveToCloud(this.data);
+        if(!selectedTimeClockUser) return; selectedTimeClockUser.status = action;
+        this.data.timeEntries = this.data.timeEntries || []; this.data.timeEntries.push({ name: selectedTimeClockUser.name, action: action, time: new Date().toISOString() });
+        saveData(); this.closeModal('modal-generic'); document.getElementById('gen-save-btn').style.display = 'inline-block';
+        alert(`${selectedTimeClockUser.name} Clocked ${action.toUpperCase()}`); this.renderTimeClock(); if(window.saveToCloud) window.saveToCloud(this.data);
     },
 
     closeModal: function(id) { document.getElementById(id).classList.remove('open'); },
