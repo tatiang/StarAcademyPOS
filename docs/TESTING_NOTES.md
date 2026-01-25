@@ -1,4 +1,14 @@
-# Testing Notes
+# Version Notes
+
+### v1.97
+—————————
+Increased Cloud Backup frequency to 10 minutes.
+Added "Run Diagnostics" tool to IT Hub to evaluate app health and cloud connectivity.
+
+### v1.96
+—————————
+Fixed Time Clock: Corrected navigation logic so the employee grid renders immediately.
+AI Aspect Ratio: Updated generator to produce 1.614:1 ratio images (807x500).
 
 ### v1.95
 —————————
