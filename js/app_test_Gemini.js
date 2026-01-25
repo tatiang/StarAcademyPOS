@@ -1,7 +1,7 @@
-/* Star Academy POS v1.97 (Diagnostics & 10min Backup) */
+/* Star Academy POS v1.98 (Square UI Action Bar) */
 
-const APP_VERSION = "v1.97";
-const STORAGE_KEY = "star_pos_v197_data";
+const APP_VERSION = "v1.98";
+const STORAGE_KEY = "star_pos_v198_data";
 const TAX_RATE = 0.0925;
 
 const DEFAULT_PRODUCTS = [
@@ -118,8 +118,6 @@ window.app = {
 
     runDiagnostics: async function() {
         let log = "DIAGNOSTICS REPORT\n==================\n\n";
-        
-        // 1. Local App Health
         log += "[LOCAL DATA]\n";
         log += `App Version: ${APP_VERSION}\n`;
         log += `Data Loaded: ${this.data ? 'YES' : 'NO'}\n`;
@@ -130,8 +128,6 @@ window.app = {
             log += `Pending Orders: ${this.data.orders.filter(o => o.status === 'Pending').length}\n`;
         }
         log += "\n";
-
-        // 2. Cloud Health
         log += "[CLOUD CONNECTION]\n";
         const dot = document.getElementById('status-dot');
         const isOnline = dot && dot.classList.contains('online');
@@ -146,7 +142,6 @@ window.app = {
                 if(cloud) {
                     log += `Latency: ${duration}ms\n`;
                     log += `Cloud Products: ${cloud.products ? cloud.products.length : 0}\n`;
-                    log += `Cloud Employees: ${cloud.employees ? cloud.employees.length : 0}\n`;
                     log += "RESULT: HEALTHY ✅\n";
                 } else {
                     log += "RESULT: EMPTY OR UNAVAILABLE ⚠️\n";
@@ -158,7 +153,6 @@ window.app = {
             log += "RESULT: MODULE MISSING ❌\n";
         }
 
-        // Show Report
         const html = `<div style="background:#222; color:#0f0; padding:15px; border-radius:5px; height:400px; overflow-y:auto; font-family:monospace; white-space:pre-wrap;">${log}</div>`;
         this.openGenericModal("System Diagnostics", html, null);
         document.getElementById('gen-save-btn').style.display = 'none';
@@ -188,7 +182,6 @@ window.app = {
                 `<button class="btn-sm" style="margin-right:5px; margin-bottom:5px;" onclick="window.app.filterPos('${c}')">${c}</button>`
             ).join('');
         }
-        
         this.filterPos('All');
         this.renderCart();
     },
@@ -217,6 +210,18 @@ window.app = {
         document.getElementById('pos-subtotal').textContent = `$${sub.toFixed(2)}`;
         document.getElementById('pos-tax').textContent = `$${(sub*TAX_RATE).toFixed(2)}`;
         document.getElementById('pos-total').textContent = `$${total.toFixed(2)}`;
+
+        // SQUARE UI LOGIC: Enable/Disable buttons based on cart state
+        const btnCash = document.getElementById('btn-action-cash');
+        const btnCard = document.getElementById('btn-action-card');
+        
+        if (this.data.cart.length > 0) {
+            btnCash.className = 'btn-square-large charge-ready-cash';
+            btnCard.className = 'btn-square-large charge-ready-card';
+        } else {
+            btnCash.className = 'btn-square-large charge-disabled';
+            btnCard.className = 'btn-square-large charge-disabled';
+        }
     },
 
     adjustQty: function(index, delta) {
@@ -332,7 +337,23 @@ window.app = {
     deleteProduct: function(id) { if(confirm("Delete?")) { this.data.products = this.data.products.filter(p => p.id !== id); saveData(); this.renderMgrMenu(); this.renderPOS(); } },
     editCategory: function() { this.openGenericModal("Add Category", `<div class="form-group"><label>Category Name</label><input id="gen-input-1" class="form-control"></div>`, () => { const c = document.getElementById('gen-input-1').value; if(c && !this.data.categories.includes(c)) { this.data.categories.push(c); saveData(); this.renderMgrMenu(); this.closeModal('modal-generic'); } }); },
     deleteCategory: function(c) { if(confirm("Delete?")) { this.data.categories = this.data.categories.filter(x => x !== c); saveData(); this.renderMgrMenu(); } },
-    generateAIImage: function() { const name = document.getElementById('edit-prod-name').value; if(!name) return alert("Enter Product Name"); const url = `https://loremflickr.com/400/300/${encodeURIComponent(name.replace(/ /g, ','))}?lock=${Math.floor(Math.random()*1000)}`; document.getElementById('edit-prod-img').value = url; this.updateImagePreview(); },
+    
+    // --- SMART AI IMAGE GENERATOR (UPDATED for 1.614:1) ---
+    generateAIImage: function() {
+        const name = document.getElementById('edit-prod-name').value;
+        if(!name) return alert("Enter Product Name first");
+        
+        let prompt = name;
+        if(name.toLowerCase().includes('water')) {
+            prompt = "fresh bottled water clear plastic bottle white background product photography";
+        } else {
+            prompt = `${name} delicious food drink white background isolated high resolution`;
+        }
+
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=807&height=500&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+        document.getElementById('edit-prod-img').value = url;
+        this.updateImagePreview(); 
+    },
     updateImagePreview: function() { const url = document.getElementById('edit-prod-img').value; document.getElementById('img-preview-box').innerHTML = url ? `<img src="${url}" style="width:100%; height:100%; object-fit:contain;">` : `<span>No Image Preview</span>`; },
 
     // --- SYSTEM ---
