@@ -1,47 +1,47 @@
-/* FILE: pos_screen_test_Gemini.js
-   PURPOSE: Logic for the Point of Sale (Ordering) screen.
-*/
+/* FILE: js/pos_screen_test_Gemini.js */
 
 window.app.posScreen = {
     
-    // 1. Start up the POS screen
     init: function() {
         this.renderCategories();
-        this.renderGrid('All'); // Default to showing all items
+        this.renderGrid('All');
         this.renderCart();
     },
 
-    // 2. Draw the category buttons (Hot Drinks, Snacks, etc.)
     renderCategories: function() {
         const container = document.getElementById('pos-categories');
         if(!container) return;
         
+        // Safety check for categories
+        const cats = window.app.data.categories || [];
+        
         let html = `<button class="btn-sm" onclick="window.app.posScreen.renderGrid('All')">All</button>`;
-        window.app.data.categories.forEach(cat => {
+        cats.forEach(cat => {
             html += `<button class="btn-sm" onclick="window.app.posScreen.renderGrid('${cat}')">${cat}</button>`;
         });
         container.innerHTML = html;
     },
 
-    // 3. Draw the grid of product cards
     renderGrid: function(category) {
         const grid = document.getElementById('pos-grid');
+        if(!grid) return;
         grid.innerHTML = '';
         
-        // Filter products: If 'All', show everything. Else, show only matching category.
+        const allProducts = window.app.data.products || [];
         const products = category === 'All' 
-            ? window.app.data.products 
-            : window.app.data.products.filter(p => p.cat === category);
+            ? allProducts 
+            : allProducts.filter(p => p.cat === category);
 
         products.forEach(p => {
             const card = document.createElement('div');
             card.className = 'product-card';
-            
-            // What happens when you click a product card? -> Add to Cart
             card.onclick = () => this.addToCart(p);
             
+            // Image fallback to prevent broken icons
+            const imgUrl = p.img || 'https://placehold.co/150';
+
             card.innerHTML = `
-                <img src="${p.img}" class="prod-img" onerror="this.src='https://placehold.co/150'">
+                <img src="${imgUrl}" class="prod-img" onerror="this.src='https://placehold.co/150'">
                 <div class="prod-info">
                     <h4>${p.name}</h4>
                     <div>${window.app.helpers.formatCurrency(p.price)}</div>
@@ -51,8 +51,10 @@ window.app.posScreen = {
         });
     },
 
-    // 4. Logic to add an item to the 'cart' array
     addToCart: function(product) {
+        // Safety: Ensure cart exists
+        if (!window.app.data.cart) window.app.data.cart = [];
+
         const item = {
             id: product.id,
             name: product.name,
@@ -61,7 +63,6 @@ window.app.posScreen = {
             opts: [] 
         };
         
-        // If item exists, just increase quantity
         const existing = window.app.data.cart.find(i => i.id === item.id);
         if(existing) {
             existing.qty++;
@@ -69,15 +70,21 @@ window.app.posScreen = {
             window.app.data.cart.push(item);
         }
         
-        this.renderCart(); // Re-draw the cart to show new item
-        window.app.database.saveLocal(); // Save to browser memory
+        this.renderCart();
+        window.app.database.saveLocal();
     },
 
-    // 5. Draw the list of items on the right side
     renderCart: function() {
         const list = document.getElementById('cart-list');
+        if(!list) return;
         list.innerHTML = '';
         
+        // --- CRASH FIX: SAFETY CHECK ---
+        if (!window.app.data.cart) {
+            console.warn("Cart was undefined, resetting.");
+            window.app.data.cart = [];
+        }
+
         let subtotal = 0;
 
         window.app.data.cart.forEach((item, index) => {
@@ -99,35 +106,33 @@ window.app.posScreen = {
             list.appendChild(div);
         });
 
-        // Calculate Totals
         const tax = subtotal * window.app.taxRate;
         const total = subtotal + tax;
 
-        // Update the screen numbers
         document.getElementById('pos-subtotal').textContent = window.app.helpers.formatCurrency(subtotal);
         document.getElementById('pos-tax').textContent = window.app.helpers.formatCurrency(tax);
         document.getElementById('pos-total').textContent = window.app.helpers.formatCurrency(total);
 
-        // Enable/Disable the big Charge buttons based on if cart is empty
         this.updateActionButtons(window.app.data.cart.length > 0);
     },
 
-    // 6. Increase or Decrease item quantity
     adjustQty: function(index, delta) {
+        if (!window.app.data.cart) return;
         const item = window.app.data.cart[index];
         item.qty += delta;
         if(item.qty <= 0) {
-            window.app.data.cart.splice(index, 1); // Remove item if qty is 0
+            window.app.data.cart.splice(index, 1);
         }
         this.renderCart();
         window.app.database.saveLocal();
     },
 
-    // 7. Make the Charge buttons look active or disabled
     updateActionButtons: function(hasItems) {
         const btnCash = document.getElementById('btn-action-cash');
         const btnCard = document.getElementById('btn-action-card');
         
+        if (!btnCash || !btnCard) return;
+
         if (hasItems) {
             btnCash.className = 'btn-square-large charge-ready-cash';
             btnCard.className = 'btn-square-large charge-ready-card';
@@ -141,18 +146,19 @@ window.app.posScreen = {
         }
     },
 
-    // 8. Payment logic
     validateAndPay: function(method) {
-        if(window.app.data.cart.length === 0) return;
+        if(!window.app.data.cart || window.app.data.cart.length === 0) return;
         
-        // For simplicity in this step, we just use a confirmation.
-        // In a real version, this is where we'd open the Cash/Card modal.
         if(confirm(`Process ${method} payment?`)) {
             this.completeOrder(method);
         }
     },
 
     completeOrder: function(method) {
+        // Safety checks for order counter
+        if(!window.app.data.orderCounter) window.app.data.orderCounter = 1001;
+        if(!window.app.data.orders) window.app.data.orders = [];
+
         const order = {
             id: window.app.data.orderCounter++,
             date: new Date().toISOString(),
@@ -162,11 +168,11 @@ window.app.posScreen = {
         };
 
         window.app.data.orders.push(order);
-        window.app.data.cart = []; // Empty the cart
+        window.app.data.cart = []; 
         
         this.renderCart();
         window.app.database.saveLocal();
-        window.app.database.sync(); // Save to cloud
+        window.app.database.sync(); 
         
         alert("Order Complete!");
     }
