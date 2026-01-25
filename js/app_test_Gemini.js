@@ -1,7 +1,7 @@
-/* Star Academy POS v1.96 (Time Clock Grid & Smart AI 1.614:1) */
+/* Star Academy POS v1.97 (Diagnostics & 10min Backup) */
 
-const APP_VERSION = "v1.96";
-const STORAGE_KEY = "star_pos_v196_data";
+const APP_VERSION = "v1.97";
+const STORAGE_KEY = "star_pos_v197_data";
 const TAX_RATE = 0.0925;
 
 const DEFAULT_PRODUCTS = [
@@ -47,10 +47,7 @@ window.app = {
         if(view === 'pos') this.renderPOS();
         if(view === 'inventory') this.renderInventory();
         if(view === 'barista') this.renderBarista();
-        
-        // FIX for v1.96: Correctly call time clock render when 'time' view is requested
-        if(view === 'time') this.renderTimeClock();
-        
+        if(view === 'timeclock') this.renderTimeClock();
         if(view === 'it') this.renderIT();
     },
 
@@ -110,12 +107,61 @@ window.app = {
                         <h3><i class="fa-solid fa-microchip"></i> System Tools</h3>
                         <p>Manage local data and connection.</p>
                         <button class="btn" style="width:100%; margin-bottom:10px; background:var(--stormy-teal); color:white;" onclick="window.app.syncData(5)">Force Cloud Sync</button>
+                        <button class="btn" style="width:100%; margin-bottom:10px; background:var(--barista-purple); color:white;" onclick="window.app.runDiagnostics()">Run Diagnostics</button>
                         <button class="btn" style="width:100%; background:var(--danger); color:white;" onclick="if(confirm('Reset ALL local data?')){localStorage.removeItem('${STORAGE_KEY}'); location.reload();}">Factory Reset Local Data</button>
                     </div>
                 </div>
                 <div style="margin-top:20px; font-family:monospace; color:#666;">System Version: ${APP_VERSION}<br>Storage Key: ${STORAGE_KEY}</div>
             </div>
         `;
+    },
+
+    runDiagnostics: async function() {
+        let log = "DIAGNOSTICS REPORT\n==================\n\n";
+        
+        // 1. Local App Health
+        log += "[LOCAL DATA]\n";
+        log += `App Version: ${APP_VERSION}\n`;
+        log += `Data Loaded: ${this.data ? 'YES' : 'NO'}\n`;
+        if(this.data) {
+            log += `Employees: ${this.data.employees.length}\n`;
+            log += `Products: ${this.data.products.length}\n`;
+            log += `Categories: ${this.data.categories.length}\n`;
+            log += `Pending Orders: ${this.data.orders.filter(o => o.status === 'Pending').length}\n`;
+        }
+        log += "\n";
+
+        // 2. Cloud Health
+        log += "[CLOUD CONNECTION]\n";
+        const dot = document.getElementById('status-dot');
+        const isOnline = dot && dot.classList.contains('online');
+        log += `UI Status: ${isOnline ? 'Online' : 'Offline'}\n`;
+        
+        if(window.fetchCloudData) {
+            log += "Probing Firestore...\n";
+            try {
+                const start = Date.now();
+                const cloud = await window.fetchCloudData();
+                const duration = Date.now() - start;
+                if(cloud) {
+                    log += `Latency: ${duration}ms\n`;
+                    log += `Cloud Products: ${cloud.products ? cloud.products.length : 0}\n`;
+                    log += `Cloud Employees: ${cloud.employees ? cloud.employees.length : 0}\n`;
+                    log += "RESULT: HEALTHY ✅\n";
+                } else {
+                    log += "RESULT: EMPTY OR UNAVAILABLE ⚠️\n";
+                }
+            } catch(e) {
+                log += `RESULT: ERROR ❌ (${e.message})\n`;
+            }
+        } else {
+            log += "RESULT: MODULE MISSING ❌\n";
+        }
+
+        // Show Report
+        const html = `<div style="background:#222; color:#0f0; padding:15px; border-radius:5px; height:400px; overflow-y:auto; font-family:monospace; white-space:pre-wrap;">${log}</div>`;
+        this.openGenericModal("System Diagnostics", html, null);
+        document.getElementById('gen-save-btn').style.display = 'none';
     },
 
     fetchDoc: function(path) {
@@ -286,24 +332,7 @@ window.app = {
     deleteProduct: function(id) { if(confirm("Delete?")) { this.data.products = this.data.products.filter(p => p.id !== id); saveData(); this.renderMgrMenu(); this.renderPOS(); } },
     editCategory: function() { this.openGenericModal("Add Category", `<div class="form-group"><label>Category Name</label><input id="gen-input-1" class="form-control"></div>`, () => { const c = document.getElementById('gen-input-1').value; if(c && !this.data.categories.includes(c)) { this.data.categories.push(c); saveData(); this.renderMgrMenu(); this.closeModal('modal-generic'); } }); },
     deleteCategory: function(c) { if(confirm("Delete?")) { this.data.categories = this.data.categories.filter(x => x !== c); saveData(); this.renderMgrMenu(); } },
-    
-    // --- SMART AI IMAGE GENERATOR (UPDATED for 1.614:1) ---
-    generateAIImage: function() {
-        const name = document.getElementById('edit-prod-name').value;
-        if(!name) return alert("Enter Product Name first");
-        
-        let prompt = name;
-        if(name.toLowerCase().includes('water')) {
-            prompt = "fresh bottled water clear plastic bottle white background product photography";
-        } else {
-            prompt = `${name} delicious food drink white background isolated high resolution`;
-        }
-
-        // 1.614:1 Ratio = 807x500
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=807&height=500&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
-        document.getElementById('edit-prod-img').value = url;
-        this.updateImagePreview(); 
-    },
+    generateAIImage: function() { const name = document.getElementById('edit-prod-name').value; if(!name) return alert("Enter Product Name"); const url = `https://loremflickr.com/400/300/${encodeURIComponent(name.replace(/ /g, ','))}?lock=${Math.floor(Math.random()*1000)}`; document.getElementById('edit-prod-img').value = url; this.updateImagePreview(); },
     updateImagePreview: function() { const url = document.getElementById('edit-prod-img').value; document.getElementById('img-preview-box').innerHTML = url ? `<img src="${url}" style="width:100%; height:100%; object-fit:contain;">` : `<span>No Image Preview</span>`; },
 
     // --- SYSTEM ---
