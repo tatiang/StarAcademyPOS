@@ -1,10 +1,9 @@
-/* Star Academy POS v1.94 (IT Hub & Docs Viewer) */
+/* Star Academy POS v1.95 (Time Clock Grid & Smart AI) */
 
-const APP_VERSION = "v1.94";
-const STORAGE_KEY = "star_pos_v194_data";
+const APP_VERSION = "v1.95";
+const STORAGE_KEY = "star_pos_v195_data";
 const TAX_RATE = 0.0925;
 
-// --- DEFAULT DATA ---
 const DEFAULT_PRODUCTS = [
     { id: 1, name: "Coffee", price: 2.50, cat: "Hot Drinks", opts: ["Cream", "Sugar"], img: "https://loremflickr.com/300/300/coffee,cup" },
     { id: 2, name: "Hot Chocolate", price: 3.00, cat: "Hot Drinks", opts: ["Whipped Cream"], img: "https://loremflickr.com/300/300/hot,chocolate" },
@@ -35,7 +34,7 @@ let selectedTimeClockUser = null;
 window.app = {
     data: null,
 
-    // --- NAVIGATION ---
+    // --- NAVIGATION & INIT ---
     navigate: function(view) {
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
@@ -49,108 +48,86 @@ window.app = {
         if(view === 'inventory') this.renderInventory();
         if(view === 'barista') this.renderBarista();
         if(view === 'timeclock') this.renderTimeClock();
-        if(view === 'it') this.renderIT(); // New IT Renderer
-    },
-
-    // --- IT HUB (New in v1.94) ---
-    renderIT: function() {
-        const container = document.getElementById('view-it');
-        if(!container) return;
-        
-        // Inject IT Dashboard UI
-        container.innerHTML = `
-            <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-                <h2 style="color:var(--space-indigo); border-bottom:2px solid #eee; padding-bottom:10px; margin-top:0;">
-                    <i class="fa-solid fa-server"></i> IT Support Hub
-                </h2>
-                
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px; margin-top:20px;">
-                    <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid #ddd;">
-                        <h3 style="margin-top:0;"><i class="fa-solid fa-book"></i> Documentation</h3>
-                        <p style="color:#666; font-size:0.9rem;">View project documentation files directly from the docs/ folder.</p>
-                        <button class="btn-sm" style="width:100%; padding:12px; margin-bottom:10px; text-align:left;" onclick="window.app.fetchDoc('docs/TESTING_NOTES.md')">
-                            <i class="fa-regular fa-file-lines"></i> View Testing Notes
-                        </button>
-                        <button class="btn-sm" style="width:100%; padding:12px; text-align:left;" onclick="window.app.fetchDoc('docs/FEATURE_SUGGESTIONS.md')">
-                            <i class="fa-regular fa-lightbulb"></i> View Feature Suggestions
-                        </button>
-                    </div>
-
-                    <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid #ddd;">
-                        <h3 style="margin-top:0;"><i class="fa-solid fa-microchip"></i> System Tools</h3>
-                        <p style="color:#666; font-size:0.9rem;">Manage local data and cloud connection.</p>
-                        
-                        <div style="margin-bottom:15px;">
-                            <strong>Version:</strong> ${APP_VERSION}<br>
-                            <strong>Storage Key:</strong> <span style="font-family:monospace">${STORAGE_KEY}</span>
-                        </div>
-
-                        <button class="btn-sm" style="width:100%; margin-bottom:10px; background:var(--stormy-teal); color:white; border:none; padding:12px;" onclick="window.app.syncData(5)">
-                            <i class="fa-solid fa-rotate"></i> Force Cloud Sync
-                        </button>
-                        <button class="btn-sm" style="width:100%; background:var(--danger); color:white; border:none; padding:12px;" onclick="if(confirm('Reset ALL local data? App will reload.')){localStorage.clear(); location.reload();}">
-                            <i class="fa-solid fa-trash-can"></i> Factory Reset Local Data
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-
-    fetchDoc: function(path) {
-        // Fetch .md files and display in generic modal
-        fetch(path)
-            .then(response => {
-                if(!response.ok) throw new Error("File not found. Make sure 'docs/' folder exists.");
-                return response.text();
-            })
-            .then(text => {
-                // Simple formatting for the modal
-                const safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const html = `
-                    <div style="background:#2d2d2d; color:#f8f8f2; padding:20px; border-radius:6px; height:400px; overflow-y:auto; font-family:monospace; line-height:1.5; white-space:pre-wrap; border:1px solid #444;">${safeText}</div>
-                    <div style="margin-top:10px; font-size:0.8rem; color:#666;">loaded from: ${path}</div>
-                `;
-                this.openGenericModal(path.split('/').pop(), html, null);
-                // Hide the save button since we are just viewing
-                document.getElementById('gen-save-btn').style.display = 'none';
-            })
-            .catch(err => {
-                alert("Error loading file.\n\nNOTE: If you are opening index.html directly from your desktop (file://), browsers block this for security.\n\nPlease use a local server (like VS Code 'Live Server') to view docs.");
-                console.error(err);
-            });
+        if(view === 'it') this.renderIT();
     },
 
     // --- CLOUD SYNC ---
     syncData: async function(attempts = 5) {
-        const statusEl = document.getElementById('connection-status');
+        const statusEl = document.getElementById('cloud-status-indicator');
         if(statusEl) statusEl.textContent = "Syncing...";
         console.log(`Sync Attempt: ${6 - attempts}/5`);
 
-        if (typeof window.saveToCloud !== "function") {
-             console.warn("Firestore module not loaded.");
-             return;
+        if (typeof window.fetchCloudData === "function") {
+            try {
+                const cloudData = await window.fetchCloudData();
+                if (cloudData) {
+                    console.log("Cloud Data Received");
+                    if(cloudData.products && cloudData.products.length > 0) this.data.products = cloudData.products;
+                    if(cloudData.employees && cloudData.employees.length > 0) this.data.employees = cloudData.employees;
+                    else if(this.data.employees.length === 0) this.data.employees = [{name: 'Manager', role: 'Manager', status: 'out'}];
+                    
+                    if(cloudData.categories) this.data.categories = cloudData.categories;
+                    
+                    saveData();
+                    this.refreshUI();
+                    if(statusEl) statusEl.textContent = "Online";
+                    return;
+                }
+            } catch (err) {
+                console.error("Cloud Sync Error:", err);
+            }
         }
 
-        // We rely on the firestore.js listener to update window.app.data
-        // But we can trigger a manual save to verify connection
-        if (attempts > 0) {
-             // In v1.88/v1.94 architecture, data flows in via the onSnapshot listener in firestore.js
-             // If we have data, we assume sync is okay.
-             if(this.data.employees && this.data.employees.length > 0) {
-                 if(statusEl) statusEl.textContent = "";
-                 console.log("Data appears synced.");
-                 return;
-             }
-             setTimeout(() => this.syncData(attempts - 1), 1000);
+        if(attempts > 0) {
+            setTimeout(() => this.syncData(attempts - 1), 1000);
         } else {
-            if(statusEl) statusEl.textContent = "Offline (Local Only)";
-            // Fallback
+            if(statusEl) statusEl.textContent = "Offline (Local)";
             if(this.data.employees.length === 0) {
                 this.data.employees = [{name: 'Manager', role: 'Manager', status: 'out'}];
                 this.refreshUI();
             }
         }
+    },
+
+    // --- IT HUB ---
+    renderIT: function() {
+        const container = document.getElementById('view-it');
+        if(!container) return;
+        container.innerHTML = `
+            <div class="card">
+                <h2 class="card-title"><i class="fa-solid fa-server"></i> IT Support Hub</h2>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                    <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #ddd;">
+                        <h3><i class="fa-solid fa-book"></i> Documentation</h3>
+                        <p>Access system files and project notes.</p>
+                        <button class="btn" style="width:100%; margin-bottom:10px;" onclick="window.app.fetchDoc('docs/TESTING_NOTES.md')">View Testing Notes</button>
+                        <button class="btn" style="width:100%;" onclick="window.app.fetchDoc('docs/FEATURE_SUGGESTIONS.md')">View Feature Suggestions</button>
+                    </div>
+                    <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #ddd;">
+                        <h3><i class="fa-solid fa-microchip"></i> System Tools</h3>
+                        <p>Manage local data and connection.</p>
+                        <button class="btn" style="width:100%; margin-bottom:10px; background:var(--stormy-teal); color:white;" onclick="window.app.syncData(5)">Force Cloud Sync</button>
+                        <button class="btn" style="width:100%; background:var(--danger); color:white;" onclick="if(confirm('Reset ALL local data?')){localStorage.removeItem('${STORAGE_KEY}'); location.reload();}">Factory Reset Local Data</button>
+                    </div>
+                </div>
+                <div style="margin-top:20px; font-family:monospace; color:#666;">System Version: ${APP_VERSION}<br>Storage Key: ${STORAGE_KEY}</div>
+            </div>
+        `;
+    },
+
+    fetchDoc: function(path) {
+        fetch(path)
+            .then(response => { if(!response.ok) throw new Error("File not found or CORS blocked."); return response.text(); })
+            .then(text => {
+                const safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const html = `<div style="background:#2d2d2d; color:#eee; padding:15px; border-radius:5px; height:400px; overflow-y:auto; font-family:monospace; white-space:pre-wrap;">${safeText}</div>`;
+                this.openGenericModal(path, html, null);
+                document.getElementById('gen-save-btn').style.display = 'none';
+            })
+            .catch(err => {
+                alert("Error loading file. If opening via file://, browsers block this. Use a local server.");
+                console.error(err);
+            });
     },
 
     // --- POS & CART ---
@@ -305,7 +282,25 @@ window.app = {
     deleteProduct: function(id) { if(confirm("Delete?")) { this.data.products = this.data.products.filter(p => p.id !== id); saveData(); this.renderMgrMenu(); this.renderPOS(); } },
     editCategory: function() { this.openGenericModal("Add Category", `<div class="form-group"><label>Category Name</label><input id="gen-input-1" class="form-control"></div>`, () => { const c = document.getElementById('gen-input-1').value; if(c && !this.data.categories.includes(c)) { this.data.categories.push(c); saveData(); this.renderMgrMenu(); this.closeModal('modal-generic'); } }); },
     deleteCategory: function(c) { if(confirm("Delete?")) { this.data.categories = this.data.categories.filter(x => x !== c); saveData(); this.renderMgrMenu(); } },
-    generateAIImage: function() { const name = document.getElementById('edit-prod-name').value; if(!name) return alert("Enter Product Name"); const url = `https://loremflickr.com/400/300/${encodeURIComponent(name.replace(/ /g, ','))}?lock=${Math.floor(Math.random()*1000)}`; document.getElementById('edit-prod-img').value = url; this.updateImagePreview(); },
+    
+    // --- SMART AI IMAGE GENERATOR (UPDATED) ---
+    generateAIImage: function() {
+        const name = document.getElementById('edit-prod-name').value;
+        if(!name) return alert("Enter Product Name first");
+        
+        let prompt = name;
+        // Fix for "Water" to avoid oceans/lakes
+        if(name.toLowerCase().includes('water')) {
+            prompt = "fresh bottled water clear plastic bottle white background product photography";
+        } else {
+            // General food enhancement
+            prompt = `${name} delicious food drink white background isolated high resolution`;
+        }
+
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+        document.getElementById('edit-prod-img').value = url;
+        this.updateImagePreview(); 
+    },
     updateImagePreview: function() { const url = document.getElementById('edit-prod-img').value; document.getElementById('img-preview-box').innerHTML = url ? `<img src="${url}" style="width:100%; height:100%; object-fit:contain;">` : `<span>No Image Preview</span>`; },
 
     // --- SYSTEM ---
@@ -325,30 +320,40 @@ window.app = {
     startKioskMode: function() { this.navigate('kiosk'); const grid = document.getElementById('kiosk-grid'); if(grid) grid.innerHTML = this.data.products.map(p => `<div class="product-card" onclick="alert('Please ask a cashier.')"><img src="${p.img}" class="prod-img"><h4>${p.name}</h4><div>$${p.price.toFixed(2)}</div></div>`).join(''); },
     exitKioskMode: function() { this.navigate('pos'); this.logout(); },
     
-    // --- TIMECLOCK ---
+    // --- TIMECLOCK (VISUAL GRID) ---
     renderTimeClock: function() {
         let container = document.getElementById('time-clock-grid');
         if (!container) {
+            // Aggressive finder logic to remove old select menus if present
             const oldSelect = document.getElementById('time-employee-select');
             if (oldSelect) { const parent = oldSelect.closest('.card'); if(parent) { parent.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`; container = document.getElementById('time-clock-grid'); } }
             else { const view = document.getElementById('view-timeclock'); if(view) { const card = view.querySelector('.card'); if(card) { card.innerHTML = `<h2 class="card-title">Employee Time Clock</h2><div id="time-clock-grid" class="tc-grid"></div>`; container = document.getElementById('time-clock-grid'); } } }
         }
         if(!container) return;
         if(this.data.employees.length === 0) { container.innerHTML = `<p style="text-align:center; color:#666;">No employees found. <br>Syncing from cloud...</p>`; return; }
+        
         container.innerHTML = this.data.employees.map((e, index) => {
             return `<div class="tc-card ${e.status === 'in' ? 'status-in' : 'status-out'}" onclick="window.app.selectTimeClockUser(${index})"><div class="tc-avatar">${e.img ? `<img src="${e.img}">` : `<div class="tc-initials">${e.name.substring(0,1)}</div>`}</div><div class="tc-info"><h3>${e.name}</h3><div class="tc-badge">${e.status === 'in' ? 'CLOCKED IN' : 'CLOCKED OUT'}</div></div></div>`;
         }).join('');
     },
     selectTimeClockUser: function(index) {
-        selectedTimeClockUser = this.data.employees[index]; const status = selectedTimeClockUser.status || 'out';
-        const html = `<div style="text-align:center;"><div class="tc-avatar large" style="margin:0 auto 15px auto; width:100px; height:100px; font-size:3rem; line-height:100px;">${selectedTimeClockUser.img ? `<img src="${selectedTimeClockUser.img}">` : selectedTimeClockUser.name.substring(0,1)}</div><h3>${selectedTimeClockUser.name}</h3><p>Currently: <strong>${status.toUpperCase()}</strong></p><hr><div style="display:flex; gap:10px; justify-content:center; margin-top:20px;"><button class="btn" style="background:var(--success); color:white; flex:1;" onclick="window.app.processTimeClock('in')">Clock IN</button><button class="btn" style="background:var(--danger); color:white; flex:1;" onclick="window.app.processTimeClock('out')">Clock OUT</button></div></div>`;
-        this.openGenericModal("Time Clock Action", html, null); document.getElementById('gen-save-btn').style.display = 'none';
+        selectedTimeClockUser = this.data.employees[index]; 
+        const status = selectedTimeClockUser.status || 'out';
+        
+        document.getElementById('tc-modal-title').innerText = selectedTimeClockUser.name;
+        document.getElementById('tc-modal-status').innerText = `Current Status: ${status.toUpperCase()}`;
+        document.getElementById('modal-time-action').classList.add('open');
     },
     processTimeClock: function(action) {
-        if(!selectedTimeClockUser) return; selectedTimeClockUser.status = action;
-        this.data.timeEntries = this.data.timeEntries || []; this.data.timeEntries.push({ name: selectedTimeClockUser.name, action: action, time: new Date().toISOString() });
-        saveData(); this.closeModal('modal-generic'); document.getElementById('gen-save-btn').style.display = 'inline-block';
-        alert(`${selectedTimeClockUser.name} Clocked ${action.toUpperCase()}`); this.renderTimeClock(); if(window.saveToCloud) window.saveToCloud(this.data);
+        if(!selectedTimeClockUser) return; 
+        selectedTimeClockUser.status = action;
+        this.data.timeEntries = this.data.timeEntries || []; 
+        this.data.timeEntries.push({ name: selectedTimeClockUser.name, action: action, time: new Date().toISOString() });
+        saveData(); 
+        this.closeModal('modal-time-action'); 
+        alert(`${selectedTimeClockUser.name} Clocked ${action.toUpperCase()}`); 
+        this.renderTimeClock(); 
+        if(window.saveToCloud) window.saveToCloud(this.data);
     },
 
     closeModal: function(id) { document.getElementById(id).classList.remove('open'); },
@@ -393,7 +398,12 @@ function injectStyles() { const css = `.tc-grid { display: grid; grid-template-c
 document.addEventListener('DOMContentLoaded', () => {
     console.log(`System Loaded: ${APP_VERSION}`); injectStyles();
     try { const stored = localStorage.getItem(STORAGE_KEY); window.app.data = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_DATA)); } catch(e) { window.app.data = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
-    if(!window.app.data.products) window.app.data.products = DEFAULT_PRODUCTS; if(!window.app.data.employees) window.app.data.employees = [];
-    window.app.syncData(5); window.app.refreshUI();
+    if(!window.app.data.products) window.app.data.products = DEFAULT_PRODUCTS; if(!window.app.data.categories) window.app.data.categories = DEFAULT_DATA.categories;
+    if(!window.app.data.employees) window.app.data.employees = []; 
+
+    // Initial Sync with Retry
+    window.app.syncData(5); 
+
+    window.app.refreshUI();
     setInterval(() => { const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); if(document.getElementById('live-clock')) document.getElementById('live-clock').textContent = t; }, 1000);
 });
