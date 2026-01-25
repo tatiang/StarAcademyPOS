@@ -3,6 +3,10 @@
 window.app.posScreen = {
     
     init: function() {
+        // Safety: Ensure data objects exist
+        if (!window.app.data.cart) window.app.data.cart = [];
+        if (!window.app.data.products) window.app.data.products = [];
+
         this.renderCategories();
         this.renderGrid('All');
         this.renderCart();
@@ -12,8 +16,7 @@ window.app.posScreen = {
         const container = document.getElementById('pos-categories');
         if(!container) return;
         
-        // Safety check for categories
-        const cats = window.app.data.categories || [];
+        const cats = window.app.data.categories || window.app.defaults.categories;
         
         let html = `<button class="btn-sm" onclick="window.app.posScreen.renderGrid('All')">All</button>`;
         cats.forEach(cat => {
@@ -37,7 +40,6 @@ window.app.posScreen = {
             card.className = 'product-card';
             card.onclick = () => this.addToCart(p);
             
-            // Image fallback to prevent broken icons
             const imgUrl = p.img || 'https://placehold.co/150';
 
             card.innerHTML = `
@@ -52,7 +54,6 @@ window.app.posScreen = {
     },
 
     addToCart: function(product) {
-        // Safety: Ensure cart exists
         if (!window.app.data.cart) window.app.data.cart = [];
 
         const item = {
@@ -79,11 +80,7 @@ window.app.posScreen = {
         if(!list) return;
         list.innerHTML = '';
         
-        // --- CRASH FIX: SAFETY CHECK ---
-        if (!window.app.data.cart) {
-            console.warn("Cart was undefined, resetting.");
-            window.app.data.cart = [];
-        }
+        if (!window.app.data.cart) window.app.data.cart = [];
 
         let subtotal = 0;
 
@@ -155,7 +152,6 @@ window.app.posScreen = {
     },
 
     completeOrder: function(method) {
-        // Safety checks for order counter
         if(!window.app.data.orderCounter) window.app.data.orderCounter = 1001;
         if(!window.app.data.orders) window.app.data.orders = [];
 
