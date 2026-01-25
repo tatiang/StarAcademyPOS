@@ -1,4 +1,4 @@
-/* Firestore Integration v1.88 (Priority Sync) */
+/* Firestore Integration v1.96 (Priority Sync) */
 
 const firebaseConfig = {
   apiKey: "AIzaSyBt6HIzo_onaft9h-RiwROnsfv3otXKB20",
@@ -37,7 +37,7 @@ window.saveToCloud = async (data, silent = false, isBackup = false) => {
         if(isBackup && backupRef) {
             const status = document.getElementById('backup-status');
             if(status) status.innerText = "Backing up...";
-            await backupRef.add({ data: data, timestamp: new Date().toISOString(), version: "v1.88", type: "auto-hourly" });
+            await backupRef.add({ data: data, timestamp: new Date().toISOString(), version: "v1.96", type: "auto-hourly" });
             if(status) status.innerText = "Last Backup: " + new Date().toLocaleTimeString();
         } else {
             await docRef.set(data);
