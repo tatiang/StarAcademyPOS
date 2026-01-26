@@ -4,16 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes"> <title>Star Academy POS v2.0.1</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Star Academy POS v2.1.0</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <link rel="stylesheet" href="css/style_test_Gemini.css">
 </head>
 <body>
+
+    <div id="offline-banner">
+        <i class="fa-solid fa-wifi" style="margin-right:8px;"></i> 
+        OFFLINE MODE - Data will sync when connection returns
+    </div>
 
     <div id="print-area"></div>
 
@@ -23,18 +30,18 @@
                 <i class="fa-solid fa-star"></i> STAR ACADEMY
             </div>
         </div>
+        
         <div class="login-box">
             <h2>Classroom Café Login</h2>
-            <div id="connection-status" style="color:#888; font-size:0.8rem; margin-bottom:15px; min-height:20px;">
-                <i class="fa-solid fa-circle-notch fa-spin"></i> Connecting...
-            </div>
             
-            <button class="btn-pay" style="width:100%; margin-bottom:20px; background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2);" onclick="window.app.loginScreen.startKioskMode()">
-                <i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode
-            </button>
+            <div id="login-version" style="font-size:1rem; color:#888; margin-bottom:20px;">
+                Initializing System...
+            </div>
 
-            <div class="login-grid" id="student-login-grid">
-                <div style="padding:20px; color:#999;">Loading...</div>
+            <div class="login-grid" style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-pay" style="background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2);" onclick="window.app.loginScreen.startKioskMode()">
+                    <i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode
+                </button>
             </div>
             
             <div class="admin-divider"><span>ADMINISTRATION</span></div>
@@ -43,7 +50,10 @@
                 <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('IT Support')"><i class="fa-solid fa-microchip"></i> IT Support</div>
             </div>
         </div>
-        <div id="login-version-text" style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">v2.0.0 (Modular)</div>
+        
+        <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">
+            &copy; 2026 Star Academy
+        </div>
     </div>
 
     <div class="app-wrapper">
@@ -59,19 +69,19 @@
                 <li onclick="window.app.router.navigate('manager')" id="nav-manager" class="nav-admin-link" style="display:none; margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
                 <li onclick="window.app.router.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
             </ul>
-          <div class="sidebar-footer">
-    <div id="connection-status" style="font-weight:bold; color:var(--success); margin-bottom:5px;">Connecting...</div>
-    <div id="app-version">v2.0.0</div>
-    <div>&copy; 2026 Star Academy</div>
-</div>
+            
+            <div class="sidebar-footer">
+                <div id="connection-status" style="font-weight:bold; color:var(--success); margin-bottom:5px;">Connecting...</div>
+                <div id="app-version" style="opacity:0.7;">v2.0.0</div>
+                <button onclick="window.app.loginScreen.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%; margin-top:10px;">Sign Out</button>
+            </div>
         </nav>
 
         <div class="main-content">
             <header class="top-bar no-print">
                 <div class="current-cashier-display" id="header-cashier">Not Logged In</div>
                 <div style="display:flex; align-items:center; gap:15px;">
-                    <div id="cloud-status"><div id="status-dot" class="status-dot online"></div> Cloud</div>
-                    <div id="live-clock">12:00 PM</div>
+                    <div id="live-clock" style="font-weight:bold; color:var(--space-indigo);">12:00 PM</div>
                 </div>
             </header>
 
@@ -83,8 +93,8 @@
                     </div>
                     <div class="cart-panel">
                         <div class="cart-header">
-                            <h3>Order #<span id="order-number">...</span></h3>
-                            <input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Required)" style="margin-top:5px; font-size:0.9rem;">
+                            <h3>Current Order</h3>
+                            <input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Optional)" style="margin-top:5px; font-size:0.9rem;">
                         </div>
                         <div class="cart-items" id="cart-list"></div>
                         <div class="cart-totals">
@@ -109,7 +119,7 @@
                 <div class="mgr-tabs">
                     <button class="mgr-tab active" onclick="window.app.managerHub.switchTab('staff')">Staff</button>
                     <button class="mgr-tab" onclick="window.app.managerHub.switchTab('menu')">Menu</button>
-                    <button class="mgr-tab" onclick="window.app.managerHub.switchTab('data')">Data</button>
+                    <button class="mgr-tab" onclick="window.app.managerHub.switchTab('data')">Data & Reports</button>
                 </div>
                 <div id="mgr-content-area"></div>
             </section>
@@ -121,11 +131,22 @@
                 </div>
             </section>
 
-            <section id="view-it" class="view"></section>
+            <section id="view-dashboard" class="view">
+                <h2>Manager Dashboard</h2>
+                <div id="dashboard-content"></div>
+            </section>
 
-            <section id="view-barista" class="view"><h2>Barista Queue</h2><div id="barista-grid" class="barista-grid"></div></section>
-            <section id="view-dashboard" class="view"><h2>Dashboard</h2><div id="dashboard-content"></div></section>
-            <section id="view-inventory" class="view"><h2>Inventory</h2><div id="inventory-content"></div></section>
+            <section id="view-barista" class="view">
+                <h2>Barista Queue</h2>
+                <div id="barista-grid" class="barista-grid" style="display:flex; flex-direction:column; gap:10px;"></div>
+            </section>
+
+            <section id="view-inventory" class="view">
+                <h2>Inventory Status</h2>
+                <div id="inventory-content"></div>
+            </section>
+
+            <section id="view-it" class="view"></section>
             
             <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0; display:none;">
                 <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.loginScreen.exitKioskMode()">Exit</button>
@@ -137,7 +158,7 @@
         </div>
     </div>
 
-   <div id="modal-container">
+    <div id="modal-container">
         <div id="modal-cash" class="modal"><div class="modal-content"></div></div>
         <div id="modal-card" class="modal"><div class="modal-content"></div></div>
         
@@ -159,7 +180,7 @@
         </div>
     </div>
 
-<script src="js/variables_test_Gemini.js"></script>
+    <script src="js/variables_test_Gemini.js"></script>
     <script src="js/helpers_test_Gemini.js"></script>
     <script src="js/database_test_Gemini.js"></script>
 
@@ -174,10 +195,6 @@
     <script src="js/dashboard_test_Gemini.js"></script>
 
     <script src="js/main_test_Gemini.js"></script>
-    
-</body>
-</html>
 
-    
 </body>
 </html>
