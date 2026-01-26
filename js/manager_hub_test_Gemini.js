@@ -4,6 +4,12 @@
 
 window.app.managerHub = {
     
+    // Internal state for the Menu tab
+    menuState: {
+        view: 'products', // 'products' or 'categories'
+        editId: null      // ID of product being edited
+    },
+
     init: function() {
         this.switchTab('staff'); 
     },
@@ -20,12 +26,16 @@ window.app.managerHub = {
         const area = document.getElementById('mgr-content-area');
         if(!area) return;
 
+        area.innerHTML = ''; // Clear current
+
         if(tab === 'staff') this.renderStaffView(area);
         if(tab === 'menu') this.renderMenuView(area);
         if(tab === 'data') this.renderDataView(area);
     },
 
-    // --- STAFF VIEW ---
+    // ============================================================
+    // 1. STAFF VIEW
+    // ============================================================
     renderStaffView: function(area) {
         const employees = window.app.data.employees || [];
         
@@ -65,57 +75,212 @@ window.app.managerHub = {
         }
     },
 
-    // --- MENU VIEW ---
+    // ============================================================
+    // 2. MENU VIEW (Redesigned)
+    // ============================================================
     renderMenuView: function(area) {
-        const products = window.app.data.products || [];
-        
-        let prodRows = products.map((p, i) => `
-            <tr>
-                <td><img src="${p.img}" width="30" onerror="this.src='https://placehold.co/30'"></td>
-                <td>${p.name}</td>
-                <td>${window.app.helpers.formatCurrency(p.price)}</td>
-                <td>${p.cat}</td>
-                <td><button class="btn-sm" style="color:var(--danger)" onclick="window.app.managerHub.deleteProduct(${i})">X</button></td>
-            </tr>
-        `).join('');
-
+        // Sub-tabs for Products vs Categories
         area.innerHTML = `
-            <div class="mgr-split">
-                <div class="mgr-box" style="flex:2">
-                    <div class="box-header"><h3>Products</h3><button class="btn-sm btn-gold" onclick="window.app.managerHub.addProduct()">+ Add Product</button></div>
-                    <table class="staff-table"><thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Cat</th><th>Action</th></tr></thead><tbody>${prodRows}</tbody></table>
-                </div>
+            <div style="margin-bottom:15px; display:flex; gap:10px;">
+                <button class="btn-sm ${this.menuState.view === 'products' ? 'btn-train' : ''}" onclick="window.app.managerHub.setMenuView('products')">Products</button>
+                <button class="btn-sm ${this.menuState.view === 'categories' ? 'btn-train' : ''}" onclick="window.app.managerHub.setMenuView('categories')">Categories</button>
             </div>
+            <div id="menu-content"></div>
         `;
+        this.renderMenuContent();
     },
 
-    addProduct: function() {
-        const name = prompt("Product Name:");
-        if(!name) return;
-        const price = parseFloat(prompt("Price:", "0.00"));
-        const cat = prompt("Category:", "Hot Drinks");
-        
-        window.app.data.products.push({
-            id: Date.now(),
-            name: name,
-            price: price,
-            cat: cat,
-            img: `https://loremflickr.com/300/300/${name.split(' ')[0]}`, // Simple auto-image
-            opts: []
-        });
-        window.app.database.saveLocal();
-        this.switchTab('menu');
+    setMenuView: function(view) {
+        this.menuState.view = view;
+        this.renderMenuContent();
     },
 
-    deleteProduct: function(index) {
-        if(confirm("Delete Product?")) {
-            window.app.data.products.splice(index, 1);
-            window.app.database.saveLocal();
-            this.switchTab('menu');
+    renderMenuContent: function() {
+        const container = document.getElementById('menu-content');
+        if(!container) return;
+
+        if (this.menuState.view === 'categories') {
+            // CATEGORY LIST
+            const cats = window.app.data.categories || [];
+            const rows = cats.map((c, i) => `
+                <tr>
+                    <td>${c}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-sm" style="color:var(--danger)" onclick="window.app.managerHub.deleteCategory(${i})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="mgr-box">
+                    <div class="box-header"><h3>Categories</h3><button class="btn-sm btn-gold" onclick="window.app.managerHub.addCategory()">+ Add Category</button></div>
+                    <table class="staff-table"><tbody>${rows}</tbody></table>
+                </div>
+            `;
+        } else {
+            // PRODUCT LIST
+            const products = window.app.data.products || [];
+            const rows = products.map((p) => `
+                <tr>
+                    <td><img src="${p.img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;" onerror="this.src='https://placehold.co/40'"></td>
+                    <td><b>${p.name}</b><br><span style="font-size:0.8rem; color:#666">${p.cat}</span></td>
+                    <td>${window.app.helpers.formatCurrency(p.price)}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-sm" onclick="window.app.managerHub.editProduct(${p.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-sm" style="color:var(--danger)" onclick="window.app.managerHub.deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="mgr-box">
+                    <div class="box-header">
+                        <h3>Product List</h3>
+                        <button class="btn-sm btn-gold" onclick="window.app.managerHub.openProductModal()">+ Add Product</button>
+                    </div>
+                    <div style="max-height:500px; overflow-y:auto;">
+                        <table class="staff-table">
+                            <thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Actions</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         }
     },
 
-    // --- DATA & REPORTS VIEW ---
+    // --- Category Logic ---
+    addCategory: function() {
+        const name = prompt("New Category Name:");
+        if(name) {
+            window.app.data.categories.push(name);
+            window.app.database.saveLocal();
+            this.renderMenuContent();
+        }
+    },
+
+    deleteCategory: function(index) {
+        const name = window.app.data.categories[index];
+        if(confirm(`Delete category "${name}"? Products in this category will remain but need reassignment.`)) {
+            window.app.data.categories.splice(index, 1);
+            window.app.database.saveLocal();
+            this.renderMenuContent();
+        }
+    },
+
+    // --- Product Logic ---
+    deleteProduct: function(id) {
+        if(confirm("Delete this product?")) {
+            window.app.data.products = window.app.data.products.filter(p => p.id !== id);
+            window.app.database.saveLocal();
+            this.renderMenuContent();
+        }
+    },
+
+    // Opens the Add/Edit Modal
+    openProductModal: function(editProduct = null) {
+        const isEdit = !!editProduct;
+        const p = editProduct || { name: '', price: 0, cat: window.app.data.categories[0], opts: [], img: '' };
+        
+        // Build the form HTML
+        const catOptions = window.app.data.categories.map(c => 
+            `<option value="${c}" ${p.cat === c ? 'selected' : ''}>${c}</option>`
+        ).join('');
+
+        const html = `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label>Name: <input type="text" id="prod-name" class="form-control" value="${p.name}"></label>
+                <div style="display:flex; gap:10px;">
+                    <label style="flex:1">Price: <input type="number" id="prod-price" class="form-control" value="${p.price}" step="0.01"></label>
+                    <label style="flex:1">Category: <select id="prod-cat" class="form-control">${catOptions}</select></label>
+                </div>
+                <label>Options (comma separated): <input type="text" id="prod-opts" class="form-control" value="${p.opts.join(', ')}"></label>
+                
+                <div style="border-top:1px solid #eee; padding-top:10px; margin-top:5px;">
+                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Image Source:</label>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <button class="btn-sm btn-train" onclick="document.getElementById('img-uploader').click()">Upload File</button>
+                        <button class="btn-sm btn-gold" onclick="window.app.managerHub.autoGenerateImage()">Auto-Match (AI)</button>
+                    </div>
+                    <input type="file" id="img-uploader" accept="image/*" style="display:none" onchange="window.app.managerHub.handleImageUpload(this)">
+                    <input type="text" id="prod-img" class="form-control" placeholder="Image URL (or upload above)" value="${p.img}">
+                    <div id="img-preview" style="margin-top:5px; height:100px; background:#f0f0f0; text-align:center; line-height:100px; color:#999; border-radius:4px; overflow:hidden;">
+                        ${p.img ? `<img src="${p.img}" style="height:100%; width:auto;">` : 'No Image'}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        window.app.helpers.showGenericModal(
+            isEdit ? "Edit Product" : "New Product",
+            html,
+            () => this.saveProduct(isEdit ? p.id : null) // Confirm Action
+        );
+    },
+
+    editProduct: function(id) {
+        const p = window.app.data.products.find(x => x.id === id);
+        if(p) this.openProductModal(p);
+    },
+
+    saveProduct: function(id) {
+        const name = document.getElementById('prod-name').value;
+        const price = parseFloat(document.getElementById('prod-price').value);
+        const cat = document.getElementById('prod-cat').value;
+        const img = document.getElementById('prod-img').value;
+        const optsStr = document.getElementById('prod-opts').value;
+        const opts = optsStr.split(',').map(s => s.trim()).filter(s => s !== '');
+
+        if(!name) return alert("Product name required");
+
+        if(id) {
+            // Update existing
+            const p = window.app.data.products.find(x => x.id === id);
+            p.name = name; p.price = price; p.cat = cat; p.img = img; p.opts = opts;
+        } else {
+            // Create new
+            window.app.data.products.push({
+                id: Date.now(),
+                name, price, cat, img, opts
+            });
+        }
+
+        window.app.database.saveLocal();
+        this.renderMenuContent();
+    },
+
+    // --- Image Handling Helpers ---
+    
+    // 1. Simulates AI generation by using a keyword search API
+    autoGenerateImage: function() {
+        const name = document.getElementById('prod-name').value;
+        if(!name) return alert("Enter a product name first!");
+        
+        // Use Unsplash Source for high quality random images based on keyword
+        const keyword = name.split(' ')[0]; // Take first word (e.g., "Latte" from "Latte Macchiato")
+        const url = `https://loremflickr.com/400/400/${keyword},food/all`; 
+        
+        document.getElementById('prod-img').value = url;
+        document.getElementById('img-preview').innerHTML = `<img src="${url}" style="height:100%; width:auto;">`;
+    },
+
+    // 2. Converts uploaded file to Base64 string for local storage
+    handleImageUpload: function(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Resize logic could go here, but for now we just use the raw base64
+                // Warning: Large images can fill LocalStorage quickly.
+                document.getElementById('prod-img').value = e.target.result;
+                document.getElementById('img-preview').innerHTML = `<img src="${e.target.result}" style="height:100%; width:auto;">`;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    },
+
+    // ============================================================
+    // 3. DATA & REPORTS VIEW
+    // ============================================================
     renderDataView: function(area) {
         area.innerHTML = `
             <div class="mgr-grid">
