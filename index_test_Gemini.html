@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Star Academy POS v2.1.0</title>
+    <title>Rising Star Cafe POS</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,6 +14,19 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <link rel="stylesheet" href="css/style_test_Gemini.css">
+    
+    <style>
+        .login-logo-img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain; /* Keeps the drawing aspect ratio */
+            border-radius: 50%;  /* Makes it circular */
+            background: white;   /* White background behind drawing */
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* Gold Glow */
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
 
@@ -25,14 +38,18 @@
     <div id="print-area"></div>
 
     <div id="login-overlay">
-        <div class="logo-area" style="border:none;">
-            <div style="font-size:3rem; color:white; font-weight:bold; letter-spacing:2px; margin-bottom:20px;">
-                <i class="fa-solid fa-star"></i> STAR ACADEMY
+        <div class="logo-area" style="border:none; flex-direction:column;">
+            <img src="img/logo.png" class="login-logo-img" alt="Rising Star Cafe Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+            
+            <div style="font-size:3rem; color:white; font-weight:bold; letter-spacing:2px; margin-bottom:20px; display:none;">
+                <i class="fa-solid fa-star"></i> RISING STAR
             </div>
+            
+            <h1 style="color:white; font-size:1.8rem; margin:0; text-shadow:0 2px 4px rgba(0,0,0,0.5);">RISING STAR CAFE</h1>
         </div>
         
-        <div class="login-box">
-            <h2>Classroom Café Login</h2>
+        <div class="login-box" style="margin-top:20px;">
+            <h2>System Login</h2>
             
             <div id="login-version" style="font-size:1rem; color:#888; margin-bottom:20px;">
                 Initializing System...
@@ -52,13 +69,13 @@
         </div>
         
         <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">
-            &copy; 2026 Star Academy
+            &copy; 2026 Rising Star Cafe
         </div>
     </div>
 
     <div class="app-wrapper">
         <nav class="sidebar no-print">
-            <div class="logo-area"><span class="logo-text hidden">STAR ACADEMY</span></div>
+            <div class="logo-area"><span class="logo-text hidden">RISING STAR</span></div>
             <ul class="nav-links">
                 <li onclick="window.app.router.navigate('pos')" id="nav-pos" class="active"><i class="fa-solid fa-mug-hot"></i> POS</li>
                 <li onclick="window.app.router.navigate('barista')" id="nav-barista"><i class="fa-solid fa-bell"></i> Barista View</li>
@@ -72,7 +89,7 @@
             
             <div class="sidebar-footer">
                 <div id="connection-status" style="font-weight:bold; color:var(--success); margin-bottom:5px;">Connecting...</div>
-                <div id="app-version" style="opacity:0.7;">v2.0.0</div>
+                <div id="app-version" style="opacity:0.7;">v2.1.0</div>
                 <button onclick="window.app.loginScreen.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%; margin-top:10px;">Sign Out</button>
             </div>
         </nav>
