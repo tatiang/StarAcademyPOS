@@ -135,14 +135,26 @@
         </div>
     </div>
 
-    <div id="modal-container">
+   <div id="modal-container">
         <div id="modal-cash" class="modal"><div class="modal-content"></div></div>
         <div id="modal-card" class="modal"><div class="modal-content"></div></div>
+        
         <div id="modal-pin" class="modal"><div class="modal-content" style="width:300px;"></div></div>
+        
         <div id="modal-generic" class="modal"><div class="modal-content"></div></div>
         <div id="modal-options" class="modal"><div class="modal-content"></div></div>
         <div id="modal-product" class="modal"><div class="modal-content"></div></div>
+        
         <div id="modal-time-action" class="modal"><div class="modal-content" style="width:350px;"></div></div>
+        
+        <div id="modal-receipts" class="modal">
+            <div class="modal-content" style="width:400px; max-height:80vh; display:flex; flex-direction:column;">
+                <h3>Order History</h3>
+                <div id="receipt-list" style="overflow-y:auto; flex:1; border:1px solid #eee; margin:10px 0; padding:10px;">
+                    </div>
+                <button class="btn-pay btn-train" onclick="window.app.helpers.closeModal('modal-receipts')">Close</button>
+            </div>
+        </div>
     </div>
 
 <script src="js/variables_test_Gemini.js"></script>
