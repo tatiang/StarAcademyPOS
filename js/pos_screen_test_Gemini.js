@@ -38,8 +38,11 @@ window.app.posScreen = {
             const card = document.createElement('div');
             card.className = 'product-card';
             card.onclick = () => this.addToCart(p);
+            
+            const imgUrl = p.img || 'https://placehold.co/150';
+
             card.innerHTML = `
-                <img src="${p.img || 'https://placehold.co/150'}" class="prod-img">
+                <img src="${imgUrl}" class="prod-img" onerror="this.src='https://placehold.co/150'">
                 <div class="prod-info"><h4>${p.name}</h4><div>${window.app.helpers.formatCurrency(p.price)}</div></div>
             `;
             grid.appendChild(card);
@@ -101,7 +104,6 @@ window.app.posScreen = {
         const btnCard = document.getElementById('btn-action-card');
         if (!btnCash || !btnCard) return;
         
-        const cssClass = hasItems ? 'btn-square-large charge-ready' : 'btn-square-large charge-disabled';
         btnCash.className = hasItems ? 'btn-square-large charge-ready-cash' : 'btn-square-large charge-disabled';
         btnCard.className = hasItems ? 'btn-square-large charge-ready-card' : 'btn-square-large charge-disabled';
         
@@ -109,20 +111,88 @@ window.app.posScreen = {
         btnCard.disabled = !hasItems;
     },
 
-    // --- PAYMENTS ---
+    // --- PAYMENTS & MODALS ---
+
+    renderCashModal: function() {
+        const modal = document.getElementById('modal-cash');
+        const content = modal.querySelector('.modal-content');
+        
+        // This injects the missing HTML!
+        content.innerHTML = `
+            <h3>Cash Payment</h3>
+            <div class="total-display-large" id="cash-total-due">$0.00</div>
+            <div id="calc-display">$0.00</div>
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.posScreen.addCash(5)">+$5</button>
+                <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.posScreen.addCash(10)">+$10</button>
+                <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.posScreen.addCash(20)">+$20</button>
+            </div>
+            <div class="calc-grid">
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('1')">1</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('2')">2</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('3')">3</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('4')">4</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('5')">5</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('6')">6</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('7')">7</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('8')">8</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('9')">9</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('.')">.</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashInput('0')">0</button>
+                <button class="calc-btn" onclick="window.app.posScreen.cashClear()" style="background:#e74c3c; color:white;">C</button>
+            </div>
+            <div id="change-display-box" class="change-display-box">Change: $0.00</div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-pay btn-train" style="flex:1" onclick="window.app.helpers.closeModal('modal-cash')">Cancel</button>
+                <button class="btn-pay btn-success" style="flex:1; background:var(--success);" onclick="window.app.posScreen.finalizeCash()">Finalize</button>
+            </div>
+        `;
+    },
+
+    renderCardModal: function() {
+        const modal = document.getElementById('modal-card');
+        const content = modal.querySelector('.modal-content');
+        
+        content.innerHTML = `
+            <div style="text-align:center; margin-bottom:15px;">
+                <h3 style="margin-top:5px;">Card Terminal</h3>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <button class="btn-sm" style="flex:1" onclick="document.getElementById('card-mode-swipe').style.display='block'; document.getElementById('card-mode-manual').style.display='none';">Swipe</button>
+                <button class="btn-sm" style="flex:1" onclick="document.getElementById('card-mode-swipe').style.display='none'; document.getElementById('card-mode-manual').style.display='block';">Manual Entry</button>
+            </div>
+            <div id="card-mode-swipe">
+                <div class="swipe-track" onclick="window.app.posScreen.simulateSwipe()"><div id="swipe-anim" class="swipe-anim">SLIDE CARD HERE &rarr;</div></div>
+                <p style="text-align:center; color:#888; font-size:0.8rem;">Click track to simulate swipe</p>
+            </div>
+            <div id="card-mode-manual" style="display:none;">
+                <input type="tel" id="cc-num" class="form-control" placeholder="Card Number (0000 0000 0000 0000)">
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="cc-exp" class="form-control" placeholder="MM/YY">
+                    <input type="tel" id="cc-cvv" class="form-control" placeholder="CVV">
+                </div>
+            </div>
+            <div id="card-msg" style="text-align:center; color:var(--success); font-weight:bold; height:20px; margin:10px 0;"></div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-pay btn-train" style="flex:1" onclick="window.app.helpers.closeModal('modal-card')">Cancel</button>
+                <button id="btn-process-card" class="btn-pay btn-card" style="flex:1; opacity:0.5; pointer-events:none;" onclick="window.app.posScreen.finalizeCard()">Process</button>
+            </div>
+        `;
+    },
+
     validateAndPay: function(method) {
         if(!window.app.data.cart || window.app.data.cart.length === 0) return;
         const total = document.getElementById('pos-total').textContent;
 
         if(method === 'Cash') {
+            this.renderCashModal(); // <--- Fix: Render HTML first
             this.cashTendered = "";
-            document.getElementById('cash-total-due').textContent = total;
+            document.getElementById('cash-total-due').textContent = total; 
             this.updateCashUI();
             window.app.helpers.openModal('modal-cash');
         } else {
+            this.renderCardModal(); // <--- Fix: Render HTML first
             this.cardVerified = false;
-            document.getElementById('card-msg').textContent = "";
-            document.getElementById('btn-process-card').style.opacity = "0.5";
             window.app.helpers.openModal('modal-card');
         }
     },
@@ -195,7 +265,7 @@ window.app.posScreen = {
             method: method,
             items: [...window.app.data.cart],
             total: parseFloat(document.getElementById('pos-total').textContent.replace('$','')),
-            status: 'Pending' // Important for Barista View
+            status: 'Pending'
         };
 
         window.app.data.orders.push(order);
@@ -208,11 +278,3 @@ window.app.posScreen = {
         alert("Order Placed Successfully!");
     }
 };
-
-// --- GLOBAL BRIDGE (Allows HTML onclick="..." to work) ---
-window.app.cashInput = (n) => window.app.posScreen.cashInput(n);
-window.app.cashClear = () => window.app.posScreen.cashClear();
-window.app.addCash = (n) => window.app.posScreen.addCash(n);
-window.app.finalizeCash = () => window.app.posScreen.finalizeCash();
-window.app.simulateSwipe = () => window.app.posScreen.simulateSwipe();
-window.app.finalizeCard = () => window.app.posScreen.finalizeCard();
