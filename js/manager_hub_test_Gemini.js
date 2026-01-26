@@ -265,19 +265,16 @@ window.app.managerHub = {
         btn.disabled = true;
 
         // --- ENHANCED PROMPT ENGINEERING ---
-        // We use Pollinations.ai which accepts a raw prompt URL.
-        // We add specific keywords to ensure professional food photography style.
         const basePrompt = `${name}, appetizing professional food photography, cinematic lighting, 8k, highly detailed, studio photo, cafe style, bokeh background`;
         
         // URL Encode the prompt
         const encoded = encodeURIComponent(basePrompt);
         
         // Set Dimensions (approx 1.62:1)
-        // Adding a random seed ensures a NEW image every time you click
         const seed = Math.floor(Math.random() * 10000);
         const url = `https://image.pollinations.ai/prompt/${encoded}?width=800&height=494&nologo=true&seed=${seed}`;
         
-        // Image Pre-loading to ensure it exists before showing
+        // Image Pre-loading
         const imgObj = new Image();
         imgObj.onload = function() {
             input.value = url;
@@ -369,9 +366,10 @@ window.app.managerHub = {
         const date = new Date(order.date).toLocaleString();
         const total = window.app.helpers.formatCurrency(order.total);
 
+        // UPDATED: Receipt Header
         alert(`
         -------------------------
-        STAR ACADEMY RECEIPT
+        RISING STAR CAFE
         -------------------------
         Order: #${order.id}
         Date:  ${date}
