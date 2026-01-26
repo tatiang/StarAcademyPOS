@@ -200,11 +200,11 @@ window.app.managerHub = {
                     <label style="font-weight:bold; margin-bottom:5px; display:block;">Image Source:</label>
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <button class="btn-sm btn-train" onclick="document.getElementById('img-uploader').click()">Upload File</button>
-                        <button class="btn-sm btn-gold" onclick="window.app.managerHub.autoGenerateImage()">Auto-Match (AI)</button>
+                        <button class="btn-sm btn-gold" id="btn-auto-gen" onclick="window.app.managerHub.autoGenerateImage()">Auto-Match (AI)</button>
                     </div>
                     <input type="file" id="img-uploader" accept="image/*" style="display:none" onchange="window.app.managerHub.handleImageUpload(this)">
                     <input type="text" id="prod-img" class="form-control" placeholder="Image URL (or upload above)" value="${p.img}">
-                    <div id="img-preview" style="margin-top:5px; height:120px; background:#f0f0f0; text-align:center; display:flex; align-items:center; justify-content:center; color:#999; border-radius:4px; overflow:hidden;">
+                    <div id="img-preview" style="margin-top:5px; height:180px; background:#f0f0f0; text-align:center; display:flex; align-items:center; justify-content:center; color:#999; border-radius:4px; overflow:hidden;">
                         ${p.img ? `<img src="${p.img}" style="height:100%; width:auto;">` : 'No Image'}
                     </div>
                 </div>
@@ -251,20 +251,46 @@ window.app.managerHub = {
 
     // --- Image Handling Helpers ---
     
-    // 1. Simulates AI generation by using a keyword search API
+    // 1. TRUE AI GENERATION via Pollinations.ai
     autoGenerateImage: function() {
         const name = document.getElementById('prod-name').value;
-        if(!name) return alert("Enter a product name first!");
+        const btn = document.getElementById('btn-auto-gen');
+        const preview = document.getElementById('img-preview');
+        const input = document.getElementById('prod-img');
+
+        if(!name) return alert("Please enter a Product Name first!");
         
-        // --- UPDATED IMAGE GENERATION PROMPT ---
-        // 1. Extracts keyword
-        // 2. Uses aspect ratio ~1.62:1 (600x371)
-        // 3. Adds 'minimalist' and 'studio' to search terms for professional look
-        const keyword = name.split(' ')[0]; 
-        const url = `https://loremflickr.com/600/371/${keyword},food,minimalist`; 
+        // Show Loading State
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+        btn.disabled = true;
+
+        // --- ENHANCED PROMPT ENGINEERING ---
+        // We use Pollinations.ai which accepts a raw prompt URL.
+        // We add specific keywords to ensure professional food photography style.
+        const basePrompt = `${name}, appetizing professional food photography, cinematic lighting, 8k, highly detailed, studio photo, cafe style, bokeh background`;
         
-        document.getElementById('prod-img').value = url;
-        document.getElementById('img-preview').innerHTML = `<img src="${url}" style="height:100%; width:auto;">`;
+        // URL Encode the prompt
+        const encoded = encodeURIComponent(basePrompt);
+        
+        // Set Dimensions (approx 1.62:1)
+        // Adding a random seed ensures a NEW image every time you click
+        const seed = Math.floor(Math.random() * 10000);
+        const url = `https://image.pollinations.ai/prompt/${encoded}?width=800&height=494&nologo=true&seed=${seed}`;
+        
+        // Image Pre-loading to ensure it exists before showing
+        const imgObj = new Image();
+        imgObj.onload = function() {
+            input.value = url;
+            preview.innerHTML = `<img src="${url}" style="height:100%; width:auto; display:block;">`;
+            btn.innerHTML = 'Auto-Match (AI)';
+            btn.disabled = false;
+        };
+        imgObj.onerror = function() {
+            alert("AI Generation failed. Please try again.");
+            btn.innerHTML = 'Auto-Match (AI)';
+            btn.disabled = false;
+        };
+        imgObj.src = url;
     },
 
     // 2. Converts uploaded file to Base64 string for local storage
