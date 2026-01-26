@@ -76,7 +76,7 @@ window.app.managerHub = {
     },
 
     // ============================================================
-    // 2. MENU VIEW (Redesigned)
+    // 2. MENU VIEW
     // ============================================================
     renderMenuView: function(area) {
         // Sub-tabs for Products vs Categories
@@ -122,7 +122,7 @@ window.app.managerHub = {
             const products = window.app.data.products || [];
             const rows = products.map((p) => `
                 <tr>
-                    <td><img src="${p.img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;" onerror="this.src='https://placehold.co/40'"></td>
+                    <td><img src="${p.img}" style="width:50px; height:30px; object-fit:cover; border-radius:4px;" onerror="this.src='https://placehold.co/50x30'"></td>
                     <td><b>${p.name}</b><br><span style="font-size:0.8rem; color:#666">${p.cat}</span></td>
                     <td>${window.app.helpers.formatCurrency(p.price)}</td>
                     <td style="text-align:right;">
@@ -204,7 +204,7 @@ window.app.managerHub = {
                     </div>
                     <input type="file" id="img-uploader" accept="image/*" style="display:none" onchange="window.app.managerHub.handleImageUpload(this)">
                     <input type="text" id="prod-img" class="form-control" placeholder="Image URL (or upload above)" value="${p.img}">
-                    <div id="img-preview" style="margin-top:5px; height:100px; background:#f0f0f0; text-align:center; line-height:100px; color:#999; border-radius:4px; overflow:hidden;">
+                    <div id="img-preview" style="margin-top:5px; height:120px; background:#f0f0f0; text-align:center; display:flex; align-items:center; justify-content:center; color:#999; border-radius:4px; overflow:hidden;">
                         ${p.img ? `<img src="${p.img}" style="height:100%; width:auto;">` : 'No Image'}
                     </div>
                 </div>
@@ -256,9 +256,12 @@ window.app.managerHub = {
         const name = document.getElementById('prod-name').value;
         if(!name) return alert("Enter a product name first!");
         
-        // Use Unsplash Source for high quality random images based on keyword
-        const keyword = name.split(' ')[0]; // Take first word (e.g., "Latte" from "Latte Macchiato")
-        const url = `https://loremflickr.com/400/400/${keyword},food/all`; 
+        // --- UPDATED IMAGE GENERATION PROMPT ---
+        // 1. Extracts keyword
+        // 2. Uses aspect ratio ~1.62:1 (600x371)
+        // 3. Adds 'minimalist' and 'studio' to search terms for professional look
+        const keyword = name.split(' ')[0]; 
+        const url = `https://loremflickr.com/600/371/${keyword},food,minimalist`; 
         
         document.getElementById('prod-img').value = url;
         document.getElementById('img-preview').innerHTML = `<img src="${url}" style="height:100%; width:auto;">`;
@@ -269,8 +272,6 @@ window.app.managerHub = {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Resize logic could go here, but for now we just use the raw base64
-                // Warning: Large images can fill LocalStorage quickly.
                 document.getElementById('prod-img').value = e.target.result;
                 document.getElementById('img-preview').innerHTML = `<img src="${e.target.result}" style="height:100%; width:auto;">`;
             }
@@ -308,7 +309,6 @@ window.app.managerHub = {
         if (!window.app.data.orders || window.app.data.orders.length === 0) {
             list.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>No orders found.</p>";
         } else {
-            // Sort orders newest first
             const sortedOrders = [...window.app.data.orders].reverse();
             
             list.innerHTML = sortedOrders.map(o => {
@@ -343,7 +343,6 @@ window.app.managerHub = {
         const date = new Date(order.date).toLocaleString();
         const total = window.app.helpers.formatCurrency(order.total);
 
-        // Simple print simulation
         alert(`
         -------------------------
         STAR ACADEMY RECEIPT
