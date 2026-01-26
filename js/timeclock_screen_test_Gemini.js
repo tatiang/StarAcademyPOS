@@ -1,4 +1,4 @@
-/* FILE: timeclock_screen_test_Gemini.js
+/* FILE: js/timeclock_screen_test_Gemini.js
    PURPOSE: Renders the employee grid for Clock In/Out.
 */
 
@@ -11,27 +11,35 @@ window.app.timeClock = {
 
         container.innerHTML = '';
 
-        if(window.app.data.employees.length === 0) {
-            container.innerHTML = "<p style='text-align:center;color:#666;'>No employees found. Please sync data.</p>";
+        // Safety check
+        if(!window.app.data.employees || window.app.data.employees.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: #888; padding: 40px;">
+                    <i class="fa-solid fa-users" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>No employees found.</p>
+                    <button class="btn-sm btn-gold" onclick="window.app.router.navigate('manager')">Go to Manager Hub to Add Staff</button>
+                </div>
+            `;
             return;
         }
 
         window.app.data.employees.forEach((emp, index) => {
-            const isClockedIn = (emp.status === 'in');
+            const isIn = (emp.status === 'in');
             
             const card = document.createElement('div');
-            card.className = `tc-card ${isClockedIn ? 'status-in' : 'status-out'}`;
+            // CSS classes determine if it looks Green (in) or Grey (out)
+            card.className = `tc-card ${isIn ? 'status-in' : 'status-out'}`;
             
-            // When clicked, open the Action Modal
+            // Clicking opens the decision modal
             card.onclick = () => this.openActionModal(index);
 
             card.innerHTML = `
                 <div class="tc-avatar">
-                    <div class="tc-initials">${emp.name.substring(0,1)}</div>
+                    <div class="tc-initials">${emp.name.substring(0,1).toUpperCase()}</div>
                 </div>
                 <div class="tc-info">
                     <h3>${emp.name}</h3>
-                    <div class="tc-badge">${isClockedIn ? 'CLOCKED IN' : 'CLOCKED OUT'}</div>
+                    <div class="tc-badge">${isIn ? 'CLOCKED IN' : 'CLOCKED OUT'}</div>
                 </div>
             `;
             container.appendChild(card);
@@ -42,19 +50,34 @@ window.app.timeClock = {
     openActionModal: function(index) {
         const emp = window.app.data.employees[index];
         const modal = document.getElementById('modal-time-action');
+        const content = modal.querySelector('.modal-content');
         
-        // Tag the modal with the employee index so we know who to update later
+        // Store the index so we know who to update
         modal.dataset.empIndex = index;
 
-        // Fill in the modal details
-        const content = modal.querySelector('.modal-content');
+        const isClockedIn = emp.status === 'in';
+        const statusColor = isClockedIn ? 'var(--success)' : '#666';
+
         content.innerHTML = `
-            <h3>${emp.name}</h3>
-            <p style="margin-bottom:20px; color:#666;">Currently: ${emp.status === 'in' ? 'Clocked IN' : 'Clocked OUT'}</p>
-            <div style="display:flex; gap:15px; margin-bottom:15px;">
-                <button class="btn-pay btn-success" onclick="window.app.timeClock.process('in')" style="flex:1; height:80px; font-size:1.2rem;"><i class="fa-solid fa-right-to-bracket"></i> CLOCK IN</button>
-                <button class="btn-pay btn-card" onclick="window.app.timeClock.process('out')" style="flex:1; height:80px; font-size:1.2rem; background:#e74c3c;"><i class="fa-solid fa-right-from-bracket"></i> CLOCK OUT</button>
+            <div style="text-align:center; margin-bottom:20px;">
+                <h3 style="margin-bottom:5px;">${emp.name}</h3>
+                <div style="color:${statusColor}; font-weight:bold;">
+                    Currently: ${isClockedIn ? 'CLOCKED IN' : 'CLOCKED OUT'}
+                </div>
             </div>
+
+            <div style="display:flex; gap:15px; margin-bottom:15px;">
+                <button class="btn-pay" onclick="window.app.timeClock.process('in')" 
+                    style="flex:1; height:80px; font-size:1.1rem; background:var(--success); opacity:${isClockedIn ? '0.5' : '1'}">
+                    <i class="fa-solid fa-right-to-bracket"></i><br>CLOCK IN
+                </button>
+                
+                <button class="btn-pay" onclick="window.app.timeClock.process('out')" 
+                    style="flex:1; height:80px; font-size:1.1rem; background:#e74c3c; opacity:${!isClockedIn ? '0.5' : '1'}">
+                    <i class="fa-solid fa-right-from-bracket"></i><br>CLOCK OUT
+                </button>
+            </div>
+            
             <button class="btn-pay btn-train" onclick="window.app.helpers.closeModal('modal-time-action')" style="width:100%">Cancel</button>
         `;
         
@@ -68,23 +91,30 @@ window.app.timeClock = {
         if(index === undefined) return;
 
         const emp = window.app.data.employees[index];
+        
+        // Prevent double clock-in
+        if(emp.status === action) {
+            alert(`Already clocked ${action}!`);
+            return;
+        }
+
+        // 1. Update Status
         emp.status = action;
 
-        // Log history
+        // 2. Log History
+        if(!window.app.data.timeEntries) window.app.data.timeEntries = [];
         window.app.data.timeEntries.push({
             name: emp.name,
             action: action,
             time: new Date().toISOString()
         });
 
-        // Save
+        // 3. Save & Sync
         window.app.database.saveLocal();
         window.app.database.sync(); 
         
-        // Refresh grid
-        this.render(); 
+        // 4. Refresh Screen
         window.app.helpers.closeModal('modal-time-action');
-        
-        alert(`${emp.name} is now Clocked ${action.toUpperCase()}`);
+        this.render();
     }
 };
