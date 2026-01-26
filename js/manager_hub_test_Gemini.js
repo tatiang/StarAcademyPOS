@@ -1,23 +1,22 @@
 /* FILE: js/manager_hub_test_Gemini.js
-   PURPOSE: Logic for the Manager Dashboard (Staff, Menu, Data).
+   PURPOSE: Logic for the Manager Dashboard (Staff, Menu, Data, Receipts).
 */
 
 window.app.managerHub = {
     
     init: function() {
-        this.switchTab('staff'); // Default tab
+        this.switchTab('staff'); 
     },
 
     switchTab: function(tab) {
-        // Update Buttons
+        // Highlight active tab
         document.querySelectorAll('.mgr-tab').forEach(b => b.classList.remove('active'));
-        // Find button by onclick text matching... simplified approach:
         const btns = document.querySelectorAll('.mgr-tab');
         if(tab === 'staff' && btns[0]) btns[0].classList.add('active');
         if(tab === 'menu' && btns[1]) btns[1].classList.add('active');
         if(tab === 'data' && btns[2]) btns[2].classList.add('active');
 
-        // Inject Content
+        // Render content
         const area = document.getElementById('mgr-content-area');
         if(!area) return;
 
@@ -29,8 +28,7 @@ window.app.managerHub = {
     // --- STAFF VIEW ---
     renderStaffView: function(area) {
         const employees = window.app.data.employees || [];
-        const roles = window.app.data.roles || [];
-
+        
         let empRows = employees.map((e, i) => `
             <tr>
                 <td>${e.name}</td>
@@ -55,7 +53,7 @@ window.app.managerHub = {
             const role = prompt("Role (Manager, Barista, etc):", "Barista");
             window.app.data.employees.push({ name, role, status: 'out' });
             window.app.database.saveLocal();
-            this.switchTab('staff'); // Refresh
+            this.switchTab('staff');
         }
     },
 
@@ -73,7 +71,7 @@ window.app.managerHub = {
         
         let prodRows = products.map((p, i) => `
             <tr>
-                <td><img src="${p.img}" width="30"></td>
+                <td><img src="${p.img}" width="30" onerror="this.src='https://placehold.co/30'"></td>
                 <td>${p.name}</td>
                 <td>${window.app.helpers.formatCurrency(p.price)}</td>
                 <td>${p.cat}</td>
@@ -92,7 +90,6 @@ window.app.managerHub = {
     },
 
     addProduct: function() {
-        // Simplified for modularity - in real app, use a modal
         const name = prompt("Product Name:");
         if(!name) return;
         const price = parseFloat(prompt("Price:", "0.00"));
@@ -103,7 +100,7 @@ window.app.managerHub = {
             name: name,
             price: price,
             cat: cat,
-            img: "https://placehold.co/150",
+            img: `https://loremflickr.com/300/300/${name.split(' ')[0]}`, // Simple auto-image
             opts: []
         });
         window.app.database.saveLocal();
@@ -118,16 +115,84 @@ window.app.managerHub = {
         }
     },
 
-    // --- DATA VIEW ---
+    // --- DATA & REPORTS VIEW ---
     renderDataView: function(area) {
         area.innerHTML = `
             <div class="mgr-grid">
                 <div class="mgr-card">
-                    <h3>System Data</h3>
-                    <button class="btn-pay btn-train" onclick="window.app.database.sync()">Force Cloud Sync</button>
-                    <p style="margin-top:10px; font-size:0.8rem; color:#666;">Version: ${window.app.version}</p>
+                    <h3>Data Management</h3>
+                    <p>Sync your local data with the cloud.</p>
+                    <button class="btn-pay btn-train" style="width:100%" onclick="window.app.database.sync()">Force Cloud Sync</button>
+                    <p style="margin-top:10px; font-size:0.8rem; color:#666;">App Version: ${window.app.version}</p>
+                </div>
+                
+                <div class="mgr-card">
+                    <h3>Reports & History</h3>
+                    <p>View past transactions and logs.</p>
+                    <button class="btn-pay btn-gold" style="width:100%" onclick="window.app.managerHub.viewReceipts()">View Order History</button>
                 </div>
             </div>
         `;
+    },
+
+    // --- RECEIPT VIEWER ---
+    viewReceipts: function() {
+        const modal = document.getElementById('modal-receipts');
+        const list = document.getElementById('receipt-list');
+        
+        if (!window.app.data.orders || window.app.data.orders.length === 0) {
+            list.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>No orders found.</p>";
+        } else {
+            // Sort orders newest first
+            const sortedOrders = [...window.app.data.orders].reverse();
+            
+            list.innerHTML = sortedOrders.map(o => {
+                const date = new Date(o.date).toLocaleString();
+                const total = window.app.helpers.formatCurrency(o.total);
+                
+                return `
+                    <div style="border-bottom:1px solid #eee; padding:15px 0;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>Order #${o.id}</span>
+                            <span>${total}</span>
+                        </div>
+                        <div style="color:#666; font-size:0.85rem; margin-bottom:5px;">${date} • ${o.method}</div>
+                        <div style="font-size:0.9rem;">
+                            ${o.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
+                        </div>
+                        <button class="btn-sm" style="margin-top:5px; width:100%; background:#f0f0f0;" onclick="window.app.managerHub.printReceipt(${o.id})">
+                            <i class="fa-solid fa-print"></i> Reprint Receipt
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        window.app.helpers.openModal('modal-receipts');
+    },
+
+    printReceipt: function(orderId) {
+        const order = window.app.data.orders.find(o => o.id === orderId);
+        if(!order) return;
+
+        const date = new Date(order.date).toLocaleString();
+        const total = window.app.helpers.formatCurrency(order.total);
+
+        // Simple print simulation
+        alert(`
+        -------------------------
+        STAR ACADEMY RECEIPT
+        -------------------------
+        Order: #${order.id}
+        Date:  ${date}
+        
+        ITEMS:
+        ${order.items.map(i => `${i.qty}x ${i.name} ... ${window.app.helpers.formatCurrency(i.price * i.qty)}`).join('\n')}
+        
+        -------------------------
+        TOTAL: ${total}
+        PAID:  ${order.method}
+        -------------------------
+        `);
     }
 };
