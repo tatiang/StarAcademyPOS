@@ -22,7 +22,7 @@ window.app.router = {
     navigate: function(viewName) {
         
         // A. Hide all views
-        // FIX: Changed from '.app-view' to '.view' to match your HTML tags
+        // FIX: Changed from '.app-view' to '.view' to match HTML tags
         document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
         
         // B. Update Sidebar Buttons
@@ -40,7 +40,6 @@ window.app.router = {
             
             // --- MODULE ROUTER ---
             if(viewName === 'pos') {
-                // Checks for both naming conventions just in case
                 if(window.app.posScreen) window.app.posScreen.init();
                 else if(window.app.pos) window.app.pos.init();
             }
