@@ -1,211 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Rising Star Cafe POS v2.2.0</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+/* FILE: js/main_test_Gemini.js
+   PURPOSE: Main entry point. Handles navigation and startup.
+*/
 
-    <link rel="stylesheet" href="css/style_test_Gemini.css">
+// CHANGED: Renamed from 'app.main' to 'app.router' to match HTML onclick events
+window.app.router = {
     
-    <style>
-        .login-logo-img {
-            width: 180px;
-            height: 180px;
-            object-fit: contain;
-            border-radius: 50%;
-            background: white;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
-            margin-bottom: 20px;
+    init: function() {
+        console.log("System Boot: " + window.app.version);
+        
+        // 1. Initialize Database & Load Data
+        window.app.database.init(() => {
+            // 2. Render Sidebar Version
+            const verEl = document.getElementById('app-version');
+            if(verEl) verEl.innerText = window.app.version;
+
+            // 3. Start Default View (POS)
+            this.navigate('pos'); 
+        });
+    },
+
+    // NAVIGATION LOGIC
+    // CHANGED: Renamed from 'switchView' to 'navigate' to match HTML
+    navigate: function(viewName) {
+        
+        // A. Hide all views
+        document.querySelectorAll('.app-view').forEach(el => el.style.display = 'none');
+        
+        // B. Update Sidebar Buttons
+        // CHANGED: targeting '.nav-links li' instead of '.nav-btn'
+        document.querySelectorAll('.nav-links li').forEach(btn => btn.classList.remove('active'));
+        
+        // CHANGED: looking for 'nav-' ID instead of 'btn-'
+        const activeBtn = document.getElementById(`nav-${viewName}`);
+        if(activeBtn) activeBtn.classList.add('active');
+
+        // C. Show Selected View & Initialize Module
+        const viewId = `view-${viewName}`;
+        const viewEl = document.getElementById(viewId);
+        
+        if(viewEl) {
+            viewEl.style.display = 'block';
+            
+            // --- MODULE ROUTER ---
+            // This triggers the specific logic for each screen
+            if(viewName === 'pos') {
+                if(window.app.posScreen) window.app.posScreen.init(); // Note: sometimes named pos or posScreen
+                else if(window.app.pos) window.app.pos.init();
+            }
+            else if(viewName === 'barista') {
+                if(window.app.barista) window.app.barista.init();
+            }
+            else if(viewName === 'manager') {
+                if(window.app.managerHub) window.app.managerHub.init();
+            }
+            else if(viewName === 'it') {
+                if(window.app.itHub) window.app.itHub.render();
+            }
+            else if(viewName === 'inventory') {
+                if(window.app.inventory) window.app.inventory.init();
+            }
+            else if(viewName === 'timeclock') {
+                 if(window.app.timeclock) window.app.timeclock.init();
+            }
+            else if(viewName === 'dashboard') {
+                 if(window.app.dashboard) window.app.dashboard.init();
+            }
+
+        } else {
+            console.error("View container not found: " + viewId);
         }
-    </style>
-</head>
-<body>
+    }
+};
 
-    <div id="offline-banner">
-        <i class="fa-solid fa-wifi" style="margin-right:8px;"></i> 
-        OFFLINE MODE - Data will sync when connection returns
-    </div>
-
-    <div id="print-area"></div>
-
-    <div id="login-overlay">
-        <div class="logo-area" style="border:none; flex-direction:column;">
-            <img src="img/logo.png" class="login-logo-img" alt="Rising Star Cafe Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-            
-            <div style="font-size:3rem; color:white; font-weight:bold; letter-spacing:2px; margin-bottom:20px; display:none;">
-                <i class="fa-solid fa-star"></i> RISING STAR
-            </div>
-            
-            <h1 style="color:white; font-size:1.8rem; margin:0; text-shadow:0 2px 4px rgba(0,0,0,0.5);">RISING STAR CAFE</h1>
-        </div>
-        
-        <div class="login-box" style="margin-top:20px;">
-            <h2>System Login</h2>
-            
-            <div id="login-version" style="font-size:1rem; color:#888; margin-bottom:20px;">
-                Initializing System...
-            </div>
-
-            <div class="login-grid" style="display:flex; flex-direction:column; gap:10px;">
-                <button class="btn-pay" style="background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2);" onclick="window.app.loginScreen.startKioskMode()">
-                    <i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode
-                </button>
-            </div>
-            
-            <div class="admin-divider"><span>ADMINISTRATION</span></div>
-            <div class="admin-buttons-row">
-                <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('Manager')"><i class="fa-solid fa-user-tie"></i> Manager</div>
-                <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('IT Support')"><i class="fa-solid fa-microchip"></i> IT Support</div>
-            </div>
-        </div>
-        
-        <div style="margin-top:20px; color:white; opacity:0.6; font-size:0.8rem;">
-            &copy; 2026 Rising Star Cafe
-        </div>
-    </div>
-
-    <div class="app-wrapper">
-        
-        <nav class="sidebar no-print">
-            <div class="logo-area"><span class="logo-text hidden">RISING STAR</span></div>
-            <ul class="nav-links">
-                <li onclick="window.app.router.navigate('pos')" id="nav-pos" class="active"><i class="fa-solid fa-mug-hot"></i> POS</li>
-                <li onclick="window.app.router.navigate('barista')" id="nav-barista"><i class="fa-solid fa-bell"></i> Barista View</li>
-                <li onclick="window.app.router.navigate('dashboard')" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
-                <li onclick="window.app.router.navigate('inventory')" id="nav-inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</li>
-                <li onclick="window.app.router.navigate('timeclock')" id="nav-timeclock"><i class="fa-solid fa-clock"></i> Time Clock</li>
-                
-                <li onclick="window.app.router.navigate('manager')" id="nav-manager" class="nav-admin-link" style="display:none; margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;"><i class="fa-solid fa-user-tie"></i> Manager Hub</li>
-                <li onclick="window.app.router.navigate('it')" id="nav-it" class="nav-admin-link" style="display:none;"><i class="fa-solid fa-microchip"></i> IT Hub</li>
-            </ul>
-            
-            <div class="sidebar-footer">
-                <div id="connection-status" style="font-weight:bold; color:var(--success); margin-bottom:5px;">Connecting...</div>
-               <div id="app-version" style="opacity:0.7;">v2.2.0</div>
-                <button onclick="window.app.loginScreen.logout()" class="btn-sm" style="background:transparent; border:1px solid rgba(255,255,255,0.3); width:100%; margin-top:10px;">Sign Out</button>
-            </div>
-        </nav>
-
-        <div class="main-content">
-            <header class="top-bar no-print">
-                <div class="current-cashier-display" id="header-cashier">Not Logged In</div>
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <div id="live-clock" style="font-weight:bold; color:var(--space-indigo);">12:00 PM</div>
-                </div>
-            </header>
-
-            <section id="view-pos" class="view active">
-                <div class="pos-layout">
-                    <div class="product-section">
-                        <div class="category-tabs" id="pos-categories"></div>
-                        <div class="product-grid" id="pos-grid"></div>
-                    </div>
-                    <div class="cart-panel">
-                        <div class="cart-header">
-                            <h3>Current Order</h3>
-                            <input type="text" id="customer-name" class="form-control" placeholder="Customer Name (Optional)" style="margin-top:5px; font-size:0.9rem;">
-                        </div>
-                        <div class="cart-items" id="cart-list"></div>
-                        <div class="cart-totals">
-                            <div class="total-row"><span>Subtotal</span> <span id="pos-subtotal">$0.00</span></div>
-                            <div class="total-row"><span>Tax (9.25%)</span> <span id="pos-tax">$0.00</span></div>
-                            <div class="total-row grand-total"><span>Total</span> <span id="pos-total">$0.00</span></div>
-                        </div>
-                        <div class="cart-actions">
-                            <button id="btn-action-cash" class="btn-square-large charge-disabled" onclick="window.app.posScreen.validateAndPay('Cash')">
-                                <i class="fa-solid fa-money-bill-wave"></i> Cash
-                            </button>
-                            <button id="btn-action-card" class="btn-square-large charge-disabled" onclick="window.app.posScreen.validateAndPay('Card')">
-                                <i class="fa-solid fa-credit-card"></i> Card
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="view-manager" class="view">
-                <div id="mgr-content-area"></div>
-            </section>
-
-            <section id="view-timeclock" class="view">
-                <h2>Time Clock</h2>
-                <div class="clock-controls" style="background:white; padding:20px; border-radius:12px; margin-top:20px;">
-                    <div id="time-clock-grid" class="tc-grid"></div>
-                </div>
-            </section>
-
-            <section id="view-dashboard" class="view">
-                <h2>Manager Dashboard</h2>
-                <div id="dashboard-content"></div>
-            </section>
-
-            <section id="view-barista" class="view">
-                <h2>Barista Queue</h2>
-                <div id="barista-grid" class="barista-grid" style="display:flex; flex-direction:column; gap:10px;"></div>
-            </section>
-
-            <section id="view-inventory" class="view">
-                </section>
-
-            <section id="view-it" class="view"></section>
-            
-            <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0; display:none;">
-                <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.loginScreen.exitKioskMode()">Exit</button>
-                <div style="text-align:center; margin-top:40px;">
-                    <h1>Customer Kiosk</h1>
-                    <div id="kiosk-grid" class="product-grid" style="padding:20px;"></div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <div id="modal-container">
-        <div id="modal-cash" class="modal"><div class="modal-content"></div></div>
-        <div id="modal-card" class="modal"><div class="modal-content"></div></div>
-        
-        <div id="modal-pin" class="modal"><div class="modal-content" style="width:300px;"></div></div>
-        
-        <div id="modal-generic" class="modal"><div class="modal-content"></div></div>
-        <div id="modal-options" class="modal"><div class="modal-content"></div></div>
-        <div id="modal-product" class="modal"><div class="modal-content"></div></div>
-        
-        <div id="modal-time-action" class="modal"><div class="modal-content" style="width:350px;"></div></div>
-        
-        <div id="modal-receipts" class="modal">
-            <div class="modal-content" style="width:400px; max-height:80vh; display:flex; flex-direction:column;">
-                <h3>Order History</h3>
-                <div id="receipt-list" style="overflow-y:auto; flex:1; border:1px solid #eee; margin:10px 0; padding:10px;">
-                    </div>
-                <button class="btn-pay btn-train" onclick="window.app.helpers.closeModal('modal-receipts')">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/variables_test_Gemini.js"></script>
-    <script src="js/helpers_test_Gemini.js"></script>
-    <script src="js/database_test_Gemini.js"></script>
-
-    <script src="js/login_screen_test_Gemini.js"></script>
-    <script src="js/pos_screen_test_Gemini.js"></script>
-    <script src="js/timeclock_screen_test_Gemini.js"></script>
-    <script src="js/manager_hub_test_Gemini.js"></script>
-    
-    <script src="js/barista_view_test_Gemini.js"></script>
-    <script src="js/dashboard_test_Gemini.js"></script>
-    
-    <script src="js/it_hub_test_Gemini.js"></script>
-    <script src="js/inventory_test_Gemini.js"></script>
-
-    <script src="js/main_test_Gemini.js"></script>
-
-</body>
-</html>
+// Start the App when page loads
+window.onload = function() {
+    window.app.router.init();
+};
