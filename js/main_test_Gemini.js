@@ -2,7 +2,8 @@
    PURPOSE: Main entry point. Handles navigation and startup.
 */
 
-window.app.main = {
+window.app.router = {
+    
     init: function() {
         console.log("System Boot: " + window.app.version);
         
@@ -13,18 +14,21 @@ window.app.main = {
             if(verEl) verEl.innerText = window.app.version;
 
             // 3. Start Default View (POS)
-            this.switchView('pos');
+            this.navigate('pos'); 
         });
     },
 
     // NAVIGATION LOGIC
-    switchView: function(viewName) {
+    navigate: function(viewName) {
+        
         // A. Hide all views
-        document.querySelectorAll('.app-view').forEach(el => el.style.display = 'none');
+        // FIX: Changed from '.app-view' to '.view' to match your HTML tags
+        document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
         
         // B. Update Sidebar Buttons
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.getElementById(`btn-${viewName}`);
+        document.querySelectorAll('.nav-links li').forEach(btn => btn.classList.remove('active'));
+        
+        const activeBtn = document.getElementById(`nav-${viewName}`);
         if(activeBtn) activeBtn.classList.add('active');
 
         // C. Show Selected View & Initialize Module
@@ -35,12 +39,13 @@ window.app.main = {
             viewEl.style.display = 'block';
             
             // --- MODULE ROUTER ---
-            // This triggers the specific logic for each screen
             if(viewName === 'pos') {
-                if(window.app.pos) window.app.pos.init();
+                // Checks for both naming conventions just in case
+                if(window.app.posScreen) window.app.posScreen.init();
+                else if(window.app.pos) window.app.pos.init();
             }
-            else if(viewName === 'kitchen') {
-                if(window.app.kitchen) window.app.kitchen.init();
+            else if(viewName === 'barista') {
+                if(window.app.barista) window.app.barista.init();
             }
             else if(viewName === 'manager') {
                 if(window.app.managerHub) window.app.managerHub.init();
@@ -49,9 +54,15 @@ window.app.main = {
                 if(window.app.itHub) window.app.itHub.render();
             }
             else if(viewName === 'inventory') {
-                // HERE IS THE FIX:
                 if(window.app.inventory) window.app.inventory.init();
             }
+            else if(viewName === 'timeclock') {
+                 if(window.app.timeclock) window.app.timeclock.init();
+            }
+            else if(viewName === 'dashboard') {
+                 if(window.app.dashboard) window.app.dashboard.init();
+            }
+
         } else {
             console.error("View container not found: " + viewId);
         }
@@ -60,5 +71,5 @@ window.app.main = {
 
 // Start the App when page loads
 window.onload = function() {
-    window.app.main.init();
+    window.app.router.init();
 };
