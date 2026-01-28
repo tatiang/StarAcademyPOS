@@ -4,28 +4,24 @@
 
 window.app.loginScreen = {
 
-    // 1. Initialize: Render the employee buttons
     init: function() {
         this.renderEmployeeButtons();
     },
 
-    // 2. Render buttons (With Safety Fallbacks)
     renderEmployeeButtons: function() {
         const container = document.querySelector('.login-grid');
         if(!container) return;
-
         container.innerHTML = '';
 
-        // A. Kiosk Button (Always Top)
+        // A. Kiosk Button
         const kioskBtn = document.createElement('button');
-        kioskBtn.className = 'btn-pay'; // Re-using this class ensures it looks good
+        kioskBtn.className = 'btn-pay';
         kioskBtn.style.cssText = "background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2); margin-bottom:15px;";
         kioskBtn.innerHTML = '<i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode';
         kioskBtn.onclick = () => this.startKioskMode();
         container.appendChild(kioskBtn);
 
-        // B. Admin Section (Hardcoded Safety)
-        // We render these manually so you can ALWAYS log in, even if the DB is empty.
+        // B. Admin Section
         const adminDiv = document.createElement('div');
         adminDiv.innerHTML = `
             <div class="admin-divider"><span>ADMIN ACCESS</span></div>
@@ -33,7 +29,7 @@ window.app.loginScreen = {
                 <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('Manager', '1234')">
                     <i class="fa-solid fa-user-tie"></i> Manager
                 </div>
-                <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('IT Support', '9999')">
+                <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('IT Support', '9753')">
                     <i class="fa-solid fa-microchip"></i> IT Support
                 </div>
             </div>
@@ -41,47 +37,38 @@ window.app.loginScreen = {
         `;
         container.appendChild(adminDiv);
 
-        // C. Employee Buttons (Dynamic)
-        // If DB is empty, use temporary defaults so the screen isn't blank
+        // C. Employee Buttons
         let employees = window.app.data.employees || [];
-        
         if(employees.length === 0) {
             console.log("No employees found in DB. Loading defaults.");
-            employees = [
-                { name: 'Sarah', pin: '1111' },
-                { name: 'Mike', pin: '2222' }
-            ];
-            // Save these defaults so they persist
+            employees = [ { name: 'Sarah', pin: '1111' }, { name: 'Mike', pin: '2222' } ];
             window.app.data.employees = employees;
             window.app.database.saveLocal();
         }
 
         employees.forEach(emp => {
             const btn = document.createElement('button');
-            // Using 'btn-pay' class gives it the nice big styling
             btn.className = 'btn-pay'; 
             btn.style.cssText = "background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); justify-content:flex-start; padding-left:20px; text-align:left; margin-bottom:8px;";
             btn.innerHTML = `<i class="fa-solid fa-user" style="margin-right:15px; opacity:0.7;"></i> ${emp.name}`;
-            
             btn.onclick = () => this.promptPin(emp.name, emp.pin); 
-            
             container.appendChild(btn);
         });
     },
 
-    // 3. Handle PIN Entry (Restored the good styling)
     promptPin: function(userRole, correctPin = null) {
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
 
-        // RESTORED: The "Pin Pad" grid layout
+        // Ensure hardcoded PINs are used if passed (redundant check but safe)
+        if(userRole === 'Manager' && !correctPin) correctPin = '1234';
+        if(userRole === 'IT Support' && !correctPin) correctPin = '9753';
+
         content.innerHTML = `
             <h2 style="color:var(--space-indigo); margin-bottom:10px;">Hello, ${userRole}</h2>
             <p style="margin-bottom:15px; color:#666;">Enter PIN to continue</p>
-            
             <input type="password" id="pin-input" readonly 
                 style="width:100%; padding:15px; font-size:2rem; text-align:center; letter-spacing:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:20px; background:#f9f9f9;">
-            
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
                 <button class="btn-pin" onclick="window.app.loginScreen.appendPin('1')">1</button>
                 <button class="btn-pin" onclick="window.app.loginScreen.appendPin('2')">2</button>
@@ -94,29 +81,14 @@ window.app.loginScreen = {
                 <button class="btn-pin" onclick="window.app.loginScreen.appendPin('9')">9</button>
                 <button class="btn-pin" onclick="window.app.loginScreen.clearPin()" style="background:#e74c3c; color:white;"><i class="fa-solid fa-xmark"></i></button>
                 <button class="btn-pin" onclick="window.app.loginScreen.appendPin('0')">0</button>
-                <button class="btn-pin" onclick="window.app.loginScreen.checkPin('${correctPin}', '${userRole}')" style="background:var(--success); color:white;">
-                    <i class="fa-solid fa-check"></i>
-                </button>
+                <button class="btn-pin" onclick="window.app.loginScreen.checkPin('${correctPin}', '${userRole}')" style="background:var(--success); color:white;"><i class="fa-solid fa-check"></i></button>
             </div>
-            
             <button class="btn-sm" style="margin-top:15px; width:100%; background:transparent; color:#888; border:none;" onclick="window.app.helpers.closeModal('modal-pin')">Cancel</button>
-            
             <style>
-                .btn-pin {
-                    padding: 15px 0;
-                    font-size: 1.5rem;
-                    background: white;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    color: var(--space-indigo);
-                    font-weight: bold;
-                }
+                .btn-pin { padding: 15px 0; font-size: 1.5rem; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--space-indigo); font-weight: bold; }
                 .btn-pin:active { background: #eee; transform:scale(0.95); }
             </style>
         `;
-
         window.app.helpers.openModal('modal-pin');
     },
 
@@ -131,8 +103,7 @@ window.app.loginScreen = {
 
     checkPin: function(correctPin, userRole) {
         const input = document.getElementById('pin-input');
-        
-        // If pin is null (unknown user), accept anything for testing, or require a specific default
+        // Fallback for testing if no PIN provided
         const valid = correctPin ? (input.value === correctPin) : (input.value === '1234');
 
         if(valid) {
@@ -152,32 +123,23 @@ window.app.loginScreen = {
         const mgrLink = document.getElementById('nav-manager');
         const itLink = document.getElementById('nav-it');
         
-        // Show/Hide links based on role
         if(mgrLink) mgrLink.style.display = (userRole === 'Manager' || userRole === 'IT Support') ? 'block' : 'none';
         if(itLink) itLink.style.display = (userRole === 'IT Support') ? 'block' : 'none';
-        
-        // If logged in as Sarah/Mike, ensure they can see TimeClock
-        if(userRole !== 'Manager' && userRole !== 'IT Support') {
-            if(mgrLink) mgrLink.style.display = 'none';
-            if(itLink) itLink.style.display = 'none';
-        }
     },
 
     logout: function() {
         document.getElementById('login-overlay').style.display = 'flex';
         document.getElementById('header-cashier').innerText = "Not Logged In";
-        this.renderEmployeeButtons(); // Refresh list on logout
+        this.renderEmployeeButtons();
     },
 
     startKioskMode: function() {
         document.getElementById('login-overlay').style.display = 'none';
         window.app.router.navigate('kiosk');
-        
+        // Simple clone of POS grid for kiosk view
         const container = document.getElementById('kiosk-grid');
         const posGrid = document.getElementById('pos-grid');
-        if(container && posGrid) {
-             container.innerHTML = posGrid.innerHTML;
-        }
+        if(container && posGrid) container.innerHTML = posGrid.innerHTML;
     },
 
     exitKioskMode: function() {
