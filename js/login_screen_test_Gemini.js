@@ -1,23 +1,19 @@
 /* FILE: js/login_screen_test_Gemini.js
    PURPOSE: Manages login. 
-   FIXED: Restores Green Check button, Fixes 'Initializing' text, Safe PIN comparison.
+   FIXED: "Stateless" logic. Passes PIN directly to the button to prevent data loss.
 */
 
 window.app.loginScreen = {
 
-    // Store the expected PIN/Role here so we don't rely on HTML click arguments
-    targetPin: null,
-    targetRole: null,
-
     init: function() {
+        console.log("Login Screen Initialized");
+        
         // 1. Force "Initializing" text to "System Ready"
-        // We search for the specific element or text to ensure it updates.
         const statusEl = document.getElementById('login-version');
         if(statusEl) {
             statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
             statusEl.style.color = '#ccc';
         } else {
-            // Fallback: update any p tag containing "Initializing"
             document.querySelectorAll('p').forEach(p => {
                 if(p.innerText.includes('Initializing')) {
                     p.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
@@ -38,7 +34,7 @@ window.app.loginScreen = {
         kioskBtn.className = 'btn-pay';
         kioskBtn.style.cssText = "background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2); margin-bottom:15px; font-size:1.2rem;";
         kioskBtn.innerHTML = '<i class="fa-solid fa-tablet-screen-button"></i> Kiosk Mode';
-        kioskBtn.onclick = () => this.startKioskMode();
+        kioskBtn.onclick = () => window.app.loginScreen.startKioskMode();
         container.appendChild(kioskBtn);
 
         // B. Admin Section
@@ -72,16 +68,14 @@ window.app.loginScreen = {
             btn.className = 'btn-pay'; 
             btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding:15px 20px; text-align:left; margin-bottom:8px; font-size:1.1rem; color:white;";
             btn.innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right:15px; color:#2ecc71;"></i> ${emp.name}`;
-            btn.onclick = () => this.completeLogin(emp.name); 
+            btn.onclick = () => window.app.loginScreen.completeLogin(emp.name); 
             container.appendChild(btn);
         });
     },
 
-    // --- RELIABLE PIN PAD ---
+    // --- DIRECT ARGUMENT PASSING (Fixes "Doesn't Do Anything") ---
     promptPin: function(userRole, correctPin) {
-        // 1. Save state safely in the object (Fixes the "onclick doesn't work" bug)
-        this.targetPin = correctPin;
-        this.targetRole = userRole;
+        console.log(`Prompting PIN for ${userRole}. Expecting: ${correctPin}`);
 
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
@@ -94,22 +88,11 @@ window.app.loginScreen = {
         content.style.borderRadius = "20px";
         content.style.maxWidth = "360px";
 
-        // Button Styles
-        const btnStyle = `
-            width: 70px; height: 70px; 
-            border-radius: 50%; 
-            border: none;
-            background: rgba(255,255,255,0.15); 
-            color: white; 
-            font-size: 24px; 
-            cursor: pointer;
-            margin: 0 auto;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-        `;
-        const btnGreen = `background: #2ecc71; color: white;`;
-        const btnRed = `background: #e74c3c; color: white;`;
+        const btnStyle = "width:70px; height:70px; border-radius:50%; border:none; background:rgba(255,255,255,0.15); color:white; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin:0 auto;";
+        const btnGreen = "background:#2ecc71;";
+        const btnRed = "background:#e74c3c;";
 
+        // IMPORTANT: We inject correctPin directly into the onclick string below.
         content.innerHTML = `
             <div style="padding:10px;">
                 <h3 style="margin-bottom:10px; font-weight:normal;">${userRole}</h3>
@@ -132,7 +115,10 @@ window.app.loginScreen = {
                     
                     <button style="${btnStyle} ${btnRed}" onclick="window.app.loginScreen.clearPin()"><i class="fa-solid fa-xmark"></i></button>
                     <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('0')">0</button>
-                    <button style="${btnStyle} ${btnGreen}" onclick="window.app.loginScreen.checkPin()"><i class="fa-solid fa-check"></i></button>
+                    
+                    <button style="${btnStyle} ${btnGreen}" onclick="window.app.loginScreen.checkPin('${correctPin}', '${userRole}')">
+                        <i class="fa-solid fa-check"></i>
+                    </button>
                 </div>
                 
                 <button style="margin-top:20px; background:transparent; border:none; color:#888; width:100%; font-size:1rem;" 
@@ -154,18 +140,23 @@ window.app.loginScreen = {
         document.getElementById('pin-input').value = '';
     },
 
-    checkPin: function() {
+    // Now accepts arguments directly
+    checkPin: function(correctPin, userRole) {
+        console.log(`Checking PIN. Correct: ${correctPin}, Role: ${userRole}`);
+        
         const input = document.getElementById('pin-input');
         const entered = input.value.toString();
-        const correct = this.targetPin.toString();
+        
+        console.log("Entered PIN:", entered);
 
-        if(entered === correct) {
+        if(entered === correctPin.toString()) {
+            console.log("PIN Match! Logging in...");
             window.app.helpers.closeModal('modal-pin');
-            this.completeLogin(this.targetRole);
+            window.app.loginScreen.completeLogin(userRole);
         } else {
+            console.log("PIN Mismatch");
             // Error animation
             input.style.color = "#e74c3c";
-            // Flash shake effect
             input.style.transform = "translateX(5px)";
             setTimeout(() => input.style.transform = "translateX(-5px)", 50);
             setTimeout(() => input.style.transform = "translateX(0)", 100);
@@ -178,8 +169,11 @@ window.app.loginScreen = {
     },
 
     completeLogin: function(userRole) {
+        console.log("Complete Login for:", userRole);
         document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('header-cashier').innerText = `Cashier: ${userRole}`;
+        
+        const header = document.getElementById('header-cashier');
+        if(header) header.innerText = `Cashier: ${userRole}`;
         
         const mgrLink = document.getElementById('nav-manager');
         const itLink = document.getElementById('nav-it');
@@ -197,7 +191,8 @@ window.app.loginScreen = {
 
     logout: function() {
         document.getElementById('login-overlay').style.display = 'flex';
-        document.getElementById('header-cashier').innerText = "Not Logged In";
+        const header = document.getElementById('header-cashier');
+        if(header) header.innerText = "Not Logged In";
         this.renderEmployeeButtons();
     },
 
