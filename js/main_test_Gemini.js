@@ -1,47 +1,64 @@
-/* FILE: js/main_test_Gemini.js */
+/* FILE: js/main_test_Gemini.js
+   PURPOSE: Main entry point. Handles navigation and startup.
+*/
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log(`System Boot: ${window.app.version}`);
+window.app.main = {
+    init: function() {
+        console.log("System Boot: " + window.app.version);
+        
+        // 1. Initialize Database & Load Data
+        window.app.database.init(() => {
+            // 2. Render Sidebar Version
+            const verEl = document.getElementById('app-version');
+            if(verEl) verEl.innerText = window.app.version;
 
-    // 1. Update Version Text (Sidebar + Login Screen)
-    const sidebarVer = document.getElementById('app-version');
-    const loginVer = document.getElementById('login-version');
-    
-    if(sidebarVer) sidebarVer.textContent = window.app.version;
-    if(loginVer) loginVer.textContent = `System Ready • ${window.app.version}`;
+            // 3. Start Default View (POS)
+            this.switchView('pos');
+        });
+    },
 
-    // 2. Load Local Data
-    if(window.app.database.loadLocal) window.app.database.loadLocal();
+    // NAVIGATION LOGIC
+    switchView: function(viewName) {
+        // A. Hide all views
+        document.querySelectorAll('.app-view').forEach(el => el.style.display = 'none');
+        
+        // B. Update Sidebar Buttons
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`btn-${viewName}`);
+        if(activeBtn) activeBtn.classList.add('active');
 
-    // 3. Setup Router
-    window.app.router = {
-        navigate: function(viewId) {
-            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+        // C. Show Selected View & Initialize Module
+        const viewId = `view-${viewName}`;
+        const viewEl = document.getElementById(viewId);
+        
+        if(viewEl) {
+            viewEl.style.display = 'block';
             
-            const viewEl = document.getElementById('view-' + viewId);
-            if(viewEl) viewEl.classList.add('active');
-            
-            const navEl = document.getElementById('nav-' + viewId);
-            if(navEl) navEl.classList.add('active');
-
-            // Trigger specific screen logic
-            if(viewId === 'pos' && window.app.posScreen.init) window.app.posScreen.init();
-            if(viewId === 'timeclock' && window.app.timeClock.render) window.app.timeClock.render();
-            if(viewId === 'manager' && window.app.managerHub.init) window.app.managerHub.init();
-            if(viewId === 'dashboard' && window.app.dashboard.init) window.app.dashboard.init();
-            if(viewId === 'it' && window.app.itHub.render) window.app.itHub.render();
-            if(viewId === 'barista') window.app.baristaView.init();
+            // --- MODULE ROUTER ---
+            // This triggers the specific logic for each screen
+            if(viewName === 'pos') {
+                if(window.app.pos) window.app.pos.init();
+            }
+            else if(viewName === 'kitchen') {
+                if(window.app.kitchen) window.app.kitchen.init();
+            }
+            else if(viewName === 'manager') {
+                if(window.app.managerHub) window.app.managerHub.init();
+            }
+            else if(viewName === 'it') {
+                if(window.app.itHub) window.app.itHub.render();
+            }
+            else if(viewName === 'inventory') {
+                // HERE IS THE FIX:
+                if(window.app.inventory) window.app.inventory.init();
+            }
+        } else {
+            console.error("View container not found: " + viewId);
         }
-    };
+    }
+};
 
-    // 4. Connect to Cloud
-    if(window.app.database.init) window.app.database.init();
-
-    // 5. Clock Loop
-    setInterval(() => {
-        const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        const el = document.getElementById('live-clock');
-        if(el) el.textContent = t;
-    }, 1000);
-});
+// Start the App when page loads
+window.onload = function() {
+    window.app.main.init();
+};
