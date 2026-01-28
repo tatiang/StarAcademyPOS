@@ -4,6 +4,11 @@
 
 window.app.timeClock = {
     
+    // FIX: Added 'init' so the Router can start this module
+    init: function() {
+        this.render();
+    },
+
     // 1. Draw the employee grid
     render: function() {
         const container = document.getElementById('time-clock-grid');
