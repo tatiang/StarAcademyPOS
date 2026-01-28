@@ -6,7 +6,6 @@ window.app.barista = {
 
     init: function() {
         this.render();
-        // Refresh check every 5 seconds (faster is better for testing)
         if(this.refreshTimer) clearInterval(this.refreshTimer);
         this.refreshTimer = setInterval(() => this.render(), 5000);
     },
@@ -18,8 +17,8 @@ window.app.barista = {
         // 1. Get Orders
         const orders = window.app.data.orders || [];
 
-        // 2. Filter: Show anything that is NOT completed.
-        // This includes 'paid', 'pending', or even undefined status.
+        // 2. Filter: Show anything NOT 'completed'
+        // This catches 'paid', 'pending', or orders with no status yet.
         const activeOrders = orders.filter(o => o.status !== 'completed');
 
         container.innerHTML = '';
@@ -34,23 +33,22 @@ window.app.barista = {
             return;
         }
 
-        // 3. Sort by Time (Oldest first)
+        // 3. Sort by Time
         activeOrders.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         activeOrders.forEach(order => {
-            // Calculate minutes ago
             const minsAgo = Math.floor((new Date() - new Date(order.timestamp)) / 60000);
             
-            // Color code based on wait time
-            let borderSide = "5px solid #2ecc71"; // Green (fresh)
+            // Color code
+            let borderSide = "5px solid #2ecc71"; // Green
             if(minsAgo > 5) borderSide = "5px solid #f1c40f"; // Yellow
             if(minsAgo > 10) borderSide = "5px solid #e74c3c"; // Red
 
             const card = document.createElement('div');
+            // Ensure card is visible with white background and block display
             card.className = 'barista-card';
-            card.style.cssText = `background:white; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); border-left:${borderSide}; display:flex; justify-content:space-between; align-items:center;`;
+            card.style.cssText = `background:white; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); border-left:${borderSide}; display:flex; justify-content:space-between; align-items:center; min-height:80px;`;
 
-            // List Items
             let itemsHtml = '<ul style="list-style:none; padding:0; margin:5px 0 0 0;">';
             order.items.forEach(item => {
                 itemsHtml += `<li style="font-size:1.1rem; font-weight:600; padding:2px 0;">• ${item.name}</li>`;
@@ -69,8 +67,9 @@ window.app.barista = {
                 </div>
                 
                 <button onclick="window.app.barista.completeOrder(event, '${order.id}')"
-                    style="background:var(--success); color:white; border:none; border-radius:6px; padding:15px 25px; font-size:1.2rem; cursor:pointer; height:100%;">
-                    DONE
+                    style="background:var(--success); color:white; border:none; border-radius:6px; padding:0 25px; font-size:1rem; cursor:pointer; height:60px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-check" style="font-size:1.5rem; margin-bottom:5px;"></i>
+                    <span>DONE</span>
                 </button>
             `;
             container.appendChild(card);
@@ -79,17 +78,14 @@ window.app.barista = {
 
     completeOrder: function(e, orderId) {
         if(e) { e.stopPropagation(); e.preventDefault(); }
-
-        // Find and update
-        // We use loose equality (==) in case ID is string vs number
+        
+        // Find order
         const order = window.app.data.orders.find(o => o.id == orderId);
         
         if(order) {
             order.status = 'completed';
             window.app.database.saveLocal();
-            this.render(); // Re-render immediately
-        } else {
-            console.error("Could not find order to complete:", orderId);
+            this.render();
         }
     }
 };
