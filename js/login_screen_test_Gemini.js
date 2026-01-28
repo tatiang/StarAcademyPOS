@@ -1,10 +1,17 @@
 /* FILE: js/login_screen_test_Gemini.js
-   PURPOSE: Manages the login overlay, PIN validation, and user sessions.
+   PURPOSE: Manages login. STAFF NO LONGER NEED PINS.
 */
 
 window.app.loginScreen = {
 
     init: function() {
+        // 1. Force the status text to update immediately
+        const statusEl = document.getElementById('login-version');
+        if(statusEl) {
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> System Ready • ${window.app.version}`;
+            statusEl.style.color = 'white';
+        }
+
         this.renderEmployeeButtons();
     },
 
@@ -21,10 +28,10 @@ window.app.loginScreen = {
         kioskBtn.onclick = () => this.startKioskMode();
         container.appendChild(kioskBtn);
 
-        // B. Admin Section
+        // B. Admin Section (Manager & IT - THESE REQUIRE PINS)
         const adminDiv = document.createElement('div');
         adminDiv.innerHTML = `
-            <div class="admin-divider"><span>ADMIN ACCESS</span></div>
+            <div class="admin-divider"><span>ADMIN ACCESS (PIN REQUIRED)</span></div>
             <div class="admin-buttons-row">
                 <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('Manager', '1234')">
                     <i class="fa-solid fa-user-tie"></i> Manager
@@ -33,15 +40,15 @@ window.app.loginScreen = {
                     <i class="fa-solid fa-microchip"></i> IT Support
                 </div>
             </div>
-            <div class="admin-divider" style="margin-top:15px;"><span>STAFF LOGIN</span></div>
+            <div class="admin-divider" style="margin-top:15px;"><span>STAFF QUICK LOGIN</span></div>
         `;
         container.appendChild(adminDiv);
 
-        // C. Employee Buttons
+        // C. Employee Buttons (NO PINS)
         let employees = window.app.data.employees || [];
         if(employees.length === 0) {
-            console.log("No employees found in DB. Loading defaults.");
-            employees = [ { name: 'Sarah', pin: '1111' }, { name: 'Mike', pin: '2222' } ];
+            // Default staff if DB is empty
+            employees = [ { name: 'Sarah' }, { name: 'Mike' }, { name: 'Jasmine' } ];
             window.app.data.employees = employees;
             window.app.database.saveLocal();
         }
@@ -49,24 +56,24 @@ window.app.loginScreen = {
         employees.forEach(emp => {
             const btn = document.createElement('button');
             btn.className = 'btn-pay'; 
-            btn.style.cssText = "background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); justify-content:flex-start; padding-left:20px; text-align:left; margin-bottom:8px;";
-            btn.innerHTML = `<i class="fa-solid fa-user" style="margin-right:15px; opacity:0.7;"></i> ${emp.name}`;
-            btn.onclick = () => this.promptPin(emp.name, emp.pin); 
+            // Green accent to show they are "ready to go"
+            btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding-left:20px; text-align:left; margin-bottom:8px;";
+            btn.innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right:15px; color:#2ecc71;"></i> ${emp.name}`;
+            
+            // DIRECT LOGIN - NO PIN
+            btn.onclick = () => this.completeLogin(emp.name); 
+            
             container.appendChild(btn);
         });
     },
 
-    promptPin: function(userRole, correctPin = null) {
+    // Only used for Admin/IT now
+    promptPin: function(userRole, correctPin) {
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
 
-        // Ensure hardcoded PINs are used if passed (redundant check but safe)
-        if(userRole === 'Manager' && !correctPin) correctPin = '1234';
-        if(userRole === 'IT Support' && !correctPin) correctPin = '9753';
-
         content.innerHTML = `
-            <h2 style="color:var(--space-indigo); margin-bottom:10px;">Hello, ${userRole}</h2>
-            <p style="margin-bottom:15px; color:#666;">Enter PIN to continue</p>
+            <h2 style="color:var(--space-indigo); margin-bottom:10px;">${userRole} Access</h2>
             <input type="password" id="pin-input" readonly 
                 style="width:100%; padding:15px; font-size:2rem; text-align:center; letter-spacing:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:20px; background:#f9f9f9;">
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
@@ -103,10 +110,7 @@ window.app.loginScreen = {
 
     checkPin: function(correctPin, userRole) {
         const input = document.getElementById('pin-input');
-        // Fallback for testing if no PIN provided
-        const valid = correctPin ? (input.value === correctPin) : (input.value === '1234');
-
-        if(valid) {
+        if(input.value === correctPin) {
             window.app.helpers.closeModal('modal-pin');
             this.completeLogin(userRole);
         } else {
@@ -123,6 +127,7 @@ window.app.loginScreen = {
         const mgrLink = document.getElementById('nav-manager');
         const itLink = document.getElementById('nav-it');
         
+        // Only show Admin links for specific roles
         if(mgrLink) mgrLink.style.display = (userRole === 'Manager' || userRole === 'IT Support') ? 'block' : 'none';
         if(itLink) itLink.style.display = (userRole === 'IT Support') ? 'block' : 'none';
     },
@@ -136,7 +141,6 @@ window.app.loginScreen = {
     startKioskMode: function() {
         document.getElementById('login-overlay').style.display = 'none';
         window.app.router.navigate('kiosk');
-        // Simple clone of POS grid for kiosk view
         const container = document.getElementById('kiosk-grid');
         const posGrid = document.getElementById('pos-grid');
         if(container && posGrid) container.innerHTML = posGrid.innerHTML;
