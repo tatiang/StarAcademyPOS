@@ -1,6 +1,5 @@
 /* FILE: js/main_test_Gemini.js
    PURPOSE: Main entry point. Handles navigation and startup.
-   FIX: Added robust checks for TimeClock and Barista module names.
 */
 
 window.app.router = {
@@ -14,11 +13,16 @@ window.app.router = {
             const verEl = document.getElementById('app-version');
             if(verEl) verEl.innerText = window.app.version;
 
-            // 3. Start Default View (POS)
+            // 3. Initialize Login Screen (Render Employee Buttons)
+            if(window.app.loginScreen) window.app.loginScreen.init();
+
+            // 4. Start Default View (POS)
+            // Note: The login overlay sits on top of this, so the user sees the login screen first.
             this.navigate('pos'); 
         });
     },
 
+    // NAVIGATION LOGIC
     navigate: function(viewName) {
         
         // A. Hide all views
@@ -37,44 +41,28 @@ window.app.router = {
         if(viewEl) {
             viewEl.style.display = 'block';
             
-            // --- MODULE ROUTER (The Fix is Here) ---
-            
-            // 1. POS Check
+            // --- MODULE ROUTER ---
             if(viewName === 'pos') {
                 if(window.app.posScreen) window.app.posScreen.init();
                 else if(window.app.pos) window.app.pos.init();
             }
-
-            // 2. Barista Check (Checks for 'barista' OR 'baristaView')
             else if(viewName === 'barista') {
                 if(window.app.barista) window.app.barista.init();
-                else if(window.app.baristaView) window.app.baristaView.init(); // Fallback
-                else console.error("Barista module missing");
+                else if(window.app.baristaView) window.app.baristaView.init();
             }
-
-            // 3. Manager Check
             else if(viewName === 'manager') {
                 if(window.app.managerHub) window.app.managerHub.init();
             }
-
-            // 4. IT Check
             else if(viewName === 'it') {
                 if(window.app.itHub) window.app.itHub.render();
             }
-
-            // 5. Inventory Check
             else if(viewName === 'inventory') {
                 if(window.app.inventory) window.app.inventory.init();
             }
-
-            // 6. Time Clock Check (Checks for 'timeclock' OR 'timeClock')
             else if(viewName === 'timeclock') {
                  if(window.app.timeclock) window.app.timeclock.init();
-                 else if(window.app.timeClock) window.app.timeClock.init(); // Fallback
-                 else console.error("Timeclock module missing");
+                 else if(window.app.timeClock) window.app.timeClock.init();
             }
-
-            // 7. Dashboard Check
             else if(viewName === 'dashboard') {
                  if(window.app.dashboard) window.app.dashboard.init();
             }
