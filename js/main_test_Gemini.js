@@ -1,5 +1,6 @@
 /* FILE: js/main_test_Gemini.js
    PURPOSE: Main entry point. Handles navigation and startup.
+   FIX: Added robust checks for TimeClock and Barista module names.
 */
 
 window.app.router = {
@@ -18,11 +19,9 @@ window.app.router = {
         });
     },
 
-    // NAVIGATION LOGIC
     navigate: function(viewName) {
         
         // A. Hide all views
-        // FIX: Changed from '.app-view' to '.view' to match HTML tags
         document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
         
         // B. Update Sidebar Buttons
@@ -38,26 +37,44 @@ window.app.router = {
         if(viewEl) {
             viewEl.style.display = 'block';
             
-            // --- MODULE ROUTER ---
+            // --- MODULE ROUTER (The Fix is Here) ---
+            
+            // 1. POS Check
             if(viewName === 'pos') {
                 if(window.app.posScreen) window.app.posScreen.init();
                 else if(window.app.pos) window.app.pos.init();
             }
+
+            // 2. Barista Check (Checks for 'barista' OR 'baristaView')
             else if(viewName === 'barista') {
                 if(window.app.barista) window.app.barista.init();
+                else if(window.app.baristaView) window.app.baristaView.init(); // Fallback
+                else console.error("Barista module missing");
             }
+
+            // 3. Manager Check
             else if(viewName === 'manager') {
                 if(window.app.managerHub) window.app.managerHub.init();
             }
+
+            // 4. IT Check
             else if(viewName === 'it') {
                 if(window.app.itHub) window.app.itHub.render();
             }
+
+            // 5. Inventory Check
             else if(viewName === 'inventory') {
                 if(window.app.inventory) window.app.inventory.init();
             }
+
+            // 6. Time Clock Check (Checks for 'timeclock' OR 'timeClock')
             else if(viewName === 'timeclock') {
                  if(window.app.timeclock) window.app.timeclock.init();
+                 else if(window.app.timeClock) window.app.timeClock.init(); // Fallback
+                 else console.error("Timeclock module missing");
             }
+
+            // 7. Dashboard Check
             else if(viewName === 'dashboard') {
                  if(window.app.dashboard) window.app.dashboard.init();
             }
