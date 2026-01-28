@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(viewId === 'manager' && window.app.managerHub.init) window.app.managerHub.init();
             if(viewId === 'dashboard' && window.app.dashboard.init) window.app.dashboard.init();
             if(viewId === 'it' && window.app.itHub.render) window.app.itHub.render();
+            if(viewId === 'barista') window.app.baristaView.init();
         }
     };
 
