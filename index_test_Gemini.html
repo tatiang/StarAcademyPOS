@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Rising Star Cafe POS</title>
+    <title>Rising Star Cafe POS v2.2.0</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -19,11 +19,11 @@
         .login-logo-img {
             width: 180px;
             height: 180px;
-            object-fit: contain; /* Keeps the drawing aspect ratio */
-            border-radius: 50%;  /* Makes it circular */
-            background: white;   /* White background behind drawing */
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
             border: 4px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* Gold Glow */
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
             margin-bottom: 20px;
         }
     </style>
@@ -74,6 +74,7 @@
     </div>
 
     <div class="app-wrapper">
+        
         <nav class="sidebar no-print">
             <div class="logo-area"><span class="logo-text hidden">RISING STAR</span></div>
             <ul class="nav-links">
@@ -132,12 +133,6 @@
             </section>
 
             <section id="view-manager" class="view">
-                <h2 style="color:var(--space-indigo); margin-bottom:20px;">Manager Hub</h2>
-                <div class="mgr-tabs">
-                    <button class="mgr-tab active" onclick="window.app.managerHub.switchTab('staff')">Staff</button>
-                    <button class="mgr-tab" onclick="window.app.managerHub.switchTab('menu')">Menu</button>
-                    <button class="mgr-tab" onclick="window.app.managerHub.switchTab('data')">Data & Reports</button>
-                </div>
                 <div id="mgr-content-area"></div>
             </section>
 
@@ -159,9 +154,7 @@
             </section>
 
             <section id="view-inventory" class="view">
-                <h2>Inventory Status</h2>
-                <div id="inventory-content"></div>
-            </section>
+                </section>
 
             <section id="view-it" class="view"></section>
             
@@ -205,15 +198,14 @@
     <script src="js/pos_screen_test_Gemini.js"></script>
     <script src="js/timeclock_screen_test_Gemini.js"></script>
     <script src="js/manager_hub_test_Gemini.js"></script>
-    <script src="js/it_hub_test_Gemini.js"></script>
     
     <script src="js/barista_view_test_Gemini.js"></script>
-    <script src="js/inventory_test_Gemini.js"></script>
     <script src="js/dashboard_test_Gemini.js"></script>
+    
+    <script src="js/it_hub_test_Gemini.js"></script>
+    <script src="js/inventory_test_Gemini.js"></script>
 
     <script src="js/main_test_Gemini.js"></script>
-<script src="js/it_hub_test_Gemini.js"></script>
-<script src="js/inventory_test_Gemini.js"></script> <script src="js/main_test_Gemini.js"></script>
 
 </body>
 </html>
