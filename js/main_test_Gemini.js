@@ -13,35 +13,37 @@ window.app.router = {
             const verEl = document.getElementById('app-version');
             if(verEl) verEl.innerText = window.app.version;
 
-            // 3. Initialize Login Screen (Render Employee Buttons)
+            // --- THE FIX IS HERE ---
+            // 3. Update Login Screen Status and Version
+            const loginVerEl = document.getElementById('login-version');
+            if(loginVerEl) {
+                 // Change text from "Initializing..." to "Ready" and show version
+                 loginVerEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> System Ready • ${window.app.version}`;
+                 loginVerEl.style.color = 'white'; // Make it stand out more
+            }
+            // -----------------------
+
+            // 4. Initialize Login Screen (Render Employee Buttons)
             if(window.app.loginScreen) window.app.loginScreen.init();
 
-            // 4. Start Default View (POS)
-            // Note: The login overlay sits on top of this, so the user sees the login screen first.
+            // 5. Start Default View (POS) underneath
             this.navigate('pos'); 
         });
     },
 
-    // NAVIGATION LOGIC
     navigate: function(viewName) {
-        
-        // A. Hide all views
         document.querySelectorAll('.view').forEach(el => el.style.display = 'none');
-        
-        // B. Update Sidebar Buttons
         document.querySelectorAll('.nav-links li').forEach(btn => btn.classList.remove('active'));
         
         const activeBtn = document.getElementById(`nav-${viewName}`);
         if(activeBtn) activeBtn.classList.add('active');
 
-        // C. Show Selected View & Initialize Module
         const viewId = `view-${viewName}`;
         const viewEl = document.getElementById(viewId);
         
         if(viewEl) {
             viewEl.style.display = 'block';
             
-            // --- MODULE ROUTER ---
             if(viewName === 'pos') {
                 if(window.app.posScreen) window.app.posScreen.init();
                 else if(window.app.pos) window.app.pos.init();
@@ -66,14 +68,12 @@ window.app.router = {
             else if(viewName === 'dashboard') {
                  if(window.app.dashboard) window.app.dashboard.init();
             }
-
         } else {
             console.error("View container not found: " + viewId);
         }
     }
 };
 
-// Start the App when page loads
 window.onload = function() {
     window.app.router.init();
 };
