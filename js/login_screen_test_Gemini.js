@@ -1,6 +1,6 @@
 /* FILE: js/login_screen_test_Gemini.js
    PURPOSE: Manages login. 
-   FIXED: "Stateless" logic. Passes PIN directly to the button to prevent data loss.
+   FIXED: Uses DOM dataset to store PINs (prevents "undefined" errors).
 */
 
 window.app.loginScreen = {
@@ -14,6 +14,7 @@ window.app.loginScreen = {
             statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
             statusEl.style.color = '#ccc';
         } else {
+            // Fallback: update any p tag containing "Initializing"
             document.querySelectorAll('p').forEach(p => {
                 if(p.innerText.includes('Initializing')) {
                     p.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
@@ -34,7 +35,7 @@ window.app.loginScreen = {
         kioskBtn.className = 'btn-pay';
         kioskBtn.style.cssText = "background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2); margin-bottom:15px; font-size:1.2rem;";
         kioskBtn.innerHTML = '<i class="fa-solid fa-tablet-screen-button"></i> Kiosk Mode';
-        kioskBtn.onclick = () => window.app.loginScreen.startKioskMode();
+        kioskBtn.onclick = () => this.startKioskMode();
         container.appendChild(kioskBtn);
 
         // B. Admin Section
@@ -68,19 +69,23 @@ window.app.loginScreen = {
             btn.className = 'btn-pay'; 
             btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding:15px 20px; text-align:left; margin-bottom:8px; font-size:1.1rem; color:white;";
             btn.innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right:15px; color:#2ecc71;"></i> ${emp.name}`;
-            btn.onclick = () => window.app.loginScreen.completeLogin(emp.name); 
+            btn.onclick = () => this.completeLogin(emp.name); 
             container.appendChild(btn);
         });
     },
 
-    // --- DIRECT ARGUMENT PASSING (Fixes "Doesn't Do Anything") ---
+    // --- BULLETPROOF PIN LOGIC ---
     promptPin: function(userRole, correctPin) {
-        console.log(`Prompting PIN for ${userRole}. Expecting: ${correctPin}`);
-
         const modal = document.getElementById('modal-pin');
+        
+        // 1. STORE THE PIN ON THE HTML ELEMENT ITSELF
+        // This prevents the data from being lost or becoming 'undefined'
+        modal.dataset.correctPin = correctPin; 
+        modal.dataset.userRole = userRole;
+
         const content = modal.querySelector('.modal-content');
         
-        // Dark Mode Styling
+        // Styling
         modal.style.background = "rgba(0,0,0,0.85)";
         content.style.background = "#1c1c1e"; 
         content.style.color = "white";
@@ -92,7 +97,6 @@ window.app.loginScreen = {
         const btnGreen = "background:#2ecc71;";
         const btnRed = "background:#e74c3c;";
 
-        // IMPORTANT: We inject correctPin directly into the onclick string below.
         content.innerHTML = `
             <div style="padding:10px;">
                 <h3 style="margin-bottom:10px; font-weight:normal;">${userRole}</h3>
@@ -115,10 +119,7 @@ window.app.loginScreen = {
                     
                     <button style="${btnStyle} ${btnRed}" onclick="window.app.loginScreen.clearPin()"><i class="fa-solid fa-xmark"></i></button>
                     <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('0')">0</button>
-                    
-                    <button style="${btnStyle} ${btnGreen}" onclick="window.app.loginScreen.checkPin('${correctPin}', '${userRole}')">
-                        <i class="fa-solid fa-check"></i>
-                    </button>
+                    <button style="${btnStyle} ${btnGreen}" onclick="window.app.loginScreen.checkPin()"><i class="fa-solid fa-check"></i></button>
                 </div>
                 
                 <button style="margin-top:20px; background:transparent; border:none; color:#888; width:100%; font-size:1rem;" 
@@ -140,21 +141,23 @@ window.app.loginScreen = {
         document.getElementById('pin-input').value = '';
     },
 
-    // Now accepts arguments directly
-    checkPin: function(correctPin, userRole) {
-        console.log(`Checking PIN. Correct: ${correctPin}, Role: ${userRole}`);
-        
+    checkPin: function() {
         const input = document.getElementById('pin-input');
+        const modal = document.getElementById('modal-pin');
+        
+        // 2. RETRIEVE FROM DOM DATASET
+        // This is the fix. We pull it straight from the HTML element.
+        const correctPin = modal.dataset.correctPin;
+        const userRole = modal.dataset.userRole;
+
         const entered = input.value.toString();
         
-        console.log("Entered PIN:", entered);
+        console.log(`Checking PIN. Entered: ${entered}, Expected: ${correctPin}`);
 
-        if(entered === correctPin.toString()) {
-            console.log("PIN Match! Logging in...");
+        if(entered === correctPin) {
             window.app.helpers.closeModal('modal-pin');
-            window.app.loginScreen.completeLogin(userRole);
+            this.completeLogin(userRole);
         } else {
-            console.log("PIN Mismatch");
             // Error animation
             input.style.color = "#e74c3c";
             input.style.transform = "translateX(5px)";
@@ -169,7 +172,6 @@ window.app.loginScreen = {
     },
 
     completeLogin: function(userRole) {
-        console.log("Complete Login for:", userRole);
         document.getElementById('login-overlay').style.display = 'none';
         
         const header = document.getElementById('header-cashier');
