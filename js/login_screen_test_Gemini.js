@@ -1,15 +1,28 @@
 /* FILE: js/login_screen_test_Gemini.js
-   PURPOSE: Manages login. STAFF NO LONGER NEED PINS. FIXES PIN PAD VISUALS.
+   PURPOSE: Manages login. 
+   FIXED: Restores Green Check button, Fixes 'Initializing' text, Safe PIN comparison.
 */
 
 window.app.loginScreen = {
 
+    // Store the expected PIN/Role here so we don't rely on HTML click arguments
+    targetPin: null,
+    targetRole: null,
+
     init: function() {
-        // 1. Force the status text to update immediately
+        // 1. Force "Initializing" text to "System Ready"
+        // We search for the specific element or text to ensure it updates.
         const statusEl = document.getElementById('login-version');
         if(statusEl) {
-            statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> System Ready • ${window.app.version}`;
-            statusEl.style.color = 'white';
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
+            statusEl.style.color = '#ccc';
+        } else {
+            // Fallback: update any p tag containing "Initializing"
+            document.querySelectorAll('p').forEach(p => {
+                if(p.innerText.includes('Initializing')) {
+                    p.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
+                }
+            });
         }
 
         this.renderEmployeeButtons();
@@ -23,28 +36,30 @@ window.app.loginScreen = {
         // A. Kiosk Button
         const kioskBtn = document.createElement('button');
         kioskBtn.className = 'btn-pay';
-        kioskBtn.style.cssText = "background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2); margin-bottom:15px;";
-        kioskBtn.innerHTML = '<i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode';
+        kioskBtn.style.cssText = "background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2); margin-bottom:15px; font-size:1.2rem;";
+        kioskBtn.innerHTML = '<i class="fa-solid fa-tablet-screen-button"></i> Kiosk Mode';
         kioskBtn.onclick = () => this.startKioskMode();
         container.appendChild(kioskBtn);
 
-        // B. Admin Section (Manager & IT - THESE REQUIRE PINS)
+        // B. Admin Section
         const adminDiv = document.createElement('div');
         adminDiv.innerHTML = `
-            <div class="admin-divider"><span>ADMIN ACCESS (PIN REQUIRED)</span></div>
-            <div class="admin-buttons-row">
-                <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('Manager', '1234')">
-                    <i class="fa-solid fa-user-tie"></i> Manager
+            <div class="admin-divider" style="color:#aaa; font-size:0.9rem; margin:15px 0;"><span>ADMIN (PIN REQUIRED)</span></div>
+            <div class="admin-buttons-row" style="display:flex; gap:10px;">
+                <div class="admin-login-btn" style="flex:1; padding:15px; background:rgba(255,255,255,0.1); text-align:center; border-radius:8px; cursor:pointer;" 
+                     onclick="window.app.loginScreen.promptPin('Manager', '1234')">
+                    <i class="fa-solid fa-user-tie"></i> Mgr
                 </div>
-                <div class="admin-login-btn" onclick="window.app.loginScreen.promptPin('IT Support', '9753')">
-                    <i class="fa-solid fa-microchip"></i> IT Support
+                <div class="admin-login-btn" style="flex:1; padding:15px; background:rgba(255,255,255,0.1); text-align:center; border-radius:8px; cursor:pointer;" 
+                     onclick="window.app.loginScreen.promptPin('IT Support', '9753')">
+                    <i class="fa-solid fa-microchip"></i> IT
                 </div>
             </div>
-            <div class="admin-divider" style="margin-top:15px;"><span>STAFF QUICK LOGIN</span></div>
+            <div class="admin-divider" style="color:#aaa; font-size:0.9rem; margin:15px 0 10px 0;"><span>STAFF (TAP TO LOGIN)</span></div>
         `;
         container.appendChild(adminDiv);
 
-        // C. Employee Buttons (NO PINS)
+        // C. Employee Buttons
         let employees = window.app.data.employees || [];
         if(employees.length === 0) {
             employees = [ { name: 'Sarah' }, { name: 'Mike' }, { name: 'Jasmine' } ];
@@ -55,76 +70,109 @@ window.app.loginScreen = {
         employees.forEach(emp => {
             const btn = document.createElement('button');
             btn.className = 'btn-pay'; 
-            btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding-left:20px; text-align:left; margin-bottom:8px;";
+            btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding:15px 20px; text-align:left; margin-bottom:8px; font-size:1.1rem; color:white;";
             btn.innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right:15px; color:#2ecc71;"></i> ${emp.name}`;
-            // DIRECT LOGIN - NO PIN
             btn.onclick = () => this.completeLogin(emp.name); 
             container.appendChild(btn);
         });
     },
 
-    // --- PIN PAD LOGIC (STYLES FIXED) ---
+    // --- RELIABLE PIN PAD ---
     promptPin: function(userRole, correctPin) {
+        // 1. Save state safely in the object (Fixes the "onclick doesn't work" bug)
+        this.targetPin = correctPin;
+        this.targetRole = userRole;
+
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
+        
+        // Dark Mode Styling
+        modal.style.background = "rgba(0,0,0,0.85)";
+        content.style.background = "#1c1c1e"; 
+        content.style.color = "white";
+        content.style.border = "1px solid #333";
+        content.style.borderRadius = "20px";
+        content.style.maxWidth = "360px";
 
-        // Styles for the buttons
-        const btnStyle = "padding: 20px 0; font-size: 1.6rem; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; color: #2c3e50; font-weight: bold; width:100%; touch-action: manipulation;";
-        const btnRed = "background: #e74c3c; color: white; border:none;";
-        const btnGreen = "background: #2ecc71; color: white; border:none;";
+        // Button Styles
+        const btnStyle = `
+            width: 70px; height: 70px; 
+            border-radius: 50%; 
+            border: none;
+            background: rgba(255,255,255,0.15); 
+            color: white; 
+            font-size: 24px; 
+            cursor: pointer;
+            margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        `;
+        const btnGreen = `background: #2ecc71; color: white;`;
+        const btnRed = `background: #e74c3c; color: white;`;
 
         content.innerHTML = `
-            <h2 style="color:var(--space-indigo); margin-bottom:15px;">${userRole} Access</h2>
-            
-            <input type="password" id="pin-input" readonly 
-                style="width:80%; padding:15px; font-size:2rem; text-align:center; letter-spacing:10px; border:2px solid #3498db; border-radius:8px; margin-bottom:25px; background:white; color:#333;">
-            
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:320px; margin:0 auto;">
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('1')">1</button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('2')">2</button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('3')">3</button>
+            <div style="padding:10px;">
+                <h3 style="margin-bottom:10px; font-weight:normal;">${userRole}</h3>
                 
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('4')">4</button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('5')">5</button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('6')">6</button>
+                <input type="password" id="pin-input" readonly autocomplete="off"
+                    style="background:transparent; border:none; color:white; font-size:3rem; letter-spacing:15px; text-align:center; width:100%; margin-bottom:30px; outline:none; -webkit-text-security:disc;">
                 
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('7')">7</button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('8')">8</button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('9')">9</button>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; justify-content:center;">
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('1')">1</button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('2')">2</button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('3')">3</button>
+                    
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('4')">4</button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('5')">5</button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('6')">6</button>
+                    
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('7')">7</button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('8')">8</button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('9')">9</button>
+                    
+                    <button style="${btnStyle} ${btnRed}" onclick="window.app.loginScreen.clearPin()"><i class="fa-solid fa-xmark"></i></button>
+                    <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('0')">0</button>
+                    <button style="${btnStyle} ${btnGreen}" onclick="window.app.loginScreen.checkPin()"><i class="fa-solid fa-check"></i></button>
+                </div>
                 
-                <button style="${btnStyle} ${btnRed}" onclick="window.app.loginScreen.clearPin()"><i class="fa-solid fa-xmark"></i></button>
-                <button style="${btnStyle}" onclick="window.app.loginScreen.appendPin('0')">0</button>
-                <button style="${btnStyle} ${btnGreen}" onclick="window.app.loginScreen.checkPin('${correctPin}', '${userRole}')"><i class="fa-solid fa-check"></i></button>
+                <button style="margin-top:20px; background:transparent; border:none; color:#888; width:100%; font-size:1rem;" 
+                    onclick="window.app.helpers.closeModal('modal-pin')">Cancel</button>
             </div>
-            
-            <button class="btn-sm" style="margin-top:20px; width:100%; background:transparent; color:#888; border:none;" onclick="window.app.helpers.closeModal('modal-pin')">Cancel</button>
         `;
+        
         window.app.helpers.openModal('modal-pin');
     },
 
     appendPin: function(num) {
         const input = document.getElementById('pin-input');
-        if(input.value.length < 4) input.value += num;
+        if(input.value.length < 4) {
+            input.value += num;
+        }
     },
 
     clearPin: function() {
         document.getElementById('pin-input').value = '';
     },
 
-    checkPin: function(correctPin, userRole) {
+    checkPin: function() {
         const input = document.getElementById('pin-input');
-        // Ensure strictly string comparison to avoid type errors
-        if(input.value.toString() === correctPin.toString()) {
+        const entered = input.value.toString();
+        const correct = this.targetPin.toString();
+
+        if(entered === correct) {
             window.app.helpers.closeModal('modal-pin');
-            this.completeLogin(userRole);
+            this.completeLogin(this.targetRole);
         } else {
-            // Shake / Error effect
-            input.style.borderColor = "#e74c3c";
-            input.style.background = "#fadbd8";
+            // Error animation
+            input.style.color = "#e74c3c";
+            // Flash shake effect
+            input.style.transform = "translateX(5px)";
+            setTimeout(() => input.style.transform = "translateX(-5px)", 50);
+            setTimeout(() => input.style.transform = "translateX(0)", 100);
+            
             setTimeout(() => {
                 input.value = '';
-                input.style.borderColor = "#3498db";
-                input.style.background = "white";
+                input.style.color = "white";
             }, 600);
         }
     },
@@ -136,11 +184,9 @@ window.app.loginScreen = {
         const mgrLink = document.getElementById('nav-manager');
         const itLink = document.getElementById('nav-it');
         
-        // Hide admin links by default
         if(mgrLink) mgrLink.style.display = 'none';
         if(itLink) itLink.style.display = 'none';
 
-        // Show based on role
         if(userRole === 'Manager' || userRole === 'IT Support') {
             if(mgrLink) mgrLink.style.display = 'block';
         }
