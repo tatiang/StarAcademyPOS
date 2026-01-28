@@ -1,4 +1,7 @@
-/* FILE: js/database_test_Gemini.js */
+/* FILE: js/database_test_Gemini.js
+   PURPOSE: Handles saving/loading data from LocalStorage and Firestore.
+   Manages Online/Offline states and real-time listeners.
+*/
 
 // Firebase Config
 const firebaseConfig = {
@@ -14,13 +17,19 @@ window.app.database = {
     db: null,
     docRef: null,
 
+    // 1. Initialize Connection
     init: function() {
         try {
             if (typeof firebase !== 'undefined') {
                 firebase.initializeApp(firebaseConfig);
                 this.db = firebase.firestore();
+                // We use a single document for the entire store's data for simplicity
                 this.docRef = this.db.collection("stores").doc("classroom_cafe_main");
+                
+                // Start listening for changes immediately
                 this.startListener();
+            } else {
+                console.error("Firebase SDK not loaded.");
             }
         } catch(e) {
             console.error("Firebase Error", e);
@@ -28,29 +37,37 @@ window.app.database = {
         }
     },
 
+    // 2. Load from LocalStorage (Instant Boot)
     loadLocal: function() {
         try {
             const stored = localStorage.getItem(window.app.storageKey);
             if(stored) {
                 window.app.data = JSON.parse(stored);
+                console.log("Loaded local data");
             } else {
                 window.app.data = JSON.parse(JSON.stringify(window.app.defaults));
             }
         } catch(e) {
+            console.error("Local Load Error", e);
             window.app.data = JSON.parse(JSON.stringify(window.app.defaults));
         }
     },
 
+    // 3. Save to LocalStorage (Backup)
     saveLocal: function() {
         localStorage.setItem(window.app.storageKey, JSON.stringify(window.app.data));
     },
 
+    // 4. Send Data to Cloud (Sync)
     sync: async function() {
         if(!this.docRef) return;
+        
         this.updateStatus("Syncing...", "orange");
         
         try {
+            // Write local data to the cloud
             await this.docRef.set(window.app.data);
+            
             this.updateStatus("Online", "var(--success)");
             this.setOfflineMode(false);
         } catch(e) {
@@ -60,24 +77,35 @@ window.app.database = {
         }
     },
 
+    // 5. Listen for updates from other devices (Real-time)
     startListener: function() {
         if(!this.docRef) return;
         
         this.docRef.onSnapshot((doc) => {
             if (doc.exists) {
+                // CONNECTION SUCCESS
                 this.setOfflineMode(false);
                 this.updateStatus("Online", "var(--success)");
 
                 const cloudData = doc.data();
+                
+                // MERGE STRATEGY:
+                // We accept the Cloud as the "Source of Truth" for shared lists.
                 if(cloudData.products) window.app.data.products = cloudData.products;
                 if(cloudData.employees) window.app.data.employees = cloudData.employees;
                 if(cloudData.categories) window.app.data.categories = cloudData.categories;
                 
-                // Merge orders (don't lose local ones)
-                if(cloudData.orders && cloudData.orders.length > window.app.data.orders.length) {
+                // For orders, if cloud has more, we take them (simple merge)
+                if(cloudData.orders && cloudData.orders.length >= window.app.data.orders.length) {
                     window.app.data.orders = cloudData.orders;
                 }
+                
+                // Also sync order counter to avoid duplicates
+                if(cloudData.orderCounter > window.app.data.orderCounter) {
+                    window.app.data.orderCounter = cloudData.orderCounter;
+                }
 
+                // Update the screen immediately
                 this.refreshScreens();
                 this.saveLocal();
             }
@@ -88,7 +116,33 @@ window.app.database = {
         });
     },
 
-    // HELPER: Toggle the Red Banner
+    // --- HELPERS ---
+
+    // Updates the active view so the user sees changes instantly
+    refreshScreens: function() {
+        // POS Screen
+        if(document.getElementById('view-pos').classList.contains('active') && window.app.posScreen.init) {
+            window.app.posScreen.init();
+        }
+        // Time Clock
+        if(document.getElementById('view-timeclock').classList.contains('active') && window.app.timeClock.render) {
+            window.app.timeClock.render();
+        }
+        // Manager Hub
+        if(document.getElementById('view-manager').classList.contains('active') && window.app.managerHub.init) {
+            window.app.managerHub.init();
+        }
+        // Barista View (CRITICAL FIX: Updates queue when new order arrives)
+        if(document.getElementById('view-barista').classList.contains('active') && window.app.baristaView.render) {
+            window.app.baristaView.render();
+        }
+        // Inventory View
+        if(document.getElementById('view-inventory').classList.contains('active') && window.app.inventory.init) {
+            window.app.inventory.init();
+        }
+    },
+
+    // Toggles the Red Offline Banner at the top of the screen
     setOfflineMode: function(isOffline) {
         const banner = document.getElementById('offline-banner');
         if(banner) {
@@ -96,18 +150,12 @@ window.app.database = {
         }
     },
 
-    // HELPER: Update Sidebar Text
+    // Updates the text in the Sidebar Footer
     updateStatus: function(text, color) {
         const el = document.getElementById('connection-status');
         if(el) {
             el.innerText = text;
             el.style.color = color;
         }
-    },
-
-    refreshScreens: function() {
-        if(document.getElementById('view-pos').classList.contains('active') && window.app.posScreen.init) window.app.posScreen.init();
-        if(document.getElementById('view-timeclock').classList.contains('active') && window.app.timeClock.render) window.app.timeClock.render();
-        if(document.getElementById('view-manager').classList.contains('active') && window.app.managerHub.init) window.app.managerHub.init();
     }
 };
