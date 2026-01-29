@@ -1,29 +1,26 @@
 /* FILE: js/login_screen_test_Gemini.js
-   PURPOSE: Login Logic. Uses new CSS classes for styling.
+   PURPOSE: Modern Login Screen with Avatar Buttons & Bulletproof PINs.
 */
 
 window.app.loginScreen = {
-    lastMod: "Jan 28 • 10:45 PM",
+    lastMod: "Jan 28 • 11:45 PM",
     targetRole: "", 
 
     init: function() {
-        console.log("✅ Gemini test JS loaded at", new Date().toISOString());
-      // alert("Gemini test JS loaded");
-
-       console.log("Login Screen Initializing...");
+        console.log("Modern Login Screen Initializing...");
         
-        // 1. Locate the container
+        // 1. Locate or Create the Container
         let container = document.querySelector('.login-box') || document.querySelector('.login-card-body');
         
-        // If we can't find the specific box, find the overlay and create the box inside it
         if (!container) {
             const overlay = document.getElementById('login-overlay');
             if(overlay) {
-                // Clear overlay but KEEP the logo image if it exists
+                // Preserve the logo if it exists in the overlay
                 const img = overlay.querySelector('img');
                 overlay.innerHTML = ''; 
                 if(img) overlay.appendChild(img);
                 
+                // Create the card container
                 container = document.createElement('div');
                 container.className = 'login-box';
                 overlay.appendChild(container);
@@ -38,48 +35,47 @@ window.app.loginScreen = {
     renderInterface: function(container) {
         container.innerHTML = '';
 
-        // 1. Header
+        // 1. Welcome Message
         const title = document.createElement('h2');
-        title.innerText = "System Login";
-        title.style.marginBottom = "5px";
+        title.innerText = "Welcome Back";
+        title.style.margin = "0 0 5px 0";
+        title.style.color = "var(--space-indigo)";
         container.appendChild(title);
 
-        // 2. Status / Timestamp
-        const status = document.createElement('div');
-        status.style.cssText = "color:#ccc; font-size:0.85rem; margin-bottom:20px;";
-        status.innerHTML = `<span style="color:#2ecc71">● Ready</span> <span style="margin-left:8px;">Updated: ${this.lastMod}</span>`;
-        container.appendChild(status);
+        const subtitle = document.createElement('div');
+        subtitle.innerHTML = `System Ready <span style="font-size:0.8em; opacity:0.5; margin-left:5px;">(Updated: ${this.lastMod})</span>`;
+        subtitle.style.color = "#2ecc71";
+        subtitle.style.fontSize = "0.9rem";
+        subtitle.style.fontWeight = "bold";
+        subtitle.style.marginBottom = "20px";
+        container.appendChild(subtitle);
 
-        // 3. Kiosk Mode
-        const kioskBtn = document.createElement('button');
-        kioskBtn.className = 'btn-kiosk';
-        kioskBtn.innerHTML = '<i class="fa-solid fa-tablet-screen-button"></i> Customer Kiosk Mode';
-        kioskBtn.onclick = () => this.startKioskMode();
-        container.appendChild(kioskBtn);
-
-        // 4. Employee List (Buttons)
-        const staffHeader = document.createElement('div');
-        staffHeader.className = 'admin-divider';
-        staffHeader.innerHTML = '<span>SELECT CASHIER</span>';
-        container.appendChild(staffHeader);
-
+        // 2. Employee List (The Main Focus)
         let employees = window.app.data.employees || [];
+        // Fallback if empty
         if(employees.length === 0) employees = [{name:'Sarah'}, {name:'Mike'}, {name:'Jasmine'}];
 
+        const empGrid = document.createElement('div');
+        empGrid.className = 'employee-grid';
+
         employees.forEach(emp => {
+            // Get Initials for Avatar
+            const initial = emp.name.charAt(0).toUpperCase();
+            
             const btn = document.createElement('button');
-            btn.className = 'btn-employee'; // Uses the new CSS class
-            btn.innerHTML = `<i class="fa-solid fa-user"></i> ${emp.name}`;
+            btn.className = 'btn-employee';
+            // Layout: Avatar Circle + Name + Chevron
+            btn.innerHTML = `
+                <div class="emp-avatar">${initial}</div>
+                <span>${emp.name}</span>
+                <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:#ccc; font-size:0.8rem;"></i>
+            `;
             btn.onclick = () => this.completeLogin(emp.name);
-            container.appendChild(btn);
+            empGrid.appendChild(btn);
         });
+        container.appendChild(empGrid);
 
-        // 5. Admin Section
-        const adminHeader = document.createElement('div');
-        adminHeader.className = 'admin-divider';
-        adminHeader.innerHTML = '<span>ADMINISTRATION</span>';
-        container.appendChild(adminHeader);
-
+        // 3. Admin Section (Subtle)
         const adminRow = document.createElement('div');
         adminRow.className = 'admin-row';
         adminRow.innerHTML = `
@@ -92,19 +88,22 @@ window.app.loginScreen = {
         `;
         container.appendChild(adminRow);
 
-        // 6. Forgot PIN Link
-        const forgotDiv = document.createElement('div');
-        forgotDiv.style.textAlign = 'center';
-        forgotDiv.innerHTML = `
-            <a href="mailto:tatiangreenleaf@gmail.com?subject=POS PIN Reset Request&body=I need to reset the PIN for the Manager or IT account." 
-               style="color:#3498db; font-size:0.85rem; text-decoration:none;">
+        // 4. Footer Links (Kiosk & Help)
+        const footer = document.createElement('div');
+        footer.className = 'login-footer-links';
+        footer.innerHTML = `
+            <button class="link-btn" onclick="window.app.loginScreen.startKioskMode()">
+                <i class="fa-solid fa-tablet-button"></i> Kiosk Mode
+            </button>
+            <a href="mailto:tatiangreenleaf@gmail.com?subject=PIN Reset Request&body=I need to reset the PIN for the Manager or IT account." 
+               class="link-btn">
                Forgot PIN?
             </a>
         `;
-        container.appendChild(forgotDiv);
+        container.appendChild(footer);
     },
 
-    // --- LOGIC REMAINS THE SAME ---
+    // --- PIN LOGIC (Stable Version) ---
     promptPin: function(role) {
         this.targetRole = role;
         const modal = document.getElementById('modal-pin');
@@ -172,11 +171,6 @@ window.app.loginScreen = {
         this.init(); 
     },
 
-   refresh: function() {
-  const container = document.querySelector('.login-box') || document.querySelector('.login-card-body');
-  if (container) this.renderInterface(container);
-},
-   
     startKioskMode: function() {
         document.getElementById('login-overlay').style.display = 'none';
         window.app.router.navigate('kiosk');
@@ -185,5 +179,3 @@ window.app.loginScreen = {
         if(pos && kiosk) kiosk.innerHTML = pos.innerHTML;
     }
 };
-
-
