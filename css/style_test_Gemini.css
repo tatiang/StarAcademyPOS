@@ -8,21 +8,82 @@
     --text-dark: #333333;
     --danger: #c0392b;
     --success: #27ae60;
-    --square-blue: #006AFF; /* New Square-like Blue */
+    --square-blue: #006AFF;
     --square-gray: #D0D3D4;
     --barista-purple: #8e44ad;
 }
 
 body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-/* Login */
-#login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--space-indigo); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.login-box { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 450px; text-align: center; border-top: 8px solid var(--golden-bronze); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+/* --- LOGIN SCREEN (UPDATED) --- */
+#login-overlay { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: var(--space-indigo); z-index: 9999; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; 
+}
+
+/* 1. LOGO FIX: Target the image directly inside the overlay */
+#login-overlay img {
+    width: 220px;               /* Larger Size */
+    height: auto;
+    border-radius: 30px;        /* Rounded Rectangle (Not Oval) */
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Nice shadow depth */
+    border: 4px solid white;    /* Clean white border */
+    background: white;
+}
+
+.login-box { 
+    background: white; padding: 30px; border-radius: 16px; 
+    width: 90%; max-width: 420px; text-align: center; 
+    border-top: 8px solid var(--golden-bronze); 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
+}
+
+/* 2. EMPLOYEE BUTTONS (New Style) */
+.btn-employee {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: rgba(46, 204, 113, 0.1); /* Light Green Tint */
+    border: 1px solid var(--success);
+    border-radius: 8px;         /* Rectangle */
+    color: var(--success);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+
+.btn-employee:hover {
+    background: var(--success);
+    color: white;
+    transform: translateY(-2px);
+}
+.btn-employee i { margin-right: 15px; font-size: 1.2rem; }
+
+/* KIOSK BUTTON */
+.btn-kiosk {
+    width: 100%; padding: 12px; border: none; border-radius: 8px;
+    background: var(--space-indigo); color: white;
+    margin-bottom: 20px; cursor: pointer; font-size: 1rem;
+}
+
+/* ADMIN AREA */
 .admin-divider { border-top: 1px solid #eee; margin: 20px 0; position: relative; }
-.admin-divider span { background: white; padding: 0 10px; position: relative; top: -10px; color: #999; font-size: 0.8rem; }
-.admin-buttons-row { display: flex; gap: 10px; justify-content: center; }
-.admin-login-btn { padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; font-size: 0.9rem; color: #555; transition: background 0.2s; }
-.admin-login-btn:hover { background: #eee; }
+.admin-divider span { background: white; padding: 0 10px; position: relative; top: -10px; color: #bbb; font-size: 0.75rem; letter-spacing: 1px; }
+
+.admin-row { display: flex; gap: 10px; margin-bottom: 15px; }
+.btn-admin { 
+    flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; 
+    background: #f9f9f9; color: #555; cursor: pointer; font-weight: bold;
+}
+.btn-admin:hover { background: #eee; color: #333; }
+
+/* --- END LOGIN UPDATES --- */
 
 /* Layout */
 .app-wrapper { display: flex; width: 100%; height: 100%; }
@@ -44,21 +105,10 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 .view { display: none; padding: 20px; height: calc(100vh - 60px); overflow-y: auto; }
 .view.active { display: block; }
 
-/* POS Layout - UPDATED for V1.98 */
+/* POS Layout */
 .pos-layout { display: flex; gap: 20px; height: 100%; }
 .product-section { flex: 2; overflow-y: auto; }
-
-/* Cart Panel - Updated to flex column for sticky footer */
-.cart-panel { 
-    flex: 1; 
-    background: white; 
-    border-radius: 12px; 
-    display: flex; 
-    flex-direction: column; 
-    padding: 15px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-    overflow: hidden; /* Contains the footer */
-}
+.cart-panel { flex: 1; background: white; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
 
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
 .product-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
@@ -68,7 +118,6 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 .prod-info h4 { margin: 0; font-size: 0.95rem; color: var(--space-indigo); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .prod-info div { color: var(--golden-bronze); font-weight: bold; margin-top: 5px; }
 
-/* Cart Items & Totals */
 .cart-items { flex: 1; overflow-y: auto; margin: 10px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
 .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 0.9rem; }
 .cart-qty-controls { display:flex; align-items:center; gap:5px; background:#f4f4f4; border-radius:4px; padding:2px; }
@@ -76,236 +125,36 @@ body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); ma
 .cart-totals .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; color: #666; }
 .cart-totals .grand-total { font-size: 1.2rem; font-weight: bold; color: var(--space-indigo); margin-top: 10px; border-top: 2px solid #333; padding-top: 10px; }
 
-/* SQUARE STYLE ACTION BAR (New in v1.98) */
-.cart-actions { 
-    display: flex; 
-    gap: 0; 
-    margin-top: 15px; 
-    height: 70px; /* Big touch targets */
-}
-
-.btn-square-large { 
-    flex: 1; 
-    border: none; 
-    color: white; 
-    font-weight: 800; 
-    font-size: 1.1rem; 
-    text-transform: uppercase; 
-    letter-spacing: 1px;
-    cursor: pointer; 
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
+/* SQUARE ACTION BAR */
+.cart-actions { display: flex; gap: 0; margin-top: 15px; height: 70px; }
+.btn-square-large { flex: 1; border: none; color: white; font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .btn-square-large i { font-size: 1.4rem; margin-bottom: 5px; }
-
-/* Dynamic States */
 .charge-ready-cash { background: var(--success); border-radius: 8px 0 0 8px; border-right: 1px solid rgba(255,255,255,0.2); }
 .charge-ready-card { background: var(--square-blue); border-radius: 0 8px 8px 0; }
-
-.charge-disabled { 
-    background: var(--square-gray); 
-    color: #999; 
-    pointer-events: none; 
-    border-radius: 8px; /* If both are disabled, they look like one block */
-}
+.charge-disabled { background: var(--square-gray); color: #999; pointer-events: none; border-radius: 8px; }
 .charge-disabled:first-child { border-radius: 8px 0 0 8px; border-right: 1px solid white; }
 .charge-disabled:last-child { border-radius: 0 8px 8px 0; }
-
 .btn-square-large:active { transform: scale(0.98); opacity: 0.9; }
 
-/* Standard Buttons (Legacy) */
+/* Misc Buttons */
 .btn-pay { width:100%; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
 .btn-cash { background: var(--success); }
 .btn-card { background: var(--space-indigo); }
 .btn-gold { background: var(--golden-bronze); }
 .btn-train { background: #95a5a6; }
-
-/* Form Elements */
-.form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; font-family: inherit; box-sizing: border-box; }
 .btn-sm { padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
-.btn-clock { padding: 15px; border: none; border-radius: 8px; color: white; cursor: pointer; width: 48%; }
-.opt-chip { display: inline-block; padding: 8px 12px; background: #eee; border-radius: 20px; margin-right: 5px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; font-size: 0.9rem; }
-.opt-chip.selected { background: var(--golden-bronze); color: white; border-color: var(--golden-bronze); }
-
-/* Manager Hub Styles */
-.mgr-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-.mgr-tab { padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: bold; color: #777; font-size: 1rem; }
-.mgr-tab.active { border-color: var(--golden-bronze); color: var(--space-indigo); }
-.mgr-subview { display: none; animation: fadeIn 0.3s; }
-.mgr-subview.active { display: block; }
-
-.mgr-split { display: flex; gap: 20px; flex-wrap:wrap; }
-.mgr-box { flex: 1; background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); min-width: 300px; }
-.box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 
 /* Modals */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; }
-.modal.open { display: flex; }
-.modal-content { background: white; padding: 25px; border-radius: 12px; width: 350px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-sizing: border-box;}
+#modal-container { position: relative; z-index: 10001; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10002 !important; align-items: center; justify-content: center; }
+.modal.open { display: flex !important; }
+.modal-content { background: white; padding: 25px; border-radius: 12px; width: 350px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
 
-/* PIN Pad */
+/* Pin Pad */
 #pin-display { font-size: 2rem; letter-spacing: 5px; text-align: center; margin: 15px 0; background: #eee; padding: 10px; border-radius: 6px; min-height: 40px; }
 #pin-pad-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
-.pin-btn { padding: 15px; font-size: 1.2rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+.pin-btn { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: 1px solid #ccc; background: white; cursor: pointer; }
 .pin-btn:active { background: #ddd; }
 
-/* Table */
-.staff-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-.staff-table th, .staff-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-.staff-table th { background: #f4f4f4; color: #666; font-size: 0.85rem; text-transform: uppercase; }
-
-/* Calculator / Cash Modal */
-.calc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-.calc-btn { padding: 15px; font-size: 1.2rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
-.calc-btn:active { background: #ddd; }
-#calc-display { font-size:1.5rem; text-align:right; margin-bottom:10px; border-bottom:2px solid #333; height:40px; padding: 5px;}
-.total-display-large { font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 10px; color: var(--space-indigo); }
-
-/* Change Display */
-.change-display-box { 
-    background: transparent; 
-    border: 2px solid #ddd; 
-    padding: 15px; 
-    text-align: center; 
-    margin-top: 20px; 
-    border-radius: 8px; 
-    font-weight: bold; 
-    font-size: 1.2rem; 
-    color: var(--text-dark);
-}
-
-/* Card Swipe Simulation */
-.swipe-track { width: 100%; height: 60px; background: #eee; border-radius: 8px; position: relative; margin: 20px 0; cursor: pointer; overflow: hidden; border: 2px dashed #ccc; }
-.swipe-anim { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-weight: bold; transition: all 1s; }
-.swipe-track.swiped .swipe-anim { transform: translateX(100%); opacity: 0; }
-.swipe-track.swiped { background: #d4edda; border-style: solid; border-color: var(--success); }
-
-/* Dashboard/Manager Stats */
-.mgr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.mgr-card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.mgr-card h3 { margin: 0 0 10px 0; color: #666; font-size: 0.9rem; text-transform: uppercase; }
-.mgr-card .value { font-size: 2rem; font-weight: bold; color: var(--space-indigo); }
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* Print Styles */
-@media print {
-    body > * { display: none !important; }
-    #print-area { display: block !important; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: white; z-index: 20000; padding: 20px; }
-}
-
-/* --- FIX FOR MODALS BEHIND LOGIN SCREEN --- */
-
-/* Ensure the modal container sits above the login screen (which is 9999) */
-#modal-container {
-    position: relative;
-    z-index: 10001; 
-}
-
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85); /* Dark background */
-    z-index: 10002 !important; /* MUST be higher than login-overlay (9999) */
-    align-items: center;
-    justify-content: center;
-}
-
-/* Ensure the modal is visible when active */
-.modal.open {
-    display: flex !important;
-}
-
-/* Optional: Make the pin buttons look better */
-.pin-btn {
-    padding: 15px;
-    font-size: 1.2rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: white;
-    cursor: pointer;
-}
-.pin-btn:active {
-    background: #ddd;
-}
-
-/* TIME CLOCK STYLES */
-.tc-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    padding: 10px;
-}
-
-.tc-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border-bottom: 5px solid #ccc; /* Default Grey */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-.tc-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-}
-
-.tc-card.status-in {
-    border-bottom-color: var(--success); /* Green when working */
-}
-
-.tc-card.status-out {
-    opacity: 0.8;
-}
-
-.tc-avatar {
-    width: 60px;
-    height: 60px;
-    background: #eee;
-    border-radius: 50%;
-    margin: 0 auto 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #666;
-}
-
-.tc-card.status-in .tc-avatar {
-    background: #d4edda;
-    color: var(--success);
-}
-
-.tc-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 1.1rem;
-    color: var(--space-indigo);
-}
-
-.tc-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    background: #eee;
-    color: #666;
-}
-
-.tc-card.status-in .tc-badge {
-    background: var(--success);
-    color: white;
-}
+/* Print */
+@media print { body > * { display: none !important; } #print-area { display: block !important; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: white; z-index: 20000; padding: 20px; } }
