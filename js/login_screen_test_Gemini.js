@@ -75,7 +75,7 @@ window.app.loginScreen = {
     },
 
     // --- BULLETPROOF PIN LOGIC ---
- promptPin: function(userRole, correctPin) {
+promptPin: function(userRole, correctPin) {
         // FIX: Save login details to Memory (safer than HTML dataset)
         this.targetPin = correctPin;
         this.targetRole = userRole;
