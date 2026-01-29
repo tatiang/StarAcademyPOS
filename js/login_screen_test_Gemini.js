@@ -172,6 +172,11 @@ window.app.loginScreen = {
         this.init(); 
     },
 
+   refresh: function() {
+  const container = document.querySelector('.login-box') || document.querySelector('.login-card-body');
+  if (container) this.renderInterface(container);
+},
+   
     startKioskMode: function() {
         document.getElementById('login-overlay').style.display = 'none';
         window.app.router.navigate('kiosk');
@@ -181,7 +186,4 @@ window.app.loginScreen = {
     }
 };
 
-refresh: function() {
-  const container = document.querySelector('.login-box') || document.querySelector('.login-card-body');
-  if (container) this.renderInterface(container);
-},
+
