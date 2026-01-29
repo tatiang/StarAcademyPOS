@@ -7,7 +7,10 @@ window.app.loginScreen = {
     targetRole: "", 
 
     init: function() {
-        console.log("Login Screen Initializing...");
+        console.log("✅ Gemini test JS loaded at", new Date().toISOString());
+      alert("Gemini test JS loaded");
+
+       console.log("Login Screen Initializing...");
         
         // 1. Locate the container
         let container = document.querySelector('.login-box') || document.querySelector('.login-card-body');
