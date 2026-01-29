@@ -25,8 +25,8 @@ window.app.router = {
 
             // 4. Initialize Login Screen (Render Employee Buttons)
             if(window.app.loginScreen) window.app.loginScreen.init();
-window.app.loginScreen.show();       // or .render(), .init(), etc.
-window.app.loginScreen.renderLogin(); // whichever exists
+// window.app.loginScreen.show();       // or .render(), .init(), etc.
+// window.app.loginScreen.renderLogin(); // whichever exists
 
            window.app.loginScreen.refresh();
 
