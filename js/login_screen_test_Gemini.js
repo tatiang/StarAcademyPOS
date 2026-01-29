@@ -180,3 +180,8 @@ window.app.loginScreen = {
         if(pos && kiosk) kiosk.innerHTML = pos.innerHTML;
     }
 };
+
+refresh: function() {
+  const container = document.querySelector('.login-box') || document.querySelector('.login-card-body');
+  if (container) this.renderInterface(container);
+},
