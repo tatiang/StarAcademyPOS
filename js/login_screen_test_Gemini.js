@@ -8,7 +8,7 @@ window.app.loginScreen = {
 
     init: function() {
         console.log("✅ Gemini test JS loaded at", new Date().toISOString());
-      alert("Gemini test JS loaded");
+      // alert("Gemini test JS loaded");
 
        console.log("Login Screen Initializing...");
         
