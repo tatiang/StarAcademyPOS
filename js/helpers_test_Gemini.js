@@ -5,9 +5,10 @@
 window.app.helpers = {
     
     // Tool: Turns a number like 2.5 into "$2.50"
-    formatCurrency: (amount) => {
-        return "$" + parseFloat(amount).toFixed(2);
-    },
+ formatCurrency: (amount) => {
+  const n = Number(amount);
+  return isFinite(n) ? `$${n.toFixed(2)}` : "$0.00";
+},
 
     // Tool: Opens a popup window (Modal)
     openModal: (id) => {
