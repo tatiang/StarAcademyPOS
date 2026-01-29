@@ -1,36 +1,36 @@
 /* FILE: js/login_screen_test_Gemini.js
    PURPOSE: Manages login. 
-   FIXED: 
-    1. Uses Memory (this.targetPin) for bulletproof PIN validation.
-    2. Adds static Build Timestamp to screen and console.
-    3. Aggressively finds "Initializing" text to replace it.
+   FIX: 
+    1. Reverted to "Lookup Table" logic (like the old version) to fix the 'undefined' error.
+    2. Kept the new UI/Design.
+    3. Added Timestamp and System Ready status.
 */
 
 window.app.loginScreen = {
     // --- STATIC TIMESTAMP ---
-    buildTimestamp: "Jan 28, 2026 • 9:45 PM PST",
+    buildTimestamp: "Jan 28, 2026 • 10:00 PM PST",
+    
+    // Internal state
+    targetRole: "", 
 
     init: function() {
         console.log(`Login Screen Initialized [Build: ${this.buildTimestamp}]`);
         
+        // 1. Update Status Text
         const statusHTML = `
             <i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> 
             System Ready 
             <span style="opacity:0.5; font-size:0.8em; margin-left:10px;">(Bld: ${this.buildTimestamp})</span>
         `;
 
-        // 1. Try finding by ID
         const statusEl = document.getElementById('login-version');
-        
         if(statusEl) {
             statusEl.innerHTML = statusHTML;
             statusEl.style.color = '#ccc';
         } else {
-            // 2. FALLBACK: Search ALL text elements for "Initializing"
-            // This covers <p>, <div>, <span>, <h3>, etc.
-            const allElements = document.querySelectorAll('p, div, span, h3, h4, h5');
+            // Robust fallback to find the "Initializing" text
+            const allElements = document.querySelectorAll('p, div, span, h3');
             allElements.forEach(el => {
-                // Check if the text content matches "Initializing" or "Initializing System..."
                 if(el.innerText && el.innerText.includes('Initializing')) {
                     el.innerHTML = statusHTML;
                     el.style.color = '#ccc';
@@ -56,15 +56,17 @@ window.app.loginScreen = {
 
         // B. Admin Section
         const adminDiv = document.createElement('div');
+        // FIX: Removed the explicit PINs from the function calls here. 
+        // We now just say "This is the Manager button". The PIN is checked internally later.
         adminDiv.innerHTML = `
             <div class="admin-divider" style="color:#aaa; font-size:0.9rem; margin:15px 0;"><span>ADMIN (PIN REQUIRED)</span></div>
             <div class="admin-buttons-row" style="display:flex; gap:10px;">
                 <div class="admin-login-btn" style="flex:1; padding:15px; background:rgba(255,255,255,0.1); text-align:center; border-radius:8px; cursor:pointer;" 
-                     onclick="window.app.loginScreen.promptPin('Manager', '1234')">
+                     onclick="window.app.loginScreen.promptPin('Manager')">
                     <i class="fa-solid fa-user-tie"></i> Mgr
                 </div>
                 <div class="admin-login-btn" style="flex:1; padding:15px; background:rgba(255,255,255,0.1); text-align:center; border-radius:8px; cursor:pointer;" 
-                     onclick="window.app.loginScreen.promptPin('IT Support', '9753')">
+                     onclick="window.app.loginScreen.promptPin('IT Support')">
                     <i class="fa-solid fa-microchip"></i> IT
                 </div>
             </div>
@@ -90,16 +92,15 @@ window.app.loginScreen = {
         });
     },
 
-    // --- BULLETPROOF PIN LOGIC (Memory Based) ---
-    promptPin: function(userRole, correctPin) {
-        // 1. SAVE TO MEMORY (Fixes "undefined" error)
-        this.targetPin = correctPin;
+    // --- PIN LOGIC ---
+    promptPin: function(userRole) {
+        // Save the Role, NOT the PIN. We look up the PIN later.
         this.targetRole = userRole;
 
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
         
-        // Styling
+        // Styling configuration
         modal.style.background = "rgba(0,0,0,0.85)";
         content.style.background = "#1c1c1e"; 
         content.style.color = "white";
@@ -107,6 +108,7 @@ window.app.loginScreen = {
         content.style.borderRadius = "20px";
         content.style.maxWidth = "360px";
 
+        // Button Styles
         const btnStyle = "width:70px; height:70px; border-radius:50%; border:none; background:rgba(255,255,255,0.15); color:white; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin:0 auto;";
         const btnGreen = "background:#2ecc71;";
         const btnRed = "background:#e74c3c;";
@@ -157,12 +159,17 @@ window.app.loginScreen = {
 
     checkPin: function() {
         const input = document.getElementById('pin-input');
-        
-        // 2. RETRIEVE FROM MEMORY (Fixes "undefined" error)
-        const correctPin = this.targetPin;
+        const entered = input.value.toString();
         const userRole = this.targetRole;
 
-        const entered = input.value.toString();
+        // FIX: Define PINs here (Old Version Logic)
+        // This ensures they are NEVER undefined
+        const VALID_PINS = {
+            'Manager': '1234',
+            'IT Support': '9753'
+        };
+
+        const correctPin = VALID_PINS[userRole];
         
         console.log(`Checking PIN. Entered: ${entered}, Expected: ${correctPin}`);
 
