@@ -141,17 +141,22 @@ window.app.loginScreen = {
         document.getElementById('pin-input').value = '';
     },
 
-    checkPin: function() {
+  checkPin: function() {
         const input = document.getElementById('pin-input');
         const modal = document.getElementById('modal-pin');
         
-        // 2. RETRIEVE FROM DOM DATASET
-        // This is the fix. We pull it straight from the HTML element.
-        const correctPin = modal.dataset.correctPin;
+        // Trim whitespace to ensure clean comparison
+        const correctPin = String(modal.dataset.correctPin || '').trim();
         const userRole = modal.dataset.userRole;
+        const entered = String(input.value || '').trim();
 
-        const entered = input.value.toString();
-        
+        // --- DEBUG ALERT (Remove this after fixing) ---
+        // This will pop up a window showing exactly what the computer sees
+        if (entered !== correctPin) {
+            alert(`DEBUG ERROR:\n\nYou Typed: "${entered}"\nRequired: "${correctPin}"\n\n(If 'Required' says undefined, the button setup is wrong)`);
+        }
+        // ----------------------------------------------
+
         console.log(`Checking PIN. Entered: ${entered}, Expected: ${correctPin}`);
 
         if(entered === correctPin) {
