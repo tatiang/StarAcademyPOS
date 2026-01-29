@@ -75,15 +75,15 @@ window.app.loginScreen = {
     },
 
     // --- BULLETPROOF PIN LOGIC ---
-  promptPin: function(userRole, correctPin) {
-        // FIX: Save specific login details to Memory (safer than HTML dataset)
+ promptPin: function(userRole, correctPin) {
+        // FIX: Save login details to Memory (safer than HTML dataset)
         this.targetPin = correctPin;
         this.targetRole = userRole;
 
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
         
-        // Styling
+        // Styling configuration
         modal.style.background = "rgba(0,0,0,0.85)";
         content.style.background = "#1c1c1e"; 
         content.style.color = "white";
@@ -91,10 +91,12 @@ window.app.loginScreen = {
         content.style.borderRadius = "20px";
         content.style.maxWidth = "360px";
 
+        // Button Styles
         const btnStyle = "width:70px; height:70px; border-radius:50%; border:none; background:rgba(255,255,255,0.15); color:white; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin:0 auto;";
         const btnGreen = "background:#2ecc71;";
         const btnRed = "background:#e74c3c;";
 
+        // Generate the Keypad HTML
         content.innerHTML = `
             <div style="padding:10px;">
                 <h3 style="margin-bottom:10px; font-weight:normal;">${userRole}</h3>
