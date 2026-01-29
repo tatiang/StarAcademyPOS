@@ -3,14 +3,14 @@
    FIXED: 
     1. Uses Memory (this.targetPin) for bulletproof PIN validation.
     2. Adds static Build Timestamp to screen and console.
+    3. Aggressively finds "Initializing" text to replace it.
 */
 
 window.app.loginScreen = {
-    // --- STATIC TIMESTAMP (Edit this manually when you update code) ---
-    buildTimestamp: "Jan 28, 2026 • 9:30 PM PST",
+    // --- STATIC TIMESTAMP ---
+    buildTimestamp: "Jan 28, 2026 • 9:45 PM PST",
 
-   init: function() {
-        // Log to console so we KNOW the new file loaded
+    init: function() {
         console.log(`Login Screen Initialized [Build: ${this.buildTimestamp}]`);
         
         const statusHTML = `
@@ -28,8 +28,9 @@ window.app.loginScreen = {
         } else {
             // 2. FALLBACK: Search ALL text elements for "Initializing"
             // This covers <p>, <div>, <span>, <h3>, etc.
-            const allElements = document.querySelectorAll('p, div, span, h3, h4');
+            const allElements = document.querySelectorAll('p, div, span, h3, h4, h5');
             allElements.forEach(el => {
+                // Check if the text content matches "Initializing" or "Initializing System..."
                 if(el.innerText && el.innerText.includes('Initializing')) {
                     el.innerHTML = statusHTML;
                     el.style.color = '#ccc';
