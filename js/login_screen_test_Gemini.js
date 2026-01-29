@@ -145,7 +145,7 @@ checkPin: function() {
         const input = document.getElementById('pin-input');
         
         // FIX: Retrieve from Memory
-        // We use "this" because we are inside window.app.loginScreen
+        // We use "this" because we are inside the loginScreen object
         const correctPin = this.targetPin; 
         const userRole = this.targetRole;
 
@@ -157,7 +157,7 @@ checkPin: function() {
             window.app.helpers.closeModal('modal-pin');
             this.completeLogin(userRole);
         } else {
-            // Error animation
+            // Error animation (Shake effect)
             input.style.color = "#e74c3c";
             input.style.transform = "translateX(5px)";
             setTimeout(() => input.style.transform = "translateX(-5px)", 50);
