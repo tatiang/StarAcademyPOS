@@ -1,23 +1,33 @@
 /* FILE: js/login_screen_test_Gemini.js
    PURPOSE: Manages login. 
-   FIXED: Uses DOM dataset to store PINs (prevents "undefined" errors).
+   FIXED: 
+    1. Uses Memory (this.targetPin) for bulletproof PIN validation.
+    2. Adds static Build Timestamp to screen and console.
 */
 
 window.app.loginScreen = {
+    // --- STATIC TIMESTAMP (Edit this manually when you update code) ---
+    buildTimestamp: "Jan 28, 2026 • 9:30 PM PST",
 
     init: function() {
-        console.log("Login Screen Initialized");
+        console.log(`Login Screen Initialized [Build: ${this.buildTimestamp}]`);
         
-        // 1. Force "Initializing" text to "System Ready"
+        // 1. Force "Initializing" text to "System Ready" + Timestamp
         const statusEl = document.getElementById('login-version');
+        const statusHTML = `
+            <i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> 
+            System Ready • v${window.app.version} 
+            <span style="opacity:0.5; font-size:0.8em; margin-left:10px;">(Bld: ${this.buildTimestamp})</span>
+        `;
+
         if(statusEl) {
-            statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
+            statusEl.innerHTML = statusHTML;
             statusEl.style.color = '#ccc';
         } else {
             // Fallback: update any p tag containing "Initializing"
             document.querySelectorAll('p').forEach(p => {
                 if(p.innerText.includes('Initializing')) {
-                    p.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> System Ready • v${window.app.version}`;
+                    p.innerHTML = statusHTML;
                 }
             });
         }
@@ -74,16 +84,16 @@ window.app.loginScreen = {
         });
     },
 
-    // --- BULLETPROOF PIN LOGIC ---
-promptPin: function(userRole, correctPin) {
-        // FIX: Save login details to Memory (safer than HTML dataset)
+    // --- BULLETPROOF PIN LOGIC (Memory Based) ---
+    promptPin: function(userRole, correctPin) {
+        // 1. SAVE TO MEMORY (Fixes "undefined" error)
         this.targetPin = correctPin;
         this.targetRole = userRole;
 
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
         
-        // Styling configuration
+        // Styling
         modal.style.background = "rgba(0,0,0,0.85)";
         content.style.background = "#1c1c1e"; 
         content.style.color = "white";
@@ -91,12 +101,10 @@ promptPin: function(userRole, correctPin) {
         content.style.borderRadius = "20px";
         content.style.maxWidth = "360px";
 
-        // Button Styles
         const btnStyle = "width:70px; height:70px; border-radius:50%; border:none; background:rgba(255,255,255,0.15); color:white; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin:0 auto;";
         const btnGreen = "background:#2ecc71;";
         const btnRed = "background:#e74c3c;";
 
-        // Generate the Keypad HTML
         content.innerHTML = `
             <div style="padding:10px;">
                 <h3 style="margin-bottom:10px; font-weight:normal;">${userRole}</h3>
@@ -141,12 +149,11 @@ promptPin: function(userRole, correctPin) {
         document.getElementById('pin-input').value = '';
     },
 
-checkPin: function() {
+    checkPin: function() {
         const input = document.getElementById('pin-input');
         
-        // FIX: Retrieve from Memory
-        // We use "this" because we are inside the loginScreen object
-        const correctPin = this.targetPin; 
+        // 2. RETRIEVE FROM MEMORY (Fixes "undefined" error)
+        const correctPin = this.targetPin;
         const userRole = this.targetRole;
 
         const entered = input.value.toString();
@@ -157,7 +164,7 @@ checkPin: function() {
             window.app.helpers.closeModal('modal-pin');
             this.completeLogin(userRole);
         } else {
-            // Error animation (Shake effect)
+            // Error animation
             input.style.color = "#e74c3c";
             input.style.transform = "translateX(5px)";
             setTimeout(() => input.style.transform = "translateX(-5px)", 50);
