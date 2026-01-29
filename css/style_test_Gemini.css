@@ -1,18 +1,35 @@
-/* --- LOGIN SCREEN (MODERNIZED) --- */
+:root {
+    --space-indigo: #1E2741;
+    --stormy-teal: #307785;
+    --white-smoke: #F5F5F6;
+    --golden-bronze: #CB9832;
+    --white: #FFFFFF;
+    --bg-app: var(--white-smoke);
+    --text-dark: #333333;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --square-blue: #006AFF; 
+    --square-gray: #D0D3D4;
+    --barista-purple: #8e44ad;
+}
+
+body { font-family: 'Open Sans', sans-serif; background-color: var(--bg-app); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+/* --- MODERN LOGIN SCREEN START --- */
 #login-overlay { 
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: linear-gradient(135deg, var(--space-indigo) 0%, #2c3e50 100%); /* Subtle Gradient */
+    background: linear-gradient(135deg, var(--space-indigo) 0%, #2c3e50 100%); 
     z-index: 9999; 
     display: flex; flex-direction: column; align-items: center; justify-content: center; 
 }
 
-/* LOGO - Floating effect */
+/* Floating Logo */
 #login-overlay img {
-    width: 180px;
-    height: 180px;
-    object-fit: contain; /* Ensures logo doesn't stretch */
-    border-radius: 40px; /* Smooth rounded square */
-    margin-bottom: -40px; /* Overlaps the card slightly */
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    border-radius: 35px; /* Smooth rounded square */
+    margin-bottom: -40px; /* Overlaps the card */
     z-index: 10000;
     background: white;
     padding: 10px;
@@ -21,19 +38,20 @@
 
 .login-box { 
     background: white; 
-    padding: 60px 30px 30px 30px; /* Extra top padding for logo overlap */
+    padding: 60px 30px 30px 30px; /* Extra top padding for logo */
     border-radius: 16px; 
     width: 90%; max-width: 400px; 
     text-align: center; 
     box-shadow: 0 20px 60px rgba(0,0,0,0.5); 
     position: relative;
+    border-top: none; /* Removed the old bronze border */
 }
 
-/* EMPLOYEE USER CARDS */
+/* Employee Avatar Buttons */
 .employee-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin: 20px 0;
 }
 
@@ -55,15 +73,14 @@
 }
 
 .btn-employee:hover {
-    background: var(--white-smoke);
+    background: #fdfdfd;
     border-color: var(--golden-bronze);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* Avatar Circle with Initials */
 .emp-avatar {
-    width: 40px; height: 40px;
+    width: 42px; height: 42px;
     background: var(--space-indigo);
     color: white;
     border-radius: 50%;
@@ -72,7 +89,17 @@
     font-weight: bold;
 }
 
-/* KIOSK & FOOTER LINKS */
+/* Admin & Footer */
+.admin-row { display: flex; gap: 10px; margin-top: 15px; }
+.btn-admin { 
+    flex: 1; padding: 12px; 
+    border: 1px dashed #ccc; border-radius: 8px; 
+    background: #fafafa; color: #777; 
+    cursor: pointer; font-weight: bold; font-size: 0.9rem;
+    transition: 0.2s;
+}
+.btn-admin:hover { background: var(--space-indigo); color: white; border-style: solid; }
+
 .login-footer-links {
     margin-top: 25px;
     padding-top: 15px;
@@ -86,16 +113,84 @@
     background: none; border: none;
     color: #999; cursor: pointer;
     font-weight: 600; text-decoration: none;
+    font-family: inherit; font-size: inherit;
 }
 .link-btn:hover { color: var(--space-indigo); }
+/* --- MODERN LOGIN SCREEN END --- */
 
-/* ADMIN BUTTONS */
-.admin-row { display: flex; gap: 10px; margin-top: 10px; }
-.btn-admin { 
-    flex: 1; padding: 12px; 
-    border: 1px dashed #ccc; border-radius: 8px; 
-    background: #fafafa; color: #777; 
-    cursor: pointer; font-weight: bold; font-size: 0.9rem;
-    transition: 0.2s;
+
+/* --- EXISTING POS STYLES --- */
+.app-wrapper { display: flex; width: 100%; height: 100%; }
+.sidebar { width: 260px; background: var(--space-indigo); color: white; display: flex; flex-direction: column; }
+.logo-area { height: 80px; display: flex; align-items: center; justify-content: center; font-weight: bold; letter-spacing: 1px; }
+.nav-links { list-style: none; padding: 0; flex: 1; }
+.nav-links li { padding: 15px 20px; cursor: pointer; opacity: 0.7; transition: 0.2s; border-left: 4px solid transparent; }
+.nav-links li.active { opacity: 1; background: rgba(255,255,255,0.1); border-left-color: var(--golden-bronze); }
+.nav-links li i { margin-right: 10px; width: 20px; text-align: center; }
+.sidebar-footer { padding: 20px; text-align: center; font-size: 0.8rem; opacity: 0.6; }
+
+.main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+.top-bar { height: 60px; background: white; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; display: inline-block; margin-right: 5px; }
+.status-dot.online { background: var(--success); }
+.status-dot.error { background: var(--danger); }
+
+.view { display: none; padding: 20px; height: calc(100vh - 60px); overflow-y: auto; }
+.view.active { display: block; }
+
+.pos-layout { display: flex; gap: 20px; height: 100%; }
+.product-section { flex: 2; overflow-y: auto; }
+
+.cart-panel { 
+    flex: 1; background: white; border-radius: 12px; 
+    display: flex; flex-direction: column; padding: 15px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden;
 }
-.btn-admin:hover { background: var(--space-indigo); color: white; border-style: solid; }
+
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+.product-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
+.product-card:active { transform: scale(0.98); }
+.prod-img { width: 100%; height: 100px; object-fit: cover; background: #eee; }
+.prod-info { padding: 10px; text-align: center; }
+.prod-info h4 { margin: 0; font-size: 0.95rem; color: var(--space-indigo); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prod-info div { color: var(--golden-bronze); font-weight: bold; margin-top: 5px; }
+
+.cart-items { flex: 1; overflow-y: auto; margin: 10px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 0.9rem; }
+.cart-qty-controls { display:flex; align-items:center; gap:5px; background:#f4f4f4; border-radius:4px; padding:2px; }
+.cart-qty-btn { width:24px; height:24px; border:none; background:white; cursor:pointer; font-weight:bold; border-radius:3px; }
+.cart-totals .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; color: #666; }
+.cart-totals .grand-total { font-size: 1.2rem; font-weight: bold; color: var(--space-indigo); margin-top: 10px; border-top: 2px solid #333; padding-top: 10px; }
+
+.cart-actions { display: flex; gap: 0; margin-top: 15px; height: 70px; }
+.btn-square-large { flex: 1; border: none; color: white; font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.btn-square-large i { font-size: 1.4rem; margin-bottom: 5px; }
+
+.charge-ready-cash { background: var(--success); border-radius: 8px 0 0 8px; border-right: 1px solid rgba(255,255,255,0.2); }
+.charge-ready-card { background: var(--square-blue); border-radius: 0 8px 8px 0; }
+.charge-disabled { background: var(--square-gray); color: #999; pointer-events: none; border-radius: 8px; }
+.charge-disabled:first-child { border-radius: 8px 0 0 8px; border-right: 1px solid white; }
+.charge-disabled:last-child { border-radius: 0 8px 8px 0; }
+.btn-square-large:active { transform: scale(0.98); opacity: 0.9; }
+
+.btn-pay { width:100%; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
+.btn-cash { background: var(--success); }
+.btn-card { background: var(--space-indigo); }
+.btn-gold { background: var(--golden-bronze); }
+.btn-train { background: #95a5a6; }
+.btn-sm { padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
+
+/* Modals */
+#modal-container { position: relative; z-index: 10001; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10002 !important; align-items: center; justify-content: center; }
+.modal.open { display: flex !important; }
+.modal-content { background: white; padding: 25px; border-radius: 12px; width: 350px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+
+/* Pin Pad */
+#pin-display { font-size: 2rem; letter-spacing: 5px; text-align: center; margin: 15px 0; background: #eee; padding: 10px; border-radius: 6px; min-height: 40px; }
+#pin-pad-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+.pin-btn { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: 1px solid #ccc; background: white; cursor: pointer; }
+.pin-btn:active { background: #ddd; }
+
+/* Print */
+@media print { body > * { display: none !important; } #print-area { display: block !important; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: white; z-index: 20000; padding: 20px; } }
