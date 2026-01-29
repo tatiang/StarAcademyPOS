@@ -9,25 +9,30 @@ window.app.loginScreen = {
     // --- STATIC TIMESTAMP (Edit this manually when you update code) ---
     buildTimestamp: "Jan 28, 2026 • 9:30 PM PST",
 
-    init: function() {
+   init: function() {
+        // Log to console so we KNOW the new file loaded
         console.log(`Login Screen Initialized [Build: ${this.buildTimestamp}]`);
         
-        // 1. Force "Initializing" text to "System Ready" + Timestamp
-        const statusEl = document.getElementById('login-version');
         const statusHTML = `
             <i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> 
-            System Ready • v${window.app.version} 
+            System Ready 
             <span style="opacity:0.5; font-size:0.8em; margin-left:10px;">(Bld: ${this.buildTimestamp})</span>
         `;
 
+        // 1. Try finding by ID
+        const statusEl = document.getElementById('login-version');
+        
         if(statusEl) {
             statusEl.innerHTML = statusHTML;
             statusEl.style.color = '#ccc';
         } else {
-            // Fallback: update any p tag containing "Initializing"
-            document.querySelectorAll('p').forEach(p => {
-                if(p.innerText.includes('Initializing')) {
-                    p.innerHTML = statusHTML;
+            // 2. FALLBACK: Search ALL text elements for "Initializing"
+            // This covers <p>, <div>, <span>, <h3>, etc.
+            const allElements = document.querySelectorAll('p, div, span, h3, h4');
+            allElements.forEach(el => {
+                if(el.innerText && el.innerText.includes('Initializing')) {
+                    el.innerHTML = statusHTML;
+                    el.style.color = '#ccc';
                 }
             });
         }
