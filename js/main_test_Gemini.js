@@ -76,12 +76,12 @@ window.app.loginScreen.renderLogin(); // whichever exists
     }
 };
 
+window.onload = function() {
+    window.app.router.init();
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   if (window.app?.loginScreen?.init) {
     window.app.loginScreen.init();
   }
 });
-
-window.onload = function() {
-    window.app.router.init();
-};
