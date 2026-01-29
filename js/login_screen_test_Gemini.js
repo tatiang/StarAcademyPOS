@@ -1,14 +1,15 @@
 /* FILE: js/login_screen_test_Gemini.js
-   PURPOSE: Manages login. 
-   FIX: 
-    1. Reverted to "Lookup Table" logic (like the old version) to fix the 'undefined' error.
-    2. Kept the new UI/Design.
-    3. Added Timestamp and System Ready status.
+   PURPOSE: Manages login, UI styling, and Authentication.
+   UPDATED:
+    1. Logo is now a large rounded rectangle.
+    2. "Forgot PIN" link added (mailto).
+    3. Employee buttons generated dynamically.
+    4. "Initializing" text fixed permanently.
 */
 
 window.app.loginScreen = {
-    // --- STATIC TIMESTAMP ---
-    buildTimestamp: "Jan 28, 2026 • 10:00 PM PST",
+    // --- STATIC TIMESTAMP (Updated) ---
+    buildTimestamp: "Jan 28, 2026 • 10:15 PM PST",
     
     // Internal state
     targetRole: "", 
@@ -16,11 +17,23 @@ window.app.loginScreen = {
     init: function() {
         console.log(`Login Screen Initialized [Build: ${this.buildTimestamp}]`);
         
-        // 1. Update Status Text
+        // 1. UI FIX: Target the Logo to make it larger and rounded-rect
+        // We search for the image inside the login header
+        const logoImg = document.querySelector('.login-header img') || document.querySelector('img[src*="logo"]');
+        if(logoImg) {
+            logoImg.style.transition = "all 0.3s ease";
+            logoImg.style.borderRadius = "25px"; // Rounded Rectangle (was 50%)
+            logoImg.style.width = "180px";       // Larger size
+            logoImg.style.height = "auto";
+            logoImg.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
+            logoImg.style.marginBottom = "20px";
+        }
+
+        // 2. TEXT FIX: Force "System Ready" status
         const statusHTML = `
             <i class="fa-solid fa-circle-check" style="color:#2ecc71"></i> 
             System Ready 
-            <span style="opacity:0.5; font-size:0.8em; margin-left:10px;">(Bld: ${this.buildTimestamp})</span>
+            <span style="opacity:0.5; font-size:0.8em; margin-left:10px;">(Last Mod: ${this.buildTimestamp})</span>
         `;
 
         const statusEl = document.getElementById('login-version');
@@ -28,7 +41,7 @@ window.app.loginScreen = {
             statusEl.innerHTML = statusHTML;
             statusEl.style.color = '#ccc';
         } else {
-            // Robust fallback to find the "Initializing" text
+            // Robust fallback to overwrite "Initializing..."
             const allElements = document.querySelectorAll('p, div, span, h3');
             allElements.forEach(el => {
                 if(el.innerText && el.innerText.includes('Initializing')) {
@@ -46,7 +59,7 @@ window.app.loginScreen = {
         if(!container) return;
         container.innerHTML = '';
 
-        // A. Kiosk Button
+        // --- SECTION A: Kiosk Mode ---
         const kioskBtn = document.createElement('button');
         kioskBtn.className = 'btn-pay';
         kioskBtn.style.cssText = "background:var(--space-indigo); border:1px solid rgba(255,255,255,0.2); margin-bottom:15px; font-size:1.2rem;";
@@ -54,12 +67,11 @@ window.app.loginScreen = {
         kioskBtn.onclick = () => this.startKioskMode();
         container.appendChild(kioskBtn);
 
-        // B. Admin Section
+        // --- SECTION B: Admin (PIN Required) ---
         const adminDiv = document.createElement('div');
-        // FIX: Removed the explicit PINs from the function calls here. 
-        // We now just say "This is the Manager button". The PIN is checked internally later.
         adminDiv.innerHTML = `
             <div class="admin-divider" style="color:#aaa; font-size:0.9rem; margin:15px 0;"><span>ADMIN (PIN REQUIRED)</span></div>
+            
             <div class="admin-buttons-row" style="display:flex; gap:10px;">
                 <div class="admin-login-btn" style="flex:1; padding:15px; background:rgba(255,255,255,0.1); text-align:center; border-radius:8px; cursor:pointer;" 
                      onclick="window.app.loginScreen.promptPin('Manager')">
@@ -70,12 +82,22 @@ window.app.loginScreen = {
                     <i class="fa-solid fa-microchip"></i> IT
                 </div>
             </div>
-            <div class="admin-divider" style="color:#aaa; font-size:0.9rem; margin:15px 0 10px 0;"><span>STAFF (TAP TO LOGIN)</span></div>
+
+            <div style="text-align:center; margin-top:10px;">
+                <a href="mailto:tatiangreenleaf@gmail.com?subject=POS PIN Reset Request&body=I need to reset the PIN for the Manager or IT account. Please assist." 
+                   style="color:#666; font-size:0.85rem; text-decoration:none;">
+                   <i class="fa-regular fa-envelope"></i> Forgot PIN?
+                </a>
+            </div>
+
+            <div class="admin-divider" style="color:#aaa; font-size:0.9rem; margin:20px 0 10px 0;"><span>STAFF (TAP TO LOGIN)</span></div>
         `;
         container.appendChild(adminDiv);
 
-        // C. Employee Buttons
+        // --- SECTION C: Employees (No PIN) ---
         let employees = window.app.data.employees || [];
+        
+        // Safety check: if no employees exist, create defaults so the screen isn't empty
         if(employees.length === 0) {
             employees = [ { name: 'Sarah' }, { name: 'Mike' }, { name: 'Jasmine' } ];
             window.app.data.employees = employees;
@@ -85,22 +107,24 @@ window.app.loginScreen = {
         employees.forEach(emp => {
             const btn = document.createElement('button');
             btn.className = 'btn-pay'; 
-            btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding:15px 20px; text-align:left; margin-bottom:8px; font-size:1.1rem; color:white;";
+            // Styling for employee buttons
+            btn.style.cssText = "background:rgba(46, 204, 113, 0.15); border:1px solid rgba(46, 204, 113, 0.4); justify-content:flex-start; padding:15px 20px; text-align:left; margin-bottom:8px; font-size:1.1rem; color:white; width:100%;";
+            
             btn.innerHTML = `<i class="fa-solid fa-id-badge" style="margin-right:15px; color:#2ecc71;"></i> ${emp.name}`;
+            
+            // Direct login (No PIN)
             btn.onclick = () => this.completeLogin(emp.name); 
             container.appendChild(btn);
         });
     },
 
-    // --- PIN LOGIC ---
+    // --- PIN SYSTEM ---
     promptPin: function(userRole) {
-        // Save the Role, NOT the PIN. We look up the PIN later.
         this.targetRole = userRole;
 
         const modal = document.getElementById('modal-pin');
         const content = modal.querySelector('.modal-content');
         
-        // Styling configuration
         modal.style.background = "rgba(0,0,0,0.85)";
         content.style.background = "#1c1c1e"; 
         content.style.color = "white";
@@ -108,7 +132,6 @@ window.app.loginScreen = {
         content.style.borderRadius = "20px";
         content.style.maxWidth = "360px";
 
-        // Button Styles
         const btnStyle = "width:70px; height:70px; border-radius:50%; border:none; background:rgba(255,255,255,0.15); color:white; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin:0 auto;";
         const btnGreen = "background:#2ecc71;";
         const btnRed = "background:#e74c3c;";
@@ -162,8 +185,7 @@ window.app.loginScreen = {
         const entered = input.value.toString();
         const userRole = this.targetRole;
 
-        // FIX: Define PINs here (Old Version Logic)
-        // This ensures they are NEVER undefined
+        // PIN LOOKUP
         const VALID_PINS = {
             'Manager': '1234',
             'IT Support': '9753'
