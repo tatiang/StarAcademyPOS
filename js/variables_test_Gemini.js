@@ -3,7 +3,7 @@
 */
 
 window.app = {
-    version: "v2.1.0", // Updated Version
+    version: "v2.2.0", // Updated Version
     storageKey: "star_pos_v2_data",
     taxRate: 0.0925,
 
