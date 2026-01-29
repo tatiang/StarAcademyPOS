@@ -28,6 +28,8 @@ window.app.router = {
 window.app.loginScreen.show();       // or .render(), .init(), etc.
 window.app.loginScreen.renderLogin(); // whichever exists
 
+           window.app.loginScreen.refresh();
+
             // 5. Start Default View (POS) underneath
             this.navigate('pos'); 
         });
