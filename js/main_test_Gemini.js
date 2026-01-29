@@ -1,13 +1,53 @@
 /* FILE: js/main_test_Gemini.js
    PURPOSE: Main entry point. Handles startup and navigation for Gemini test build.
-   NOTES:
-   - database_test_Gemini.js init() has NO callback; it starts a real-time listener.
-   - We boot from LocalStorage immediately, then Firestore merges in and refreshes screens.
-   - We render the login UI at launch, and re-render it when employees update (if login overlay is visible).
+
+   KEY BEHAVIORS:
+   - Instant boot from LocalStorage (safe-merge to preserve schema keys).
+   - Start Firestore real-time listener (database_test_Gemini.js).
+   - Render login UI immediately at launch (employee buttons, etc.).
+   - Re-render login UI on cloud updates when login overlay is visible.
 */
 
 (function () {
   "use strict";
+
+  // -----------------------------
+  // Small helpers
+  // -----------------------------
+  function isLoginOverlayVisible() {
+    const overlay = document.getElementById("login-overlay");
+    if (!overlay) return false;
+
+    // If no inline style, CSS shows it → treat as visible
+    const disp = overlay.style.display;
+    return disp !== "none";
+  }
+
+  function safeMergeData(target, source) {
+    // Shallow merge for known top-level keys to preserve schema.
+    // (Avoids losing new keys when old LocalStorage data is missing them.)
+    const out = { ...target };
+
+    if (!source || typeof source !== "object") return out;
+
+    // Only merge the known data keys
+    const keys = [
+      "products",
+      "categories",
+      "roles",
+      "employees",
+      "cart",
+      "orders",
+      "timeEntries",
+      "orderCounter",
+    ];
+
+    keys.forEach((k) => {
+      if (k in source) out[k] = source[k];
+    });
+
+    return out;
+  }
 
   // -----------------------------
   // Router
@@ -17,27 +57,38 @@
       try {
         console.log("System Boot:", window.app.version);
 
-        // 1) Load local data first for instant boot
+        // 1) Load local data first (instant boot), but keep schema safe
+        // Your database.loadLocal() currently overwrites window.app.data.
+        // We'll still call it (to keep your logic), then merge back with defaults.
         if (window.app?.database?.loadLocal) {
           window.app.database.loadLocal();
+
+          // Merge the loaded data with the current schema to ensure all keys exist
+          const schema = window.app.data || {};
+          const merged = safeMergeData(schema, window.app.data);
+          window.app.data = merged;
         }
 
-        // 2) Render sidebar version
+        // 2) Render sidebar version from window.app.version
         const verEl = document.getElementById("app-version");
         if (verEl) verEl.innerText = window.app.version || "";
 
-        // 3) Ensure login UI is rendered immediately (employee buttons, etc.)
+        // (Optional) Keep <title> in sync with version
+        if (window.app.version) {
+          document.title = `Rising Star Cafe POS ${window.app.version}`;
+        }
+
+        // 3) Render login UI immediately (this replaces the static HTML login box)
         if (window.app?.loginScreen?.init) {
           window.app.loginScreen.init();
         }
 
-        // 4) Start Firestore (real-time listener will merge cloud data + refresh screens)
+        // 4) Start Firestore listener (merges cloud updates and refreshes screens)
         if (window.app?.database?.init) {
           window.app.database.init();
         }
 
-        // 5) Patch database.refreshScreens so cloud updates can also refresh login UI
-        //    (only when login overlay is visible)
+        // 5) Patch database.refreshScreens to also refresh login overlay when visible
         this._patchDatabaseRefreshScreens();
 
         // 6) Start default view underneath the login overlay
@@ -58,20 +109,11 @@
       const original = db.refreshScreens.bind(db);
 
       db.refreshScreens = function () {
-        // Run the original screen refresh logic
+        // Run original refresh logic for the active view(s)
         original();
 
-        // If login overlay is visible, rebuild login UI so employee list updates immediately
-        const overlay = document.getElementById("login-overlay");
-        const overlayVisible =
-          overlay && overlay.style.display !== "none" && overlay.style.display !== "";
-
-        // Important:
-        // - On first load, overlay has no inline style (""), but it's visible due to CSS.
-        // - Treat "" as visible.
-        const visible = overlay && overlay.style.display !== "none";
-
-        if (visible && window.app?.loginScreen?.init) {
+        // Also refresh login UI if overlay is visible (e.g., new employees from Firestore)
+        if (isLoginOverlayVisible() && window.app?.loginScreen?.init) {
           window.app.loginScreen.init();
         }
       };
@@ -119,26 +161,30 @@
       } else if (viewName === "inventory") {
         if (window.app.inventory?.init) window.app.inventory.init();
       } else if (viewName === "timeclock") {
-        // Your database.refreshScreens references window.app.timeClock.render,
-        // but your index includes timeclock_screen_test_Gemini.js (likely window.app.timeclock)
+        // database.refreshScreens references window.app.timeClock.render,
+        // but your modules may attach as window.app.timeclock
         if (window.app.timeclock?.init) window.app.timeclock.init();
         else if (window.app.timeClock?.render) window.app.timeClock.render();
       } else if (viewName === "dashboard") {
         if (window.app.dashboard?.init) window.app.dashboard.init();
+      } else if (viewName === "kiosk") {
+        // kiosk view is special; no init required here unless you add one
       }
     },
   };
 
   // -----------------------------
-  // Startup (single entry point)
+  // Startup: single entry point
   // -----------------------------
   document.addEventListener("DOMContentLoaded", () => {
     if (!window.app) {
-      console.error("window.app not found. Check load order (main_test_Gemini.js should load last).");
+      console.error(
+        "window.app not found. Check script load order (main_test_Gemini.js should load last)."
+      );
       return;
     }
-    if (!window.app.router) {
-      console.error("window.app.router not defined.");
+    if (!window.app.router?.init) {
+      console.error("window.app.router.init not found.");
       return;
     }
     window.app.router.init();
