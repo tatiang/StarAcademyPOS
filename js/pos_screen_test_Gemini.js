@@ -259,17 +259,25 @@ window.app.posScreen = {
         if(!window.app.data.orderCounter) window.app.data.orderCounter = 1001;
         if(!window.app.data.orders) window.app.data.orders = [];
 
+        const customerInput = document.getElementById('customer-name');
+        const customerName = customerInput ? customerInput.value.trim() : "";
+        const nowIso = new Date().toISOString();
+
         const order = {
             id: window.app.data.orderCounter++,
-            date: new Date().toISOString(),
+            date: nowIso,
+            timestamp: nowIso,
             method: method,
             items: [...window.app.data.cart],
             total: parseFloat(document.getElementById('pos-total').textContent.replace('$','')),
-            status: 'Pending'
+            status: 'Pending',
+            customerName: customerName || null
         };
 
         window.app.data.orders.push(order);
         window.app.data.cart = []; 
+
+        if (customerInput) customerInput.value = "";
         
         this.renderCart();
         window.app.database.saveLocal();

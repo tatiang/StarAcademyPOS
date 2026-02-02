@@ -19,7 +19,8 @@ window.app.dashboard = {
         // Calculate Top Seller (Simple version: counts items sold)
         let productCounts = {};
         orders.forEach(o => {
-            o.items.forEach(i => {
+            const items = Array.isArray(o.items) ? o.items : [];
+            items.forEach(i => {
                 productCounts[i.name] = (productCounts[i.name] || 0) + i.qty;
             });
         });
@@ -29,7 +30,13 @@ window.app.dashboard = {
 
         // Calculate "Busy Hour" (Time of day with most orders)
         // (Simplified logic for demo)
-        const lastOrderTime = orders.length > 0 ? new Date(orders[orders.length-1].date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "N/A";
+        const lastOrder = orders.length > 0 ? orders[orders.length - 1] : null;
+        const lastOrderDate = lastOrder
+            ? new Date(lastOrder.date || lastOrder.timestamp || lastOrder.time)
+            : null;
+        const lastOrderTime = lastOrderDate && !isNaN(lastOrderDate.getTime())
+            ? lastOrderDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            : "N/A";
 
         // 2. RENDER DASHBOARD
         div.innerHTML = `

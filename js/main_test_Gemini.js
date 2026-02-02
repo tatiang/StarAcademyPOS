@@ -40,6 +40,7 @@
       "orders",
       "timeEntries",
       "orderCounter",
+      "inventory",
     ];
 
     keys.forEach((k) => {
@@ -64,7 +65,9 @@
           window.app.database.loadLocal();
 
           // Merge the loaded data with the current schema to ensure all keys exist
-          const schema = window.app.data || {};
+          const schema = window.app.defaults
+            ? JSON.parse(JSON.stringify(window.app.defaults))
+            : {};
           const merged = safeMergeData(schema, window.app.data);
           window.app.data = merged;
         }

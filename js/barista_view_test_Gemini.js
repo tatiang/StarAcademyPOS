@@ -34,10 +34,26 @@ window.app.barista = {
         }
 
         // 3. Sort by Time
-        activeOrders.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const getOrderDate = (order) => {
+            const raw = order.timestamp || order.date || order.time;
+            const parsed = raw ? new Date(raw) : null;
+            return parsed && !isNaN(parsed.getTime()) ? parsed : null;
+        };
+
+        activeOrders.sort((a, b) => {
+            const aDate = getOrderDate(a);
+            const bDate = getOrderDate(b);
+            if (!aDate && !bDate) return 0;
+            if (!aDate) return 1;
+            if (!bDate) return -1;
+            return aDate - bDate;
+        });
 
         activeOrders.forEach(order => {
-            const minsAgo = Math.floor((new Date() - new Date(order.timestamp)) / 60000);
+            const orderDate = getOrderDate(order);
+            const minsAgo = orderDate
+                ? Math.max(0, Math.floor((Date.now() - orderDate.getTime()) / 60000))
+                : 0;
             
             // Color code
             let borderSide = "5px solid #2ecc71"; // Green
@@ -85,6 +101,7 @@ window.app.barista = {
         if(order) {
             order.status = 'completed';
             window.app.database.saveLocal();
+            window.app.database.sync();
             this.render();
         }
     }

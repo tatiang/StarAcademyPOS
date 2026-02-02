@@ -94,6 +94,9 @@ window.app.database = {
                 if(cloudData.products) window.app.data.products = cloudData.products;
                 if(cloudData.employees) window.app.data.employees = cloudData.employees;
                 if(cloudData.categories) window.app.data.categories = cloudData.categories;
+                if(cloudData.roles) window.app.data.roles = cloudData.roles;
+                if(cloudData.inventory) window.app.data.inventory = cloudData.inventory;
+                if(cloudData.timeEntries) window.app.data.timeEntries = cloudData.timeEntries;
                 
                 // For orders, if cloud has more, we take them (simple merge)
                 if(cloudData.orders && cloudData.orders.length >= window.app.data.orders.length) {
@@ -133,8 +136,9 @@ window.app.database = {
             window.app.managerHub.init();
         }
         // Barista View (CRITICAL FIX: Updates queue when new order arrives)
-        if(document.getElementById('view-barista').classList.contains('active') && window.app.baristaView.render) {
-            window.app.baristaView.render();
+        if(document.getElementById('view-barista').classList.contains('active')) {
+            if (window.app.baristaView?.render) window.app.baristaView.render();
+            else if (window.app.barista?.render) window.app.barista.render();
         }
         // Inventory View
         if(document.getElementById('view-inventory').classList.contains('active') && window.app.inventory.init) {

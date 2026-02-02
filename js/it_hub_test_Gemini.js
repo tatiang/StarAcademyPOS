@@ -152,7 +152,11 @@ window.app.itHub = {
                     </h3>
                     <ul style="list-style:none; padding:0;">
                         <li style="margin-bottom:15px;">
-                            <strong>v2.1.0</strong> <span style="font-size:0.8rem; background:#d4edda; padding:2px 6px; border-radius:4px;">Current</span><br>
+                            <strong>v2.50</strong> <span style="font-size:0.8rem; background:#d4edda; padding:2px 6px; border-radius:4px;">Current</span><br>
+                            Compatibility fixes for barista timing, inventory sync, and safer order data handling.
+                        </li>
+                        <li style="margin-bottom:15px;">
+                            <strong>v2.1.0</strong><br>
                             Added "Barista View", "Inventory", and "Dashboard" modules. Fixed Cloud Sync race conditions. Added Offline banner.
                         </li>
                         <li style="margin-bottom:15px;">

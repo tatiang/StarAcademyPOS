@@ -65,11 +65,16 @@ window.app.managerHub = {
         // Calcs
         const totalSales = orders.reduce((sum, o) => sum + (o.total || 0), 0);
         const todayStr = new Date().toISOString().split('T')[0];
-        const todaySales = orders.filter(o => o.date.startsWith(todayStr)).reduce((sum, o) => sum + (o.total || 0), 0);
+        const todaySales = orders
+            .filter(o => o.date && o.date.startsWith(todayStr))
+            .reduce((sum, o) => sum + (o.total || 0), 0);
         
         // Find Top Item
         const itemCounts = {};
-        orders.forEach(o => o.items.forEach(i => itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty));
+        orders.forEach(o => {
+            const items = Array.isArray(o.items) ? o.items : [];
+            items.forEach(i => itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty);
+        });
         const topItem = Object.keys(itemCounts).reduce((a, b) => itemCounts[a] > itemCounts[b] ? a : b, "No Data");
 
         container.innerHTML = `

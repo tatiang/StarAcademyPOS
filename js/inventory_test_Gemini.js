@@ -118,6 +118,7 @@ window.app.inventory = {
         });
         
         window.app.database.saveLocal();
+        window.app.database.sync();
         this.render();
     },
 
@@ -136,6 +137,7 @@ window.app.inventory = {
             }
 
             window.app.database.saveLocal();
+            window.app.database.sync();
             this.render();
         }
     }
