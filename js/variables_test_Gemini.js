@@ -4,8 +4,14 @@
 
 window.app = {
     version: "v2.50", // Updated Version
+    lastModified: "Feb 2, 2026",
     storageKey: "star_pos_v2_data",
     taxRate: 0.0925,
+    session: {
+        userName: null,
+        roleName: null,
+        isAdmin: false
+    },
 
     // THE DATA STORE (Active Data)
     data: {

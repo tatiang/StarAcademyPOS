@@ -162,8 +162,15 @@
 
             <section id="view-manager" class="view"><div id="mgr-content-area"></div></section>
             <section id="view-timeclock" class="view">
-                <h2>Time Clock</h2>
-                <div class="clock-controls" style="background:white; padding:20px; border-radius:12px; margin-top:20px;"><div id="time-clock-grid" class="tc-grid"></div></div>
+                <div class="tc-shell">
+                    <div class="tc-header">
+                        <h2>Time Clock</h2>
+                        <div id="tc-subtitle" class="tc-subtitle">Select your name to clock in or out.</div>
+                    </div>
+                    <div class="clock-controls">
+                        <div id="time-clock-grid" class="tc-grid"></div>
+                    </div>
+                </div>
             </section>
             <section id="view-dashboard" class="view"><h2>Manager Dashboard</h2><div id="dashboard-content"></div></section>
             <section id="view-barista" class="view"><h2>Barista Queue</h2><div id="barista-grid" class="barista-grid" style="display:flex; flex-direction:column; gap:10px;"></div></section>

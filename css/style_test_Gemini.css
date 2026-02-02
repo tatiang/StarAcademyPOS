@@ -291,6 +291,46 @@ body {
 .view { display: none; padding: 20px; height: calc(100vh - 60px); overflow-y: auto; }
 .view.active { display: block; }
 
+/* Time Clock */
+.tc-shell { display: flex; flex-direction: column; gap: 16px; }
+.tc-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tc-subtitle { color: #666; font-size: 0.95rem; }
+.clock-controls { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.tc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.tc-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #eee;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.12s ease;
+}
+.tc-card:active { transform: scale(0.99); }
+.tc-card.status-in { border-left: 5px solid var(--success); }
+.tc-card.status-out { border-left: 5px solid #bbb; }
+.tc-card-locked { opacity: 0.6; cursor: not-allowed; }
+.tc-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--space-indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tc-initials { color: white; font-weight: 800; font-size: 1.1rem; }
+.tc-info h3 { margin: 0 0 4px 0; font-size: 1.05rem; color: #222; }
+.tc-badge { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 999px; display: inline-block; }
+.tc-badge-in { background: rgba(39,174,96,0.12); color: var(--success); border: 1px solid rgba(39,174,96,0.35); }
+.tc-badge-out { background: rgba(0,0,0,0.05); color: #777; border: 1px solid #ddd; }
+.tc-locked { margin-top: 6px; font-size: 0.8rem; color: #999; display: flex; align-items: center; gap: 6px; }
+.tc-action { margin-left: auto; font-weight: 800; color: var(--space-indigo); }
+.tc-card-locked .tc-action { color: #999; }
+
 /* POS Layout */
 .pos-layout { display: flex; gap: 20px; height: 100%; }
 .product-section { flex: 2; overflow-y: auto; }

@@ -16,6 +16,21 @@ window.app.timeClock = {
 
         container.innerHTML = '';
 
+        const subtitle = document.getElementById('tc-subtitle');
+        const session = window.app?.session || {};
+        const currentUser = session.userName || null;
+        const isAdmin = !!session.isAdmin;
+
+        if (subtitle) {
+            if (!currentUser) {
+                subtitle.textContent = "Please log in to clock in or out.";
+            } else if (isAdmin) {
+                subtitle.textContent = `${currentUser} (Admin) — you can clock anyone in or out.`;
+            } else {
+                subtitle.textContent = `Logged in as ${currentUser} — you can clock only your own name.`;
+            }
+        }
+
         // Safety check
         if(!window.app.data.employees || window.app.data.employees.length === 0) {
             container.innerHTML = `
@@ -30,13 +45,20 @@ window.app.timeClock = {
 
         window.app.data.employees.forEach((emp, index) => {
             const isIn = (emp.status === 'in');
+            const canAct = isAdmin || (currentUser && emp.name === currentUser);
             
             const card = document.createElement('div');
             // CSS classes determine if it looks Green (in) or Grey (out)
-            card.className = `tc-card ${isIn ? 'status-in' : 'status-out'}`;
+            card.className = `tc-card ${isIn ? 'status-in' : 'status-out'} ${canAct ? '' : 'tc-card-locked'}`;
             
             // Clicking opens the decision modal
-            card.onclick = () => this.openActionModal(index);
+            if (canAct) {
+                card.onclick = () => this.openActionModal(index);
+                card.tabIndex = 0;
+            } else {
+                card.onclick = null;
+                card.tabIndex = -1;
+            }
 
             card.innerHTML = `
                 <div class="tc-avatar">
@@ -44,7 +66,13 @@ window.app.timeClock = {
                 </div>
                 <div class="tc-info">
                     <h3>${emp.name}</h3>
-                    <div class="tc-badge">${isIn ? 'CLOCKED IN' : 'CLOCKED OUT'}</div>
+                    <div class="tc-badge ${isIn ? 'tc-badge-in' : 'tc-badge-out'}">
+                        ${isIn ? 'CLOCKED IN' : 'CLOCKED OUT'}
+                    </div>
+                    ${!canAct ? '<div class="tc-locked"><i class="fa-solid fa-lock"></i> Ask a manager</div>' : ''}
+                </div>
+                <div class="tc-action">
+                    ${canAct ? (isIn ? 'Clock Out' : 'Clock In') : 'Locked'}
                 </div>
             `;
             container.appendChild(card);

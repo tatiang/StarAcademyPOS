@@ -3,7 +3,6 @@
 */
 
 window.app.loginScreen = {
-  lastMod: "Jan 28 • 10:45 PM",
   targetRole: "",
 
   init: function () {
@@ -45,6 +44,24 @@ window.app.loginScreen = {
   renderInterface: function (container) {
     container.innerHTML = "";
 
+    const versionLabel = window.app?.version ? window.app.version : "";
+    const lastMod =
+      window.app?.lastModified ||
+      (() => {
+        const raw = document.lastModified;
+        const date = raw ? new Date(raw) : null;
+        if (date && !isNaN(date.getTime())) {
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        }
+        return "Unknown";
+      })();
+
+    const statusLabel = `${versionLabel ? versionLabel + " • " : ""}Updated: ${lastMod}`;
+
     // Title
     const title = document.createElement("h2");
     title.innerText = "System Login";
@@ -56,7 +73,7 @@ window.app.loginScreen = {
     statusRow.innerHTML = `
       <span class="dot"></span>
       <span style="color: var(--success); font-weight:800;">Ready</span>
-      <span class="muted">Updated: ${this.lastMod}</span>
+      <span class="muted">${statusLabel}</span>
     `;
     container.appendChild(statusRow);
 
@@ -222,9 +239,20 @@ window.app.loginScreen = {
     const overlay = document.getElementById("login-overlay");
     if (overlay) overlay.style.display = "none";
 
+    const isAdmin = role === "Manager" || role === "IT Support";
+    if (window.app?.session) {
+      window.app.session.userName = role;
+      window.app.session.roleName = isAdmin ? role : "Cashier";
+      window.app.session.isAdmin = isAdmin;
+    }
+
     // Update Header
     const header = document.getElementById("header-cashier");
     if (header) header.innerText = `Cashier: ${role}`;
+
+    // Update Sidebar Version
+    const verEl = document.getElementById("app-version");
+    if (verEl && window.app?.version) verEl.innerText = window.app.version;
 
     // Show/Hide Nav
     const mgr = document.getElementById("nav-manager");
@@ -238,6 +266,16 @@ window.app.loginScreen = {
   logout: function () {
     const overlay = document.getElementById("login-overlay");
     if (overlay) overlay.style.display = "flex";
+
+    if (window.app?.session) {
+      window.app.session.userName = null;
+      window.app.session.roleName = null;
+      window.app.session.isAdmin = false;
+    }
+
+    const header = document.getElementById("header-cashier");
+    if (header) header.innerText = "Not Logged In";
+
     this.init();
   },
 
