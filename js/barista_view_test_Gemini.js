@@ -66,8 +66,10 @@ window.app.barista = {
             card.style.cssText = `background:white; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); border-left:${borderSide}; display:flex; justify-content:space-between; align-items:center; min-height:80px;`;
 
             let itemsHtml = '<ul style="list-style:none; padding:0; margin:5px 0 0 0;">';
-            order.items.forEach(item => {
-                itemsHtml += `<li style="font-size:1.1rem; font-weight:600; padding:2px 0;">• ${item.name}</li>`;
+            (order.items || []).forEach(item => {
+                const qty = Number(item.qty || item.quantity || 1);
+                const label = qty > 1 ? `${qty}x ${item.name}` : item.name;
+                itemsHtml += `<li style="font-size:1.1rem; font-weight:600; padding:2px 0;">• ${label}</li>`;
             });
             itemsHtml += '</ul>';
 
