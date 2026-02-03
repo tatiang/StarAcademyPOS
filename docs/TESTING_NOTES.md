@@ -3,6 +3,8 @@
 ### v2.50 (Baseline)
 —————————
 Baseline for Gemini testing. Includes Time Clock UI refresh, admin-only PIN reset stored in Firestore, and faster auto-backups.
+Pinned Gemini preview:
+https://raw.githack.com/tatiang/StarAcademyPOS/10d8573/index_test_Gemini.html
 
 ### v1.97
 —————————
@@ -82,4 +84,3 @@ IT Hub screen
     • This appears to be included in v1.34
   • Expandable list of current features, known bugs, potential future improvements
     • This appears to be included in v1.34
-

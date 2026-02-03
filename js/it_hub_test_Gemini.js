@@ -7,6 +7,12 @@ window.app.itHub = {
     
     // Internal State
     currentTab: 'dashboard', // 'dashboard' or 'docs'
+    getLastUpdatedLabel: function() {
+        const raw = window.app?.lastModified || document.lastModified;
+        const date = raw ? new Date(raw) : null;
+        if (!date || isNaN(date.getTime())) return "Last Updated: Unknown";
+        return `Last Updated: ${date.toLocaleString()}`;
+    },
 
     render: function() {
         const area = document.getElementById('view-it');
@@ -48,9 +54,12 @@ window.app.itHub = {
         area.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 style="color:var(--space-indigo); margin:0;"><i class="fa-solid fa-server"></i> IT Operations Center</h2>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-sm btn-train" onclick="window.app.itHub.switchTab('dashboard')">Monitor</button>
-                    <button class="btn-sm" onclick="window.app.itHub.switchTab('docs')">Docs & Logs</button>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                    <div style="color:#777; font-size:0.85rem;">${this.getLastUpdatedLabel()}</div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-sm btn-train" onclick="window.app.itHub.switchTab('dashboard')">Monitor</button>
+                        <button class="btn-sm" onclick="window.app.itHub.switchTab('docs')">Docs & Logs</button>
+                    </div>
                 </div>
             </div>
 

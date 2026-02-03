@@ -10,6 +10,12 @@ window.app.managerHub = {
         tab: 'dashboard',    // 'dashboard', 'menu', 'staff', 'data'
         menuView: 'products' // 'products' or 'categories'
     },
+    getLastUpdatedLabel: function() {
+        const raw = window.app?.lastModified || document.lastModified;
+        const date = raw ? new Date(raw) : null;
+        if (!date || isNaN(date.getTime())) return "Last Updated: Unknown";
+        return `Last Updated: ${date.toLocaleString()}`;
+    },
 
     init: function() {
         this.render();
@@ -26,6 +32,9 @@ window.app.managerHub = {
                 <h2 style="color:var(--space-indigo); margin:0;">
                     <i class="fa-solid fa-briefcase"></i> Manager Hub
                 </h2>
+                <div style="color:#777; font-size:0.85rem;">${this.getLastUpdatedLabel()}</div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
                 <div style="display:flex; gap:10px;">
                     <button class="btn-sm ${this.state.tab === 'dashboard' ? 'btn-train' : ''}" onclick="window.app.managerHub.switchTab('dashboard')">Dashboard</button>
                     <button class="btn-sm ${this.state.tab === 'menu' ? 'btn-train' : ''}" onclick="window.app.managerHub.switchTab('menu')">Menu</button>
