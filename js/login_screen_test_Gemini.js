@@ -92,14 +92,6 @@ window.app.loginScreen = {
     staffHeader.innerHTML = "<span>Select Cashier</span>";
     container.appendChild(staffHeader);
 
-    // Search input
-    const search = document.createElement("input");
-    search.className = "login-search";
-    search.type = "text";
-    search.placeholder = "Search cashiers…";
-    search.autocomplete = "off";
-    container.appendChild(search);
-
     // Employee list wrapper (scrollable, 2-column on desktop via CSS)
     const listWrap = document.createElement("div");
     listWrap.className = "employee-list";
@@ -111,23 +103,18 @@ window.app.loginScreen = {
       : [];
 
     // Render function with filtering + sorting
-    const renderEmployees = (query = "") => {
+    const renderEmployees = () => {
       listWrap.innerHTML = "";
-
-      const q = query.trim().toLowerCase();
 
       const sorted = employees
         .slice()
-        .filter((e) => ((e?.name || "") + "").toLowerCase().includes(q))
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
       if (!sorted.length) {
         const msg = document.createElement("div");
         msg.style.cssText =
           "color:#999; text-align:center; padding:14px 0; grid-column: 1 / -1;";
-        msg.innerText = q
-          ? "No matching cashiers."
-          : "Loading cashiers…";
+        msg.innerText = "Loading cashiers…";
         listWrap.appendChild(msg);
         return;
       }
@@ -142,11 +129,7 @@ window.app.loginScreen = {
       });
     };
 
-    renderEmployees("");
-
-    search.addEventListener("input", (e) => {
-      renderEmployees(e.target.value);
-    });
+    renderEmployees();
 
     // Admin section
     const adminHeader = document.createElement("div");
