@@ -1,5 +1,9 @@
 # Version Notes
 
+### v2.50 (Baseline)
+—————————
+Baseline for Gemini testing. Includes Time Clock UI refresh, admin-only PIN reset stored in Firestore, and faster auto-backups.
+
 ### v1.97
 —————————
 Increased Cloud Backup frequency to 10 minutes.
@@ -78,5 +82,4 @@ IT Hub screen
     • This appears to be included in v1.34
   • Expandable list of current features, known bugs, potential future improvements
     • This appears to be included in v1.34
-
 

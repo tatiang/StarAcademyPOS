@@ -113,6 +113,28 @@ window.app.itHub = {
                         </button>
                     </div>
                     <input type="file" id="restore-file" style="display:none;" accept=".json" onchange="window.app.itHub.restoreBackup(this)">
+
+                    <div id="backup-status" style="margin-top:10px; font-size:0.85rem; color:#666;">
+                        Auto backup: pending
+                    </div>
+                </div>
+
+                <div class="mgr-card" style="text-align:left;">
+                    <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">PIN Management</h3>
+                    <p style="font-size:0.85rem; color:#666; margin-bottom:12px;">
+                        Generate and save new PINs in Firestore. Share them securely with staff.
+                    </p>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <button class="btn-pay" style="flex:1; background:var(--space-indigo);" onclick="window.app.itHub.resetPin('Manager')">
+                            Reset Manager PIN
+                        </button>
+                        <button class="btn-pay" style="flex:1; background:var(--stormy-teal);" onclick="window.app.itHub.resetPin('IT Support')">
+                            Reset IT PIN
+                        </button>
+                    </div>
+                    <button class="btn-pay" style="width:100%; background:#95a5a6;" onclick="window.app.itHub.setCustomPin()">
+                        Set Custom PIN
+                    </button>
                 </div>
 
                 <div class="mgr-card" style="text-align:left; border:2px solid var(--danger);">
@@ -129,6 +151,10 @@ window.app.itHub = {
 
             </div>
         `;
+
+        if (window.app?.database?.updateBackupStatus) {
+            window.app.database.updateBackupStatus();
+        }
     },
 
     // ============================================================
@@ -152,8 +178,8 @@ window.app.itHub = {
                     </h3>
                     <ul style="list-style:none; padding:0;">
                         <li style="margin-bottom:15px;">
-                            <strong>v2.50</strong> <span style="font-size:0.8rem; background:#d4edda; padding:2px 6px; border-radius:4px;">Current</span><br>
-                            Compatibility fixes for barista timing, inventory sync, and safer order data handling.
+                            <strong>v2.50</strong> <span style="font-size:0.8rem; background:#d4edda; padding:2px 6px; border-radius:4px;">Current • Baseline</span><br>
+                            Baseline build. Added faster auto-backups and admin PIN reset tools.
                         </li>
                         <li style="margin-bottom:15px;">
                             <strong>v2.1.0</strong><br>
@@ -224,6 +250,65 @@ window.app.itHub = {
         link.href = dataUri;
         link.download = fileName;
         link.click();
+    },
+
+    // ============================================================
+    // 4. PIN MANAGEMENT
+    // ============================================================
+    ensurePins: function() {
+        if (!window.app.data.pins) {
+            const defaults = window.app.defaults?.pins || {};
+            window.app.data.pins = { ...defaults };
+        }
+    },
+
+    generatePin: function() {
+        return Math.floor(1000 + Math.random() * 9000).toString();
+    },
+
+    resetPin: function(role) {
+        this.ensurePins();
+
+        const confirmReset = confirm(`Generate a new PIN for ${role}?`);
+        if (!confirmReset) return;
+
+        const newPin = this.generatePin();
+        window.app.data.pins[role] = newPin;
+
+        window.app.database.saveLocal();
+        window.app.database.sync();
+
+        window.app.helpers.showGenericModal(
+            `${role} PIN Updated`,
+            `<p style="margin:0 0 10px 0;">New PIN for <strong>${role}</strong>:</p>
+             <div style="font-size:2rem; font-weight:800; text-align:center; letter-spacing:4px;">${newPin}</div>
+             <p style="margin:10px 0 0 0; color:#666; font-size:0.85rem;">This PIN was saved to Firestore.</p>`,
+            null
+        );
+        window.app.helpers.openModal("modal-generic");
+    },
+
+    setCustomPin: function() {
+        this.ensurePins();
+
+        const role = prompt("Enter role to update (Manager or IT Support):", "Manager");
+        if (!role) return;
+        if (!["Manager", "IT Support"].includes(role)) {
+            alert("Role must be Manager or IT Support.");
+            return;
+        }
+
+        const pin = prompt(`Enter new 4-digit PIN for ${role}:`, "");
+        if (!pin || !/^\d{4}$/.test(pin)) {
+            alert("PIN must be exactly 4 digits.");
+            return;
+        }
+
+        window.app.data.pins[role] = pin;
+        window.app.database.saveLocal();
+        window.app.database.sync();
+
+        alert(`${role} PIN updated.`);
     },
 
     // ACTION: Restore

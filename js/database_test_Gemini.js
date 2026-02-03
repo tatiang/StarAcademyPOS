@@ -16,6 +16,10 @@ const firebaseConfig = {
 window.app.database = {
     db: null,
     docRef: null,
+    backupRef: null,
+    backupTimer: null,
+    lastBackupAt: null,
+    backupDebounceMs: 5000,
 
     // 1. Initialize Connection
     init: function() {
@@ -25,6 +29,7 @@ window.app.database = {
                 this.db = firebase.firestore();
                 // We use a single document for the entire store's data for simplicity
                 this.docRef = this.db.collection("stores").doc("classroom_cafe_main");
+                this.backupRef = this.db.collection("backups");
                 
                 // Start listening for changes immediately
                 this.startListener();
@@ -56,6 +61,7 @@ window.app.database = {
     // 3. Save to LocalStorage (Backup)
     saveLocal: function() {
         localStorage.setItem(window.app.storageKey, JSON.stringify(window.app.data));
+        this.scheduleBackup("local-save");
     },
 
     // 4. Send Data to Cloud (Sync)
@@ -97,6 +103,7 @@ window.app.database = {
                 if(cloudData.roles) window.app.data.roles = cloudData.roles;
                 if(cloudData.inventory) window.app.data.inventory = cloudData.inventory;
                 if(cloudData.timeEntries) window.app.data.timeEntries = cloudData.timeEntries;
+                if(cloudData.pins) window.app.data.pins = cloudData.pins;
                 
                 // For orders, if cloud has more, we take them (simple merge)
                 if(cloudData.orders && cloudData.orders.length >= window.app.data.orders.length) {
@@ -161,5 +168,44 @@ window.app.database = {
             el.innerText = text;
             el.style.color = color;
         }
+    },
+
+    scheduleBackup: function(reason = "auto") {
+        if (!this.backupRef) return;
+
+        if (this.backupTimer) clearTimeout(this.backupTimer);
+        this.backupTimer = setTimeout(() => {
+            this.runBackup(reason);
+        }, this.backupDebounceMs);
+    },
+
+    runBackup: async function(reason = "auto") {
+        if (!this.backupRef) return;
+
+        try {
+            await this.backupRef.add({
+                data: window.app.data,
+                timestamp: new Date().toISOString(),
+                version: window.app.version || "",
+                type: "auto-quick",
+                reason: reason
+            });
+            this.lastBackupAt = new Date();
+            this.updateBackupStatus();
+        } catch (e) {
+            console.error("Auto Backup Failed", e);
+        }
+    },
+
+    updateBackupStatus: function() {
+        const el = document.getElementById('backup-status');
+        if (!el) return;
+
+        if (!this.lastBackupAt) {
+            el.innerText = "Auto backup: pending";
+            return;
+        }
+
+        el.innerText = "Auto backup: " + this.lastBackupAt.toLocaleTimeString();
     }
 };

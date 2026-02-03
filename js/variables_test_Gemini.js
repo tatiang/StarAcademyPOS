@@ -22,7 +22,11 @@ window.app = {
         cart: [],        
         orders: [],      
         timeEntries: [], 
-        orderCounter: 1001 
+        orderCounter: 1001,
+        pins: {
+            "Manager": "1234",
+            "IT Support": "9753"
+        }
     },
 
     // MODULE PLACEHOLDERS (Other files will attach here)
@@ -47,6 +51,10 @@ window.app = {
         cart: [],
         orders: [],
         timeEntries: [],
-        orderCounter: 1001
+        orderCounter: 1001,
+        pins: {
+            "Manager": "1234",
+            "IT Support": "9753"
+        }
     }
 };

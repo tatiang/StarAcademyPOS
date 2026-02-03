@@ -152,9 +152,12 @@ window.app.loginScreen = {
     // Forgot PIN link
     const forgot = document.createElement("a");
     forgot.className = "forgot-link";
-    forgot.href =
-      "mailto:tatiangreenleaf@gmail.com?subject=POS%20PIN%20Reset%20Request&body=I%20need%20to%20reset%20the%20PIN%20for%20the%20Manager%20or%20IT%20account.";
+    forgot.href = "#";
     forgot.innerText = "Forgot PIN?";
+    forgot.onclick = (e) => {
+      e.preventDefault();
+      this.showForgotPin();
+    };
     container.appendChild(forgot);
   },
 
@@ -203,9 +206,10 @@ window.app.loginScreen = {
 
   checkPin: function () {
     const val = document.getElementById("pin-input").value;
-    const PINS = { Manager: "1234", "IT Support": "9753" };
+    const pins = window.app?.data?.pins || window.app?.defaults?.pins || {};
+    const expected = pins[this.targetRole];
 
-    if (val === PINS[this.targetRole]) {
+    if (expected && val === expected) {
       window.app.helpers.closeModal("modal-pin");
       this.completeLogin(this.targetRole);
     } else {
@@ -216,6 +220,19 @@ window.app.loginScreen = {
         inp.style.color = "black";
       }, 500);
     }
+  },
+
+  showForgotPin: function () {
+    const html = `
+      <p style="margin:0 0 10px 0;">
+        An admin can reset your PIN in the IT Hub. The new PIN is saved to Firestore and updates instantly.
+      </p>
+      <p style="margin:0; color:#666; font-size:0.9rem;">
+        Ask a Manager or IT Support to open <strong>IT Hub → PIN Management</strong> and generate a new PIN.
+      </p>
+    `;
+    window.app.helpers.showGenericModal("Forgot PIN?", html, null);
+    window.app.helpers.openModal("modal-generic");
   },
 
   completeLogin: function (role) {

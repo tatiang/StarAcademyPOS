@@ -44,7 +44,7 @@ body {
   /* IMPORTANT: prevents logo clipping on shorter windows */
   justify-content: flex-start;
 
-  padding: 28px 18px 36px;
+  padding: 38px 18px 36px;
   gap: 16px;
 }
 

@@ -41,6 +41,7 @@
       "timeEntries",
       "orderCounter",
       "inventory",
+      "pins",
     ];
 
     keys.forEach((k) => {
