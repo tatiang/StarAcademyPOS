@@ -105,9 +105,29 @@ window.app.database = {
                 if(cloudData.timeEntries) window.app.data.timeEntries = cloudData.timeEntries;
                 if(cloudData.pins) window.app.data.pins = cloudData.pins;
                 
-                // For orders, if cloud has more, we take them (simple merge)
-                if(cloudData.orders && cloudData.orders.length >= window.app.data.orders.length) {
-                    window.app.data.orders = cloudData.orders;
+                // For orders, merge to preserve local completions
+                if(cloudData.orders) {
+                    const localOrders = window.app.data.orders || [];
+                    const localById = new Map(localOrders.map(o => [o.id, o]));
+                    const cloudOrders = cloudData.orders || [];
+
+                    const merged = cloudOrders.map(o => {
+                        const local = localById.get(o.id);
+                        if (local && local.status === 'completed' && o.status !== 'completed') {
+                            return { ...o, status: 'completed' };
+                        }
+                        if (local && local.customerName && !o.customerName) {
+                            return { ...o, customerName: local.customerName };
+                        }
+                        return o;
+                    });
+
+                    const mergedIds = new Set(merged.map(o => o.id));
+                    localOrders.forEach(o => {
+                        if (!mergedIds.has(o.id)) merged.push(o);
+                    });
+
+                    window.app.data.orders = merged;
                 }
                 
                 // Also sync order counter to avoid duplicates

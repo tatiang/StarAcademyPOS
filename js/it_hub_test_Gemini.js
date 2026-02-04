@@ -282,7 +282,7 @@ window.app.itHub = {
     },
 
     openFirestoreConsole: function() {
-        const url = "https://console.firebase.google.com/project/star-academy-cafe-pos/firestore/data";
+        const url = "https://console.firebase.google.com/u/1/project/star-academy-cafe-pos/firestore/databases/-default-/data";
         window.open(url, "_blank", "noopener");
     },
 
@@ -309,16 +309,18 @@ window.app.itHub = {
                 return;
             }
 
+            this.backupCache = {};
             const rows = [];
             snap.forEach(doc => {
                 const data = doc.data() || {};
+                this.backupCache[doc.id] = data;
                 const ts = data.timestamp ? new Date(data.timestamp) : null;
                 const tsLabel = ts && !isNaN(ts.getTime())
                     ? ts.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
                     : "Unknown time";
                 const ver = data.version ? ` • ${data.version}` : "";
                 const reason = data.reason ? ` • ${data.reason}` : "";
-                rows.push(`<div>• ${tsLabel}${ver}${reason}</div>`);
+                rows.push(`<button class="btn-sm" style="text-align:left;" onclick="window.app.itHub.showBackupDetails('${doc.id}')">• ${tsLabel}${ver}${reason}</button>`);
             });
 
             listEl.innerHTML = rows.join("");
@@ -326,6 +328,32 @@ window.app.itHub = {
             console.error("Failed to load backups", e);
             listEl.innerHTML = '<div>Unable to load backups.</div>';
         }
+    },
+
+    showBackupDetails: function(docId) {
+        const data = this.backupCache?.[docId];
+        if (!data) return;
+
+        const sizeKb = data.data ? (JSON.stringify(data.data).length / 1024).toFixed(2) : "0.00";
+        const products = data.data?.products?.length || 0;
+        const employees = data.data?.employees?.length || 0;
+        const orders = data.data?.orders?.length || 0;
+        const inventory = data.data?.inventory?.length || 0;
+        const timeEntries = data.data?.timeEntries?.length || 0;
+
+        const html = `
+            <div style="text-align:left;">
+                <p><strong>Backup Size:</strong> ${sizeKb} KB</p>
+                <p><strong>Products:</strong> ${products}</p>
+                <p><strong>Employees:</strong> ${employees}</p>
+                <p><strong>Orders:</strong> ${orders}</p>
+                <p><strong>Inventory Items:</strong> ${inventory}</p>
+                <p><strong>Time Entries:</strong> ${timeEntries}</p>
+            </div>
+        `;
+
+        window.app.helpers.showGenericModal("Backup Details", html, null);
+        window.app.helpers.openModal("modal-generic");
     },
 
     // ============================================================

@@ -337,6 +337,7 @@ body {
 .pos-layout { display: flex; gap: 20px; height: 100%; }
 .product-section { flex: 2; overflow-y: auto; }
 .cart-panel { flex: 1; background: white; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
+.cart-header input { width: 100%; padding: 10px 12px; font-size: 1rem; box-sizing: border-box; }
 .cart-panel .form-control { width: 100%; padding: 10px 12px; font-size: 1rem; }
 .form-control { width: 100%; padding: 10px 12px; font-size: 1rem; box-sizing: border-box; }
 
@@ -403,6 +404,12 @@ body {
 .kiosk-subtitle {
   color: #777;
   margin-top: 4px;
+}
+.kiosk-footer {
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+  padding: 20px 10px 10px;
 }
 .kiosk-tabs { margin: 20px auto 10px; justify-content: center; display: flex; flex-wrap: wrap; gap: 8px; }
 .kiosk-grid { padding: 10px 20px 30px; }

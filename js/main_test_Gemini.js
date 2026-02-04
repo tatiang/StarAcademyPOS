@@ -97,9 +97,25 @@
 
         // 6) Start default view underneath the login overlay
         this.navigate("pos");
+
+        // 7) Start live clock
+        this._startLiveClock();
       } catch (e) {
         console.error("Router init failed:", e);
       }
+    },
+    _startLiveClock: function () {
+      const tick = () => {
+        const clockEl = document.getElementById("live-clock");
+        if (!clockEl) return;
+        const now = new Date();
+        clockEl.textContent = now.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      };
+      tick();
+      setInterval(tick, 1000);
     },
 
     _patchDatabaseRefreshScreens: function () {

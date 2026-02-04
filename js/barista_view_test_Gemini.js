@@ -17,9 +17,12 @@ window.app.barista = {
         // 1. Get Orders
         const orders = window.app.data.orders || [];
 
-        // 2. Filter: Show anything NOT 'completed'
+        // 2. Filter: Show anything NOT 'completed' (case-insensitive)
         // This catches 'paid', 'pending', or orders with no status yet.
-        const activeOrders = orders.filter(o => o.status !== 'completed');
+        const activeOrders = orders.filter(o => {
+            const status = (o.status || '').toString().toLowerCase();
+            return status !== 'completed' && status !== 'complete' && status !== 'done';
+        });
 
         container.innerHTML = '';
 
