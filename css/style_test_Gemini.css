@@ -413,7 +413,7 @@ body {
 }
 .kiosk-tabs { margin: 20px auto 10px; justify-content: center; display: flex; flex-wrap: wrap; gap: 8px; }
 .kiosk-layout { display: flex; gap: 20px; align-items: flex-start; }
-.kiosk-grid { padding: 10px 0 30px; flex: 2; }
+.kiosk-grid { padding: 10px 0 30px; flex: 2; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .kiosk-cart { flex: 1; background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; min-width: 260px; }
 .kiosk-cart h3 { margin-top: 0; }
 .kiosk-cart .cart-items { max-height: 50vh; }

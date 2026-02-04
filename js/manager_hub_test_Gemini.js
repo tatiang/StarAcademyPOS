@@ -336,22 +336,53 @@ window.app.managerHub = {
         `;
     },
     addStaff: function() {
-        const name = prompt("Student Name:");
-        if(name) {
-            const role = prompt("Role (Cashier, Barista, Manager, IT Support):", "Cashier");
-            window.app.data.employees.push({ name, role: role || "Cashier", status: 'out' });
-            this.saveAndRefresh();
-        }
+        this.openStaffModal();
     },
     editStaff: function(i) {
         const emp = window.app.data.employees[i];
         if (!emp) return;
-        const name = prompt("Update Name:", emp.name);
-        if (!name) return;
-        const role = prompt("Update Role (Cashier, Barista, Manager, IT Support):", emp.role || "Cashier");
-        emp.name = name;
-        emp.role = role || emp.role || "Cashier";
-        this.saveAndRefresh();
+        this.openStaffModal(emp, i);
+    },
+    openStaffModal: function(emp = null, index = null) {
+        const roles = window.app.data.roles || window.app.defaults.roles || ["Cashier", "Barista", "Manager", "IT Support"];
+        const currentRole = emp?.role || "Cashier";
+        const options = roles.map(r =>
+            `<option value="${r}" ${r === currentRole ? "selected" : ""}>${r}</option>`
+        ).join("");
+
+        const html = `
+            <div style="text-align:left; display:flex; flex-direction:column; gap:10px;">
+                <label>Name
+                    <input id="staff-name" type="text" value="${emp?.name || ""}" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                </label>
+                <label>Role
+                    <select id="staff-role" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                        ${options}
+                    </select>
+                </label>
+            </div>
+        `;
+
+        window.app.helpers.showGenericModal(emp ? "Edit Staff" : "Add Staff", html, () => {
+            const nameInput = document.getElementById("staff-name");
+            const roleSelect = document.getElementById("staff-role");
+            const name = nameInput ? nameInput.value.trim() : "";
+            const role = roleSelect ? roleSelect.value : "Cashier";
+
+            if (!name) {
+                alert("Please enter a name.");
+                return;
+            }
+
+            if (index !== null && index !== undefined) {
+                window.app.data.employees[index].name = name;
+                window.app.data.employees[index].role = role;
+            } else {
+                window.app.data.employees.push({ name, role, status: 'out' });
+            }
+            this.saveAndRefresh();
+        });
+        window.app.helpers.openModal("modal-generic");
     },
     deleteStaff: function(i) {
         if(confirm("Remove student?")) {
