@@ -6,6 +6,7 @@ window.app.posScreen = {
     // Internal State for Payments
     cashTendered: "",
     cardVerified: false,
+    kioskCart: [],
 
     // --- INITIALIZATION ---
     init: function() {
@@ -81,6 +82,7 @@ window.app.posScreen = {
         products.forEach(p => {
             const card = document.createElement('div');
             card.className = 'product-card kiosk-card';
+            card.onclick = () => this.addToKioskCart(p);
             const imgUrl = p.img || 'https://placehold.co/150';
             card.innerHTML = `
                 <img src="${imgUrl}" class="prod-img" onerror="this.src='https://placehold.co/150'">
@@ -91,6 +93,89 @@ window.app.posScreen = {
             `;
             grid.appendChild(card);
         });
+    },
+
+    addToKioskCart: function(product) {
+        const existing = this.kioskCart.find(i => i.id === product.id);
+        if (existing) existing.qty += 1;
+        else this.kioskCart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+        this.renderKioskCart();
+    },
+
+    renderKioskCart: function() {
+        const list = document.getElementById('kiosk-cart-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        let subtotal = 0;
+        this.kioskCart.forEach((item, index) => {
+            subtotal += item.price * item.qty;
+            const row = document.createElement('div');
+            row.className = 'cart-item';
+            row.innerHTML = `
+                <div style="flex:1"><strong>${item.name}</strong></div>
+                <div class="cart-qty-controls">
+                    <button class="cart-qty-btn" onclick="window.app.posScreen.adjustKioskQty(${index}, -1)">-</button>
+                    <span>${item.qty}</span>
+                    <button class="cart-qty-btn" onclick="window.app.posScreen.adjustKioskQty(${index}, 1)">+</button>
+                </div>
+                <div style="margin-left:10px; font-weight:bold;">${window.app.helpers.formatCurrency(item.price * item.qty)}</div>
+            `;
+            list.appendChild(row);
+        });
+
+        const tax = subtotal * window.app.taxRate;
+        const total = subtotal + tax;
+
+        const subEl = document.getElementById('kiosk-subtotal');
+        const taxEl = document.getElementById('kiosk-tax');
+        const totalEl = document.getElementById('kiosk-total');
+        if (subEl) subEl.textContent = window.app.helpers.formatCurrency(subtotal);
+        if (taxEl) taxEl.textContent = window.app.helpers.formatCurrency(tax);
+        if (totalEl) totalEl.textContent = window.app.helpers.formatCurrency(total);
+    },
+
+    adjustKioskQty: function(index, delta) {
+        const item = this.kioskCart[index];
+        if (!item) return;
+        item.qty += delta;
+        if (item.qty <= 0) this.kioskCart.splice(index, 1);
+        this.renderKioskCart();
+    },
+
+    submitKioskOrder: function() {
+        if (!this.kioskCart.length) return alert("Your cart is empty.");
+        const nameInput = document.getElementById('kiosk-customer-name');
+        const customerName = nameInput ? nameInput.value.trim() : "";
+
+        const subtotal = this.kioskCart.reduce((sum, i) => sum + i.price * i.qty, 0);
+        const total = subtotal + (subtotal * window.app.taxRate);
+
+        if(!window.app.data.orderCounter) window.app.data.orderCounter = 1001;
+        if(!window.app.data.orders) window.app.data.orders = [];
+
+        const nowIso = new Date().toISOString();
+        window.app.data.orders.push({
+            id: window.app.data.orderCounter++,
+            date: nowIso,
+            timestamp: nowIso,
+            method: "Kiosk",
+            items: this.kioskCart.map(i => ({ ...i })),
+            total: total,
+            status: "Pending",
+            customerName: customerName || "Guest"
+        });
+
+        window.app.database.saveLocal();
+        window.app.database.sync();
+
+        this.kioskCart = [];
+        if (nameInput) nameInput.value = "";
+        this.renderKioskCart();
+
+        alert("Order submitted! Please see a cashier for payment.");
+        if (window.app?.loginScreen?.exitKioskMode) window.app.loginScreen.exitKioskMode();
+        if (window.app?.router?.navigate) window.app.router.navigate("pos");
     },
 
     addToCart: function(product) {

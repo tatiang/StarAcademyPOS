@@ -4,7 +4,7 @@
 
 window.app = {
     version: "v2.50", // Updated Version
-    lastModified: "2026-02-04T08:11:58-08:00",
+    lastModified: "2026-02-04T10:59:39-08:00",
     storageKey: "star_pos_v2_data",
     taxRate: 0.0925,
     session: {
@@ -26,6 +26,12 @@ window.app = {
         pins: {
             "Manager": "1234",
             "IT Support": "9753"
+        },
+        backupSettings: {
+            intervalMs: 300000 // 5 minutes default
+        },
+        cleanupFlags: {
+            removedOrder1001: false
         }
     },
 
@@ -55,6 +61,12 @@ window.app = {
         pins: {
             "Manager": "1234",
             "IT Support": "9753"
+        },
+        backupSettings: {
+            intervalMs: 300000
+        },
+        cleanupFlags: {
+            removedOrder1001: false
         }
     }
 };

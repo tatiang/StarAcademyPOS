@@ -183,7 +183,20 @@
                     <div class="kiosk-subtitle">Tap an item to view the menu</div>
                 </div>
                 <div id="kiosk-categories" class="category-tabs kiosk-tabs"></div>
-                <div id="kiosk-grid" class="product-grid kiosk-grid"></div>
+                <div class="kiosk-layout">
+                    <div id="kiosk-grid" class="product-grid kiosk-grid"></div>
+                    <div class="kiosk-cart">
+                        <h3>My Order</h3>
+                        <input id="kiosk-customer-name" type="text" class="form-control" placeholder="Name (Optional)">
+                        <div id="kiosk-cart-list" class="cart-items"></div>
+                        <div class="cart-totals">
+                            <div class="total-row"><span>Subtotal</span> <span id="kiosk-subtotal">$0.00</span></div>
+                            <div class="total-row"><span>Tax (9.25%)</span> <span id="kiosk-tax">$0.00</span></div>
+                            <div class="total-row grand-total"><span>Total</span> <span id="kiosk-total">$0.00</span></div>
+                        </div>
+                        <button class="btn-pay btn-gold" onclick="window.app.posScreen.submitKioskOrder()">Submit Order</button>
+                    </div>
+                </div>
                 <div class="kiosk-footer">
                     Need help? Please ask a cashier at the front counter.
                 </div>

@@ -42,6 +42,8 @@
       "orderCounter",
       "inventory",
       "pins",
+      "backupSettings",
+      "cleanupFlags",
     ];
 
     keys.forEach((k) => {
@@ -71,6 +73,17 @@
             : {};
           const merged = safeMergeData(schema, window.app.data);
           window.app.data = merged;
+        }
+
+        // One-time cleanup for legacy order #1001 if requested
+        if (window.app?.data?.cleanupFlags && !window.app.data.cleanupFlags.removedOrder1001) {
+          const beforeCount = (window.app.data.orders || []).length;
+          window.app.data.orders = (window.app.data.orders || []).filter((o) => o.id !== 1001);
+          window.app.data.cleanupFlags.removedOrder1001 = true;
+          if ((window.app.data.orders || []).length !== beforeCount) {
+            window.app.database?.saveLocal?.();
+            window.app.database?.sync?.();
+          }
         }
 
         // 2) Render sidebar version from window.app.version

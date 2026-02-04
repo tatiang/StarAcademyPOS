@@ -317,13 +317,17 @@ window.app.managerHub = {
                     <button class="btn-sm btn-success" onclick="window.app.managerHub.addStaff()">+ Add Student</button>
                 </div>
                 <table style="width:100%;">
-                    <thead><tr style="background:#f8f9fa; text-align:left;"><th style="padding:10px;">Name</th><th style="padding:10px;">Status</th><th style="padding:10px;">Action</th></tr></thead>
+                    <thead><tr style="background:#f8f9fa; text-align:left;"><th style="padding:10px;">Name</th><th style="padding:10px;">Role</th><th style="padding:10px;">Status</th><th style="padding:10px;">Action</th></tr></thead>
                     <tbody>
                         ${staff.map((e, i) => `
                             <tr style="border-bottom:1px solid #eee;">
                                 <td style="padding:10px; font-weight:bold;">${e.name}</td>
+                                <td style="padding:10px;">${e.role || 'Cashier'}</td>
                                 <td style="padding:10px;">${e.status === 'in' ? '<span style="color:var(--success)">Clocked In</span>' : '<span style="color:#999">Out</span>'}</td>
-                                <td style="padding:10px;"><button class="btn-sm" style="color:var(--danger)" onclick="window.app.managerHub.deleteStaff(${i})">Remove</button></td>
+                                <td style="padding:10px; display:flex; gap:6px;">
+                                    <button class="btn-sm" onclick="window.app.managerHub.editStaff(${i})">Edit</button>
+                                    <button class="btn-sm" style="color:var(--danger)" onclick="window.app.managerHub.deleteStaff(${i})">Remove</button>
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -334,9 +338,20 @@ window.app.managerHub = {
     addStaff: function() {
         const name = prompt("Student Name:");
         if(name) {
-            window.app.data.employees.push({ name, status: 'out' });
+            const role = prompt("Role (Cashier, Barista, Manager, IT Support):", "Cashier");
+            window.app.data.employees.push({ name, role: role || "Cashier", status: 'out' });
             this.saveAndRefresh();
         }
+    },
+    editStaff: function(i) {
+        const emp = window.app.data.employees[i];
+        if (!emp) return;
+        const name = prompt("Update Name:", emp.name);
+        if (!name) return;
+        const role = prompt("Update Role (Cashier, Barista, Manager, IT Support):", emp.role || "Cashier");
+        emp.name = name;
+        emp.role = role || emp.role || "Cashier";
+        this.saveAndRefresh();
     },
     deleteStaff: function(i) {
         if(confirm("Remove student?")) {

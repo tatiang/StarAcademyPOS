@@ -140,10 +140,35 @@ window.app.itHub = {
 
                 <div class="mgr-card" style="text-align:left;">
                     <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">Recent Backups</h3>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                        <button class="btn-sm" onclick="window.app.itHub.setBackupFilter('all')">All</button>
+                        <button class="btn-sm" onclick="window.app.itHub.setBackupFilter('hour')">Last Hour</button>
+                        <button class="btn-sm" onclick="window.app.itHub.setBackupFilter('auto')">Auto Only</button>
+                        <button class="btn-sm" onclick="window.app.itHub.setBackupFilter('manual')">Manual Only</button>
+                    </div>
                     <div id="backup-list" style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:#555;">
                         Loading backups...
                     </div>
-                    <button class="btn-sm" style="margin-top:12px;" onclick="window.app.itHub.loadBackupList()">Refresh Backups</button>
+                    <div style="display:flex; gap:10px; margin-top:12px;">
+                        <button class="btn-sm" onclick="window.app.itHub.loadBackupList()">Refresh Backups</button>
+                        <button class="btn-sm" onclick="window.app.database.runBackup('manual')">Create Manual Backup</button>
+                    </div>
+                </div>
+
+                <div class="mgr-card" style="text-align:left;">
+                    <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">Backup Frequency</h3>
+                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+                        <input id="backup-interval-value" type="number" min="1" value="5" style="width:80px; padding:6px;">
+                        <select id="backup-interval-unit" style="padding:6px;">
+                            <option value="seconds">Seconds</option>
+                            <option value="minutes" selected>Minutes</option>
+                            <option value="hours">Hours</option>
+                        </select>
+                        <button class="btn-sm btn-active" onclick="window.app.itHub.applyBackupInterval()">Apply</button>
+                    </div>
+                    <div id="backup-interval-current" style="font-size:0.85rem; color:#666;">
+                        Current interval: 5 minutes
+                    </div>
                 </div>
 
                 <div class="mgr-card" style="text-align:left;">
@@ -174,6 +199,9 @@ window.app.itHub = {
                     <button class="btn-pay" onclick="window.app.itHub.factoryReset()" style="width:100%; background:var(--danger);">
                         <i class="fa-solid fa-skull"></i> FACTORY RESET DEVICE
                     </button>
+                    <button class="btn-pay" onclick="window.app.itHub.clearOldOrders()" style="width:100%; margin-top:10px; background:#e67e22;">
+                        <i class="fa-solid fa-broom"></i> Clear Old Orders
+                    </button>
                 </div>
 
             </div>
@@ -184,6 +212,7 @@ window.app.itHub = {
         }
 
         this.loadBackupList();
+        this.renderBackupInterval();
     },
 
     // ============================================================
@@ -286,6 +315,13 @@ window.app.itHub = {
         window.open(url, "_blank", "noopener");
     },
 
+    backupFilter: "all",
+
+    setBackupFilter: function(filter) {
+        this.backupFilter = filter;
+        this.loadBackupList();
+    },
+
     loadBackupList: async function() {
         const listEl = document.getElementById('backup-list');
         if (!listEl) return;
@@ -315,6 +351,12 @@ window.app.itHub = {
                 const data = doc.data() || {};
                 this.backupCache[doc.id] = data;
                 const ts = data.timestamp ? new Date(data.timestamp) : null;
+                if (this.backupFilter === "hour" && ts) {
+                    const ageMs = Date.now() - ts.getTime();
+                    if (ageMs > 3600000) return;
+                }
+                if (this.backupFilter === "auto" && data.type !== "auto-quick" && data.type !== "interval") return;
+                if (this.backupFilter === "manual" && data.reason !== "manual" && data.type !== "manual") return;
                 const tsLabel = ts && !isNaN(ts.getTime())
                     ? ts.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
                     : "Unknown time";
@@ -323,11 +365,40 @@ window.app.itHub = {
                 rows.push(`<button class="btn-sm" style="text-align:left;" onclick="window.app.itHub.showBackupDetails('${doc.id}')">• ${tsLabel}${ver}${reason}</button>`);
             });
 
-            listEl.innerHTML = rows.join("");
+            listEl.innerHTML = rows.length ? rows.join("") : "<div>No backups found for this filter.</div>";
         } catch (e) {
             console.error("Failed to load backups", e);
             listEl.innerHTML = '<div>Unable to load backups.</div>';
         }
+    },
+
+    renderBackupInterval: function() {
+        const current = window.app?.data?.backupSettings?.intervalMs || 0;
+        const labelEl = document.getElementById("backup-interval-current");
+        if (!labelEl) return;
+        if (!current) {
+            labelEl.textContent = "Current interval: Off";
+            return;
+        }
+        const minutes = current / 60000;
+        if (minutes >= 60 && minutes % 60 === 0) {
+            labelEl.textContent = `Current interval: ${minutes / 60} hours`;
+        } else if (minutes >= 1) {
+            labelEl.textContent = `Current interval: ${minutes} minutes`;
+        } else {
+            labelEl.textContent = `Current interval: ${current / 1000} seconds`;
+        }
+    },
+
+    applyBackupInterval: function() {
+        const val = parseInt(document.getElementById("backup-interval-value").value, 10);
+        const unit = document.getElementById("backup-interval-unit").value;
+        if (!val || val < 1) return alert("Enter a valid interval.");
+        let ms = val * 1000;
+        if (unit === "minutes") ms = val * 60000;
+        if (unit === "hours") ms = val * 3600000;
+        window.app.database.setBackupInterval(ms);
+        this.renderBackupInterval();
     },
 
     showBackupDetails: function(docId) {
@@ -452,5 +523,27 @@ window.app.itHub = {
             alert("Device Reset.");
             location.reload();
         }
+    },
+
+    clearOldOrders: function() {
+        const daysStr = prompt("Clear orders older than how many days?", "30");
+        const days = parseInt(daysStr, 10);
+        if (!days || days < 1) return;
+
+        if (!confirm(`Delete orders older than ${days} days? This cannot be undone.`)) return;
+
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+        const orders = window.app.data.orders || [];
+        const filtered = orders.filter(o => {
+            const ts = o.date || o.timestamp || o.time;
+            const dt = ts ? new Date(ts) : null;
+            if (!dt || isNaN(dt.getTime())) return true;
+            return dt.getTime() >= cutoff;
+        });
+
+        window.app.data.orders = filtered;
+        window.app.database.saveLocal();
+        window.app.database.sync();
+        alert("Old orders cleared.");
     }
 };

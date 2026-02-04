@@ -18,6 +18,7 @@ window.app.database = {
     docRef: null,
     backupRef: null,
     backupTimer: null,
+    backupIntervalTimer: null,
     lastBackupAt: null,
     backupDebounceMs: 5000,
 
@@ -33,6 +34,9 @@ window.app.database = {
                 
                 // Start listening for changes immediately
                 this.startListener();
+
+                // Start scheduled backups if configured
+                this.startBackupInterval();
             } else {
                 console.error("Firebase SDK not loaded.");
             }
@@ -197,6 +201,24 @@ window.app.database = {
         this.backupTimer = setTimeout(() => {
             this.runBackup(reason);
         }, this.backupDebounceMs);
+    },
+
+    startBackupInterval: function() {
+        if (this.backupIntervalTimer) clearInterval(this.backupIntervalTimer);
+
+        const intervalMs = window.app?.data?.backupSettings?.intervalMs;
+        if (!intervalMs || intervalMs <= 0) return;
+
+        this.backupIntervalTimer = setInterval(() => {
+            this.runBackup("interval");
+        }, intervalMs);
+    },
+
+    setBackupInterval: function(intervalMs) {
+        if (!window.app.data.backupSettings) window.app.data.backupSettings = {};
+        window.app.data.backupSettings.intervalMs = intervalMs;
+        this.startBackupInterval();
+        this.saveLocal();
     },
 
     runBackup: async function(reason = "auto") {
