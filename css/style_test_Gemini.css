@@ -433,6 +433,23 @@ body {
 .modal.open { display: flex !important; }
 .modal-content { background: white; padding: 25px; border-radius: 12px; width: 350px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
 
+/* Payment Modals */
+.pay-modal { display: flex; flex-direction: column; gap: 12px; }
+.pay-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.pay-total { text-align: right; color: #555; font-size: 0.85rem; }
+.pay-total-value { font-size: 1.4rem; font-weight: 800; color: var(--space-indigo); }
+.pay-display { background: #f8f9fb; border: 1px solid #e6e9ef; border-radius: 10px; padding: 10px 12px; }
+.pay-display-label { color: #888; font-size: 0.8rem; }
+.pay-display-value { font-size: 1.6rem; font-weight: 800; }
+.pay-quick { display: flex; gap: 8px; }
+.pay-quick-btn { flex: 1; background: #eef2f7; border-color: #d9e0ea; font-weight: 800; }
+.pay-keypad .calc-btn { background: #fff; border: 1px solid #d9dde5; border-radius: 8px; }
+.pay-keypad .calc-btn:active { transform: scale(0.98); }
+.pay-clear { background: #e74c3c !important; color: white; }
+.pay-change { font-weight: 700; }
+.pay-actions { display: flex; gap: 10px; }
+.pay-actions .btn-pay { flex: 1; }
+
 /* Pin Pad */
 #pin-display { font-size: 2rem; letter-spacing: 5px; text-align: center; margin: 15px 0; background: #eee; padding: 10px; border-radius: 6px; min-height: 40px; }
 #pin-pad-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }

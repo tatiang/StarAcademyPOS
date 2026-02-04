@@ -4,7 +4,7 @@
 
 window.app = {
     version: "v2.50", // Updated Version
-    lastModified: "2026-02-04T11:15:07-08:00",
+    lastModified: "2026-02-04T11:27:50-08:00",
     storageKey: "star_pos_v2_data",
     taxRate: 0.0925,
     session: {
@@ -17,7 +17,7 @@ window.app = {
     data: {
         products: [],    
         categories: [],  
-        roles: [],       
+        roles: ["Barista", "Cashier", "Inventory", "Marketing", "Shopper"],
         employees: [],   
         cart: [],        
         orders: [],      
@@ -52,7 +52,7 @@ window.app = {
             { id: 2, name: "Water", price: 1.00, cat: "Cold Drinks", opts: [], img: "https://loremflickr.com/300/300/water" }
         ],
         categories: ["Hot Drinks", "Cold Drinks", "Snacks"],
-        roles: ["Manager", "IT Support", "Barista", "Cashier"],
+        roles: ["Barista", "Cashier", "Inventory", "Marketing", "Shopper"],
         employees: [],
         cart: [],
         orders: [],

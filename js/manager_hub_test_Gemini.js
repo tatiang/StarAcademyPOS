@@ -344,9 +344,11 @@ window.app.managerHub = {
         this.openStaffModal(emp, i);
     },
     openStaffModal: function(emp = null, index = null) {
-        const roles = window.app.data.roles || window.app.defaults.roles || ["Cashier", "Barista", "Manager", "IT Support"];
+        const rolesFromData = window.app.data.roles || [];
+        const roles = rolesFromData.length ? rolesFromData : (window.app.defaults.roles || ["Barista", "Cashier", "Inventory", "Marketing", "Shopper"]);
         const currentRole = emp?.role || "Cashier";
-        const options = roles.map(r =>
+        const roleList = roles.includes(currentRole) ? roles : [currentRole, ...roles];
+        const options = roleList.map(r =>
             `<option value="${r}" ${r === currentRole ? "selected" : ""}>${r}</option>`
         ).join("");
 

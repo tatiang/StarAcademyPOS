@@ -246,34 +246,48 @@ window.app.posScreen = {
         const modal = document.getElementById('modal-cash');
         const content = modal.querySelector('.modal-content');
         
-        // This injects the missing HTML!
         content.innerHTML = `
-            <h3>Cash Payment</h3>
-            <div class="total-display-large" id="cash-total-due">$0.00</div>
-            <div id="calc-display">$0.00</div>
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.posScreen.addCash(5)">+$5</button>
-                <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.posScreen.addCash(10)">+$10</button>
-                <button class="btn-sm" style="flex:1; background:#e0e0e0; font-weight:bold;" onclick="window.app.posScreen.addCash(20)">+$20</button>
-            </div>
-            <div class="calc-grid">
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('1')">1</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('2')">2</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('3')">3</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('4')">4</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('5')">5</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('6')">6</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('7')">7</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('8')">8</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('9')">9</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('.')">.</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashInput('0')">0</button>
-                <button class="calc-btn" onclick="window.app.posScreen.cashClear()" style="background:#e74c3c; color:white;">C</button>
-            </div>
-            <div id="change-display-box" class="change-display-box">Change: $0.00</div>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn-pay btn-train" style="flex:1" onclick="window.app.helpers.closeModal('modal-cash')">Cancel</button>
-                <button class="btn-pay btn-success" style="flex:1; background:var(--success);" onclick="window.app.posScreen.finalizeCash()">Finalize</button>
+            <div class="pay-modal">
+                <div class="pay-header">
+                    <h3>Cash Payment</h3>
+                    <div class="pay-total">
+                        <span>Total Due</span>
+                        <div id="cash-total-due" class="pay-total-value">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="pay-display">
+                    <div class="pay-display-label">Amount Tendered</div>
+                    <div id="calc-display" class="pay-display-value">$0.00</div>
+                </div>
+
+                <div class="pay-quick">
+                    <button class="btn-sm pay-quick-btn" onclick="window.app.posScreen.addCash(5)">+$5</button>
+                    <button class="btn-sm pay-quick-btn" onclick="window.app.posScreen.addCash(10)">+$10</button>
+                    <button class="btn-sm pay-quick-btn" onclick="window.app.posScreen.addCash(20)">+$20</button>
+                </div>
+
+                <div class="calc-grid pay-keypad">
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('1')">1</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('2')">2</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('3')">3</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('4')">4</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('5')">5</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('6')">6</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('7')">7</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('8')">8</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('9')">9</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('.')">.</button>
+                    <button class="calc-btn" onclick="window.app.posScreen.cashInput('0')">0</button>
+                    <button class="calc-btn pay-clear" onclick="window.app.posScreen.cashClear()">C</button>
+                </div>
+
+                <div id="change-display-box" class="change-display-box pay-change">Change Due: $0.00</div>
+
+                <div class="pay-actions">
+                    <button class="btn-pay btn-train" onclick="window.app.helpers.closeModal('modal-cash')">Cancel</button>
+                    <button class="btn-pay btn-success" onclick="window.app.posScreen.finalizeCash()">Finalize</button>
+                </div>
             </div>
         `;
     },
@@ -283,28 +297,34 @@ window.app.posScreen = {
         const content = modal.querySelector('.modal-content');
         
         content.innerHTML = `
-            <div style="text-align:center; margin-bottom:15px;">
-                <h3 style="margin-top:5px;">Card Terminal</h3>
-            </div>
-            <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
-                <button class="btn-sm" style="flex:1" onclick="document.getElementById('card-mode-swipe').style.display='block'; document.getElementById('card-mode-manual').style.display='none';">Swipe</button>
-                <button class="btn-sm" style="flex:1" onclick="document.getElementById('card-mode-swipe').style.display='none'; document.getElementById('card-mode-manual').style.display='block';">Manual Entry</button>
-            </div>
-            <div id="card-mode-swipe">
-                <div class="swipe-track" onclick="window.app.posScreen.simulateSwipe()"><div id="swipe-anim" class="swipe-anim">SLIDE CARD HERE &rarr;</div></div>
-                <p style="text-align:center; color:#888; font-size:0.8rem;">Click track to simulate swipe</p>
-            </div>
-            <div id="card-mode-manual" style="display:none;">
-                <input type="tel" id="cc-num" class="form-control" placeholder="Card Number (0000 0000 0000 0000)">
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="cc-exp" class="form-control" placeholder="MM/YY">
-                    <input type="tel" id="cc-cvv" class="form-control" placeholder="CVV">
+            <div class="pay-modal">
+                <div class="pay-header">
+                    <h3>Card Terminal</h3>
+                    <div class="pay-total">
+                        <span>Ready to Process</span>
+                        <div class="pay-total-value">Insert or Swipe</div>
+                    </div>
                 </div>
-            </div>
-            <div id="card-msg" style="text-align:center; color:var(--success); font-weight:bold; height:20px; margin:10px 0;"></div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn-pay btn-train" style="flex:1" onclick="window.app.helpers.closeModal('modal-card')">Cancel</button>
-                <button id="btn-process-card" class="btn-pay btn-card" style="flex:1; opacity:0.5; pointer-events:none;" onclick="window.app.posScreen.finalizeCard()">Process</button>
+                <div class="pay-quick">
+                    <button class="btn-sm pay-quick-btn" onclick="document.getElementById('card-mode-swipe').style.display='block'; document.getElementById('card-mode-manual').style.display='none';">Swipe</button>
+                    <button class="btn-sm pay-quick-btn" onclick="document.getElementById('card-mode-swipe').style.display='none'; document.getElementById('card-mode-manual').style.display='block';">Manual Entry</button>
+                </div>
+                <div id="card-mode-swipe">
+                    <div class="swipe-track" onclick="window.app.posScreen.simulateSwipe()"><div id="swipe-anim" class="swipe-anim">SLIDE CARD HERE &rarr;</div></div>
+                    <p style="text-align:center; color:#888; font-size:0.8rem;">Click track to simulate swipe</p>
+                </div>
+                <div id="card-mode-manual" style="display:none;">
+                    <input type="tel" id="cc-num" class="form-control" placeholder="Card Number (0000 0000 0000 0000)">
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="cc-exp" class="form-control" placeholder="MM/YY">
+                        <input type="tel" id="cc-cvv" class="form-control" placeholder="CVV">
+                    </div>
+                </div>
+                <div id="card-msg" style="text-align:center; color:var(--success); font-weight:bold; height:20px; margin:10px 0;"></div>
+                <div class="pay-actions">
+                    <button class="btn-pay btn-train" onclick="window.app.helpers.closeModal('modal-card')">Cancel</button>
+                    <button id="btn-process-card" class="btn-pay btn-card" style="opacity:0.5; pointer-events:none;" onclick="window.app.posScreen.finalizeCard()">Process</button>
+                </div>
             </div>
         `;
     },
