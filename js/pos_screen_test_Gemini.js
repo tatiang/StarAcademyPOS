@@ -49,6 +49,50 @@ window.app.posScreen = {
         });
     },
 
+    // --- KIOSK VIEW ---
+    renderKioskCategories: function() {
+        const container = document.getElementById('kiosk-categories');
+        if(!container) return;
+        const cats = window.app.data.categories || window.app.defaults.categories || [];
+        let html = `<button class="btn-sm btn-active" onclick="window.app.posScreen.renderKioskGrid('All')">All</button>`;
+        cats.forEach(cat => {
+            html += `<button class="btn-sm" onclick="window.app.posScreen.renderKioskGrid('${cat}')">${cat}</button>`;
+        });
+        container.innerHTML = html;
+    },
+
+    renderKioskGrid: function(category) {
+        const grid = document.getElementById('kiosk-grid');
+        if(!grid) return;
+        grid.innerHTML = '';
+
+        const catWrap = document.getElementById('kiosk-categories');
+        if (catWrap) {
+            catWrap.querySelectorAll('button').forEach(btn => {
+                const isActive = btn.textContent.trim() === category || (category === 'All' && btn.textContent.trim() === 'All');
+                if (isActive) btn.classList.add('btn-active');
+                else btn.classList.remove('btn-active');
+            });
+        }
+
+        const allProducts = window.app.data.products || [];
+        const products = category === 'All' ? allProducts : allProducts.filter(p => p.cat === category);
+
+        products.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'product-card kiosk-card';
+            const imgUrl = p.img || 'https://placehold.co/150';
+            card.innerHTML = `
+                <img src="${imgUrl}" class="prod-img" onerror="this.src='https://placehold.co/150'">
+                <div class="prod-info">
+                    <h4>${p.name}</h4>
+                    <div>${window.app.helpers.formatCurrency(p.price)}</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    },
+
     addToCart: function(product) {
         if (!window.app.data.cart) window.app.data.cart = [];
         const item = { id: product.id, name: product.name, price: product.price, qty: 1, opts: [] };

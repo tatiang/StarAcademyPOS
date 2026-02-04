@@ -266,6 +266,16 @@ window.app.loginScreen = {
     const verEl = document.getElementById("app-version");
     if (verEl && window.app?.version) verEl.innerText = window.app.version;
 
+    // Prompt clock-in for employees
+    if (!isAdmin && window.app?.timeClock?.clockInByName) {
+      const emp = window.app.timeClock.findEmployeeByName(role);
+      if (emp && emp.status !== "in") {
+        if (window.confirm(`Clock in now, ${role}?`)) {
+          window.app.timeClock.clockInByName(role);
+        }
+      }
+    }
+
     // Show/Hide Nav
     const mgr = document.getElementById("nav-manager");
     const it = document.getElementById("nav-it");
@@ -276,6 +286,25 @@ window.app.loginScreen = {
   },
 
   logout: function () {
+    const session = window.app?.session || {};
+    const userName = session.userName;
+    const isAdmin = session.isAdmin;
+
+    if (userName && window.app?.timeClock) {
+      if (isAdmin) {
+        const confirmOut = window.confirm(
+          "Clock out all currently clocked-in employees before logging out?"
+        );
+        if (confirmOut) window.app.timeClock.clockOutAll();
+      } else {
+        const emp = window.app.timeClock.findEmployeeByName(userName);
+        if (emp && emp.status === "in") {
+          const confirmOut = window.confirm(`Clock out now, ${userName}?`);
+          if (confirmOut) window.app.timeClock.clockOutByName(userName);
+        }
+      }
+    }
+
     const overlay = document.getElementById("login-overlay");
     if (overlay) overlay.style.display = "flex";
 
@@ -297,9 +326,10 @@ window.app.loginScreen = {
 
     if (window.app?.router?.navigate) window.app.router.navigate("kiosk");
 
-    const pos = document.getElementById("pos-grid");
-    const kiosk = document.getElementById("kiosk-grid");
-    if (pos && kiosk) kiosk.innerHTML = pos.innerHTML;
+    if (window.app?.posScreen?.renderKioskCategories) {
+      window.app.posScreen.renderKioskCategories();
+      window.app.posScreen.renderKioskGrid("All");
+    }
   },
 
   exitKioskMode: function () {

@@ -63,8 +63,8 @@ window.app.itHub = {
                 <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
                     <div style="color:#777; font-size:0.85rem;">${this.getLastUpdatedLabel()}</div>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn-sm btn-train" onclick="window.app.itHub.switchTab('dashboard')">Monitor</button>
-                        <button class="btn-sm" onclick="window.app.itHub.switchTab('docs')">Docs & Logs</button>
+                        <button class="btn-sm ${this.currentTab === 'dashboard' ? 'btn-active' : ''}" onclick="window.app.itHub.switchTab('dashboard')">Monitor</button>
+                        <button class="btn-sm ${this.currentTab === 'docs' ? 'btn-active' : ''}" onclick="window.app.itHub.switchTab('docs')">Docs & Logs</button>
                     </div>
                 </div>
             </div>
@@ -139,6 +139,14 @@ window.app.itHub = {
                 </div>
 
                 <div class="mgr-card" style="text-align:left;">
+                    <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">Recent Backups</h3>
+                    <div id="backup-list" style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:#555;">
+                        Loading backups...
+                    </div>
+                    <button class="btn-sm" style="margin-top:12px;" onclick="window.app.itHub.loadBackupList()">Refresh Backups</button>
+                </div>
+
+                <div class="mgr-card" style="text-align:left;">
                     <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">PIN Management</h3>
                     <p style="font-size:0.85rem; color:#666; margin-bottom:12px;">
                         Generate and save new PINs in Firestore. Share them securely with staff.
@@ -174,6 +182,8 @@ window.app.itHub = {
         if (window.app?.database?.updateBackupStatus) {
             window.app.database.updateBackupStatus();
         }
+
+        this.loadBackupList();
     },
 
     // ============================================================
@@ -181,13 +191,13 @@ window.app.itHub = {
     // ============================================================
     renderDocs: function(area) {
         area.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="color:var(--space-indigo); margin:0;"><i class="fa-solid fa-book"></i> Documentation</h2>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-sm" onclick="window.app.itHub.switchTab('dashboard')">Monitor</button>
-                    <button class="btn-sm btn-train" onclick="window.app.itHub.switchTab('docs')">Docs & Logs</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="color:var(--space-indigo); margin:0;"><i class="fa-solid fa-book"></i> Documentation</h2>
+                    <div style="display:flex; gap:10px;">
+                    <button class="btn-sm ${this.currentTab === 'dashboard' ? 'btn-active' : ''}" onclick="window.app.itHub.switchTab('dashboard')">Monitor</button>
+                    <button class="btn-sm ${this.currentTab === 'docs' ? 'btn-active' : ''}" onclick="window.app.itHub.switchTab('docs')">Docs & Logs</button>
+                    </div>
                 </div>
-            </div>
 
             <div style="background:white; padding:20px; border-radius:10px; height:70vh; overflow-y:auto;">
                 
@@ -274,6 +284,48 @@ window.app.itHub = {
     openFirestoreConsole: function() {
         const url = "https://console.firebase.google.com/project/star-academy-cafe-pos/firestore/data";
         window.open(url, "_blank", "noopener");
+    },
+
+    loadBackupList: async function() {
+        const listEl = document.getElementById('backup-list');
+        if (!listEl) return;
+
+        const db = window.app?.database?.db;
+        if (!db) {
+            listEl.innerHTML = '<div>Offline or not connected.</div>';
+            return;
+        }
+
+        listEl.innerHTML = 'Loading backups...';
+
+        try {
+            const snap = await db.collection("backups")
+                .orderBy("timestamp", "desc")
+                .limit(8)
+                .get();
+
+            if (snap.empty) {
+                listEl.innerHTML = '<div>No backups found yet.</div>';
+                return;
+            }
+
+            const rows = [];
+            snap.forEach(doc => {
+                const data = doc.data() || {};
+                const ts = data.timestamp ? new Date(data.timestamp) : null;
+                const tsLabel = ts && !isNaN(ts.getTime())
+                    ? ts.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+                    : "Unknown time";
+                const ver = data.version ? ` • ${data.version}` : "";
+                const reason = data.reason ? ` • ${data.reason}` : "";
+                rows.push(`<div>• ${tsLabel}${ver}${reason}</div>`);
+            });
+
+            listEl.innerHTML = rows.join("");
+        } catch (e) {
+            console.error("Failed to load backups", e);
+            listEl.innerHTML = '<div>Unable to load backups.</div>';
+        }
     },
 
     // ============================================================

@@ -176,9 +176,14 @@
             <section id="view-barista" class="view"><h2>Barista Queue</h2><div id="barista-grid" class="barista-grid" style="display:flex; flex-direction:column; gap:10px;"></div></section>
             <section id="view-inventory" class="view"></section>
             <section id="view-it" class="view"></section>
-            <section id="view-kiosk" class="view" style="background:white; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2000; padding:0; display:none;">
-                <button class="btn-sm" style="position:absolute; top:20px; right:20px; z-index:2001; opacity:0.3;" onclick="window.app.loginScreen.exitKioskMode()">Exit</button>
-                <div style="text-align:center; margin-top:40px;"><h1>Customer Kiosk</h1><div id="kiosk-grid" class="product-grid" style="padding:20px;"></div></div>
+            <section id="view-kiosk" class="view kiosk-view">
+                <button class="btn-sm kiosk-exit" onclick="window.app.loginScreen.exitKioskMode()">Exit</button>
+                <div class="kiosk-header">
+                    <h1>Customer Kiosk</h1>
+                    <div class="kiosk-subtitle">Tap an item to view the menu</div>
+                </div>
+                <div id="kiosk-categories" class="category-tabs kiosk-tabs"></div>
+                <div id="kiosk-grid" class="product-grid kiosk-grid"></div>
             </section>
         </div>
     </div>

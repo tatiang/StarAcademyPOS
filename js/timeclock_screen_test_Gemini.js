@@ -150,4 +150,56 @@ window.app.timeClock = {
         window.app.helpers.closeModal('modal-time-action');
         this.render();
     }
+    ,
+
+    // --- Helpers for login/logout prompts ---
+    findEmployeeByName: function(name) {
+        return (window.app.data.employees || []).find(e => e.name === name);
+    },
+
+    logTimeEntry: function(name, action) {
+        if(!window.app.data.timeEntries) window.app.data.timeEntries = [];
+        window.app.data.timeEntries.push({
+            name: name,
+            action: action,
+            time: new Date().toISOString()
+        });
+    },
+
+    clockInByName: function(name) {
+        const emp = this.findEmployeeByName(name);
+        if (!emp || emp.status === 'in') return;
+        emp.status = 'in';
+        this.logTimeEntry(name, 'in');
+        window.app.database.saveLocal();
+        window.app.database.sync();
+        this.render();
+    },
+
+    clockOutByName: function(name) {
+        const emp = this.findEmployeeByName(name);
+        if (!emp || emp.status === 'out') return;
+        emp.status = 'out';
+        this.logTimeEntry(name, 'out');
+        window.app.database.saveLocal();
+        window.app.database.sync();
+        this.render();
+    },
+
+    clockOutAll: function() {
+        const emps = window.app.data.employees || [];
+        let changed = false;
+        emps.forEach(emp => {
+            if (emp.status === 'in') {
+                emp.status = 'out';
+                this.logTimeEntry(emp.name, 'out');
+                changed = true;
+            }
+        });
+        if (changed) {
+            window.app.database.saveLocal();
+            window.app.database.sync();
+            this.render();
+        }
+    }
 };
