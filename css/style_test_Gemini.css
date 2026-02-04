@@ -413,8 +413,14 @@ body {
 }
 .kiosk-tabs { margin: 20px auto 10px; justify-content: center; display: flex; flex-wrap: wrap; gap: 8px; }
 .kiosk-layout { display: flex; gap: 20px; align-items: flex-start; }
-.kiosk-grid { padding: 10px 0 30px; flex: 2; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-.kiosk-cart { flex: 1; background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; min-width: 260px; }
+.kiosk-grid {
+  padding: 10px 0 30px;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 190px));
+  justify-content: start;
+}
+.kiosk-cart { flex: 0 0 320px; background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; min-width: 280px; }
 .kiosk-cart h3 { margin-top: 0; }
 .kiosk-cart .cart-items { max-height: 50vh; }
 .kiosk-cart .btn-pay { margin-top: 10px; }
@@ -432,23 +438,77 @@ body {
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10002 !important; align-items: center; justify-content: center; }
 .modal.open { display: flex !important; }
 .modal-content { background: white; padding: 25px; border-radius: 12px; width: 350px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+#modal-cash .modal-content,
+#modal-card .modal-content {
+  width: 380px;
+}
 
 /* Payment Modals */
-.pay-modal { display: flex; flex-direction: column; gap: 12px; }
-.pay-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.pay-total { text-align: right; color: #555; font-size: 0.85rem; }
-.pay-total-value { font-size: 1.4rem; font-weight: 800; color: var(--space-indigo); }
-.pay-display { background: #f8f9fb; border: 1px solid #e6e9ef; border-radius: 10px; padding: 10px 12px; }
-.pay-display-label { color: #888; font-size: 0.8rem; }
-.pay-display-value { font-size: 1.6rem; font-weight: 800; }
+.pay-modal { display: flex; flex-direction: column; gap: 14px; }
+.pay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+.pay-title { font-size: 1.1rem; font-weight: 800; color: #111827; }
+.pay-subtitle { font-size: 0.85rem; color: #6b7280; margin-top: 4px; }
+.pay-total-card {
+  text-align: right;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px 12px;
+  min-width: 120px;
+}
+.pay-total-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; }
+.pay-total-value { font-size: 1.5rem; font-weight: 800; color: #111827; }
+.pay-display {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+.pay-display-label { color: #6b7280; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.pay-display-value { font-size: 2rem; font-weight: 800; color: #111827; }
 .pay-quick { display: flex; gap: 8px; }
-.pay-quick-btn { flex: 1; background: #eef2f7; border-color: #d9e0ea; font-weight: 800; }
-.pay-keypad .calc-btn { background: #fff; border: 1px solid #d9dde5; border-radius: 8px; }
+.pay-quick-btn {
+  flex: 1;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 0;
+}
+.pay-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pay-keypad .calc-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+}
 .pay-keypad .calc-btn:active { transform: scale(0.98); }
-.pay-clear { background: #e74c3c !important; color: white; }
-.pay-change { font-weight: 700; }
+.pay-clear { background: #ef4444 !important; color: white; }
+.pay-change {
+  font-weight: 700;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
 .pay-actions { display: flex; gap: 10px; }
-.pay-actions .btn-pay { flex: 1; }
+.pay-actions .btn-pay { flex: 1; border-radius: 12px; font-size: 1.05rem; padding: 14px; }
+.pay-actions .btn-train { background: #e5e7eb; color: #374151; }
+.pay-actions .btn-success { background: #16a34a; }
 
 /* Pin Pad */
 #pin-display { font-size: 2rem; letter-spacing: 5px; text-align: center; margin: 15px 0; background: #eee; padding: 10px; border-radius: 6px; min-height: 40px; }

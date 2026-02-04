@@ -333,6 +333,12 @@ window.app.managerHub = {
                     </tbody>
                 </table>
             </div>
+
+            <div class="mgr-card" style="text-align:left; margin-top:15px;">
+                <h3>Manager PIN</h3>
+                <p style="font-size:0.85rem; color:#666;">Change the Manager PIN (requires current PIN).</p>
+                <button class="btn-sm btn-gold" onclick="window.app.managerHub.changeManagerPin()">Change Manager PIN</button>
+            </div>
         `;
     },
     addStaff: function() {
@@ -391,6 +397,34 @@ window.app.managerHub = {
             window.app.data.employees.splice(i, 1);
             this.saveAndRefresh();
         }
+    },
+
+    changeManagerPin: function() {
+        const html = `
+            <div style="text-align:left; display:flex; flex-direction:column; gap:10px;">
+                <label>Current PIN
+                    <input id="mgr-pin-current" type="password" inputmode="numeric" maxlength="4" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                </label>
+                <label>New PIN
+                    <input id="mgr-pin-new" type="password" inputmode="numeric" maxlength="4" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                </label>
+            </div>
+        `;
+        window.app.helpers.showGenericModal("Change Manager PIN", html, () => {
+            const current = document.getElementById("mgr-pin-current")?.value || "";
+            const next = document.getElementById("mgr-pin-new")?.value || "";
+            const pins = window.app.data.pins || {};
+            if (!pins.Manager) return alert("Manager PIN not set.");
+            if (current !== pins.Manager) return alert("Current PIN is incorrect.");
+            if (!/^\d{4}$/.test(next)) return alert("New PIN must be 4 digits.");
+
+            pins.Manager = next;
+            window.app.data.pins = pins;
+            window.app.database.saveLocal();
+            window.app.database.sync();
+            alert("Manager PIN updated.");
+        });
+        window.app.helpers.openModal("modal-generic");
     },
 
     // ============================================================

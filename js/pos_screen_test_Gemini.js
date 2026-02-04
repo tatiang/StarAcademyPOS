@@ -249,9 +249,12 @@ window.app.posScreen = {
         content.innerHTML = `
             <div class="pay-modal">
                 <div class="pay-header">
-                    <h3>Cash Payment</h3>
-                    <div class="pay-total">
-                        <span>Total Due</span>
+                    <div>
+                        <div class="pay-title">Cash Payment</div>
+                        <div class="pay-subtitle">Enter the amount tendered.</div>
+                    </div>
+                    <div class="pay-total-card">
+                        <div class="pay-total-label">Total Due</div>
                         <div id="cash-total-due" class="pay-total-value">$0.00</div>
                     </div>
                 </div>
@@ -299,10 +302,13 @@ window.app.posScreen = {
         content.innerHTML = `
             <div class="pay-modal">
                 <div class="pay-header">
-                    <h3>Card Terminal</h3>
-                    <div class="pay-total">
-                        <span>Ready to Process</span>
-                        <div class="pay-total-value">Insert or Swipe</div>
+                    <div>
+                        <div class="pay-title">Card Terminal</div>
+                        <div class="pay-subtitle">Swipe, tap, or enter card details.</div>
+                    </div>
+                    <div class="pay-total-card">
+                        <div class="pay-total-label">Status</div>
+                        <div class="pay-total-value">Ready</div>
                     </div>
                 </div>
                 <div class="pay-quick">

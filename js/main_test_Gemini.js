@@ -75,6 +75,14 @@
           window.app.data = merged;
         }
 
+        // Ensure roles list exists for dropdowns
+        if (!window.app.data.roles || window.app.data.roles.length === 0) {
+          window.app.data.roles = window.app.defaults?.roles
+            ? [...window.app.defaults.roles]
+            : [];
+          window.app.database?.saveLocal?.();
+        }
+
         // One-time cleanup for legacy order #1001 if requested
         if (window.app?.data?.cleanupFlags && !window.app.data.cleanupFlags.removedOrder1001) {
           const beforeCount = (window.app.data.orders || []).length;
