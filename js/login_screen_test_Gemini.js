@@ -60,7 +60,19 @@ window.app.loginScreen = {
         return "Unknown";
       })();
 
-    const statusLabel = `${versionLabel ? versionLabel + " • " : ""}Updated: ${lastMod}`;
+    const lastModDate = (() => {
+      const date = lastMod ? new Date(lastMod) : null;
+      if (date && !isNaN(date.getTime())) {
+        return date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+      return lastMod;
+    })();
+
+    const statusLabel = `${versionLabel ? versionLabel + " • " : ""}Updated: ${lastModDate}`;
 
     // Title
     const title = document.createElement("h2");

@@ -11,7 +11,13 @@ window.app.itHub = {
         const raw = window.app?.lastModified || document.lastModified;
         const date = raw ? new Date(raw) : null;
         if (!date || isNaN(date.getTime())) return "Last Updated: Unknown";
-        return `Last Updated: ${date.toLocaleString()}`;
+        return `Last Updated: ${date.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+        })}`;
     },
 
     render: function() {
@@ -126,6 +132,10 @@ window.app.itHub = {
                     <div id="backup-status" style="margin-top:10px; font-size:0.85rem; color:#666;">
                         Auto backup: pending
                     </div>
+
+                    <button class="btn-pay" style="width:100%; margin-top:12px; background:#eef3ff; color:#1E2741;" onclick="window.app.itHub.openFirestoreConsole()">
+                        <i class="fa-solid fa-database"></i> Open Firestore Console
+                    </button>
                 </div>
 
                 <div class="mgr-card" style="text-align:left;">
@@ -259,6 +269,11 @@ window.app.itHub = {
         link.href = dataUri;
         link.download = fileName;
         link.click();
+    },
+
+    openFirestoreConsole: function() {
+        const url = "https://console.firebase.google.com/project/star-academy-cafe-pos/firestore/data";
+        window.open(url, "_blank", "noopener");
     },
 
     // ============================================================

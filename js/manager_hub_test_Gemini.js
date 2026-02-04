@@ -14,7 +14,13 @@ window.app.managerHub = {
         const raw = window.app?.lastModified || document.lastModified;
         const date = raw ? new Date(raw) : null;
         if (!date || isNaN(date.getTime())) return "Last Updated: Unknown";
-        return `Last Updated: ${date.toLocaleString()}`;
+        return `Last Updated: ${date.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+        })}`;
     },
 
     init: function() {
@@ -36,10 +42,10 @@ window.app.managerHub = {
             </div>
             <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
                 <div style="display:flex; gap:10px;">
-                    <button class="btn-sm ${this.state.tab === 'dashboard' ? 'btn-train' : ''}" onclick="window.app.managerHub.switchTab('dashboard')">Dashboard</button>
-                    <button class="btn-sm ${this.state.tab === 'menu' ? 'btn-train' : ''}" onclick="window.app.managerHub.switchTab('menu')">Menu</button>
-                    <button class="btn-sm ${this.state.tab === 'staff' ? 'btn-train' : ''}" onclick="window.app.managerHub.switchTab('staff')">Staff</button>
-                    <button class="btn-sm ${this.state.tab === 'data' ? 'btn-train' : ''}" onclick="window.app.managerHub.switchTab('data')">History</button>
+                    <button class="btn-sm ${this.state.tab === 'dashboard' ? 'btn-active' : ''}" onclick="window.app.managerHub.switchTab('dashboard')">Dashboard</button>
+                    <button class="btn-sm ${this.state.tab === 'menu' ? 'btn-active' : ''}" onclick="window.app.managerHub.switchTab('menu')">Menu</button>
+                    <button class="btn-sm ${this.state.tab === 'staff' ? 'btn-active' : ''}" onclick="window.app.managerHub.switchTab('staff')">Staff</button>
+                    <button class="btn-sm ${this.state.tab === 'data' ? 'btn-active' : ''}" onclick="window.app.managerHub.switchTab('data')">History</button>
                 </div>
             </div>
             <div id="mgr-content-area"></div>
@@ -116,8 +122,8 @@ window.app.managerHub = {
     renderMenuView: function(area) {
         area.innerHTML = `
             <div style="margin-bottom:15px; display:flex; gap:10px;">
-                <button class="btn-sm ${this.state.menuView === 'products' ? 'btn-train' : ''}" onclick="window.app.managerHub.setMenuView('products')">Products</button>
-                <button class="btn-sm ${this.state.menuView === 'categories' ? 'btn-train' : ''}" onclick="window.app.managerHub.setMenuView('categories')">Categories</button>
+                <button class="btn-sm ${this.state.menuView === 'products' ? 'btn-active' : ''}" onclick="window.app.managerHub.setMenuView('products')">Products</button>
+                <button class="btn-sm ${this.state.menuView === 'categories' ? 'btn-active' : ''}" onclick="window.app.managerHub.setMenuView('categories')">Categories</button>
             </div>
             <div id="menu-inner-content"></div>
         `;

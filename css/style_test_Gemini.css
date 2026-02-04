@@ -337,6 +337,7 @@ body {
 .pos-layout { display: flex; gap: 20px; height: 100%; }
 .product-section { flex: 2; overflow-y: auto; }
 .cart-panel { flex: 1; background: white; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
+.cart-panel .form-control { width: 100%; padding: 10px 12px; font-size: 1rem; }
 
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
 .product-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
@@ -371,6 +372,8 @@ body {
 .btn-gold { background: var(--golden-bronze); }
 .btn-train { background: #95a5a6; }
 .btn-sm { padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
+.btn-sm.btn-active { background: var(--space-indigo); color: white; border-color: var(--space-indigo); }
+.btn-sm.btn-active:hover { filter: brightness(1.05); }
 
 /* Modals */
 #modal-container { position: relative; z-index: 10001; }
