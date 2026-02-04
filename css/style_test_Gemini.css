@@ -412,12 +412,19 @@ body {
   padding: 20px 10px 10px;
 }
 .kiosk-tabs { margin: 20px auto 10px; justify-content: center; display: flex; flex-wrap: wrap; gap: 8px; }
-.kiosk-layout { display: flex; gap: 20px; align-items: flex-start; }
+.kiosk-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
 .kiosk-grid {
   padding: 10px 0 30px;
   flex: 1;
   min-width: 0;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 190px));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   justify-content: start;
 }
 .kiosk-cart { flex: 0 0 320px; background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; min-width: 280px; }
@@ -431,6 +438,14 @@ body {
 @media (max-width: 900px) {
   .kiosk-layout { flex-direction: column; }
   .kiosk-cart { width: 100%; }
+}
+
+@media (max-width: 1100px) {
+  .kiosk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .kiosk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Modals */
