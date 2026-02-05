@@ -48,7 +48,7 @@ window.app.itHub = {
         const usagePercent = ((bytes / 5000000) * 100).toFixed(2); // ~5MB LocalStorage Limit
         
         const isOnline = navigator.onLine;
-        const isFirebaseReady = window.app.database.db !== null;
+        const isCloudConnected = window.app.database?.cloudConnected === true;
         const isDataValid = window.app.data && Array.isArray(window.app.data.products);
 
         // --- 2. CALCULATE RECORD STATS ---
@@ -75,7 +75,7 @@ window.app.itHub = {
                     <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">System Health</h3>
                     
                     ${this.renderStatusPill("Network Connection", isOnline, isOnline ? "Online" : "Offline")}
-                    ${this.renderStatusPill("Cloud Database", isFirebaseReady, isFirebaseReady ? "Connected" : "Disconnected")}
+                    ${this.renderStatusPill("Cloud Database", isCloudConnected, isCloudConnected ? "Connected" : "Disconnected")}
                     ${this.renderStatusPill("Local Data Integrity", isDataValid, isDataValid ? "Valid JSON" : "Corrupt")}
                     
                     <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">

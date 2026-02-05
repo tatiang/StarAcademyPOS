@@ -21,6 +21,7 @@ window.app.database = {
     backupIntervalTimer: null,
     lastBackupAt: null,
     backupDebounceMs: 5000,
+    cloudConnected: false,
 
     // 1. Initialize Connection
     init: function() {
@@ -78,10 +79,12 @@ window.app.database = {
             // Write local data to the cloud
             await this.docRef.set(window.app.data);
             
+            this.cloudConnected = true;
             this.updateStatus("Online", "var(--success)");
             this.setOfflineMode(false);
         } catch(e) {
             console.error("Sync Failed", e);
+            this.cloudConnected = false;
             this.updateStatus("Sync Error", "var(--danger)");
             this.setOfflineMode(true);
         }
@@ -94,6 +97,7 @@ window.app.database = {
         this.docRef.onSnapshot((doc) => {
             if (doc.exists) {
                 // CONNECTION SUCCESS
+                this.cloudConnected = true;
                 this.setOfflineMode(false);
                 this.updateStatus("Online", "var(--success)");
 
@@ -145,6 +149,7 @@ window.app.database = {
             }
         }, (error) => {
             console.error("Listener Error:", error);
+            this.cloudConnected = false;
             this.setOfflineMode(true);
             this.updateStatus("Offline", "var(--danger)");
         });
@@ -179,10 +184,12 @@ window.app.database = {
 
     // Toggles the Red Offline Banner at the top of the screen
     setOfflineMode: function(isOffline) {
+        this.cloudConnected = !isOffline;
         const banner = document.getElementById('offline-banner');
         if(banner) {
             banner.style.display = isOffline ? 'block' : 'none';
         }
+        document.body.classList.toggle('offline-banner-visible', isOffline);
     },
 
     // Updates the text in the Sidebar Footer

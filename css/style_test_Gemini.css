@@ -458,6 +458,25 @@ body {
   width: 380px;
 }
 
+/* Offline Banner */
+#offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4000;
+  background: #fee2e2;
+  color: #7f1d1d;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+body.offline-banner-visible {
+  padding-top: 44px;
+}
+
 /* Payment Modals */
 .pay-modal { display: flex; flex-direction: column; gap: 14px; }
 .pay-header {
