@@ -22,6 +22,10 @@ window.app.database = {
     lastBackupAt: null,
     backupDebounceMs: 5000,
     cloudConnected: false,
+    lastFirestoreError: null,
+    retryIntervalSec: 10,
+    retryCountdown: null,
+    retryTimer: null,
 
     // 1. Initialize Connection
     init: function() {
@@ -80,11 +84,13 @@ window.app.database = {
             await this.docRef.set(window.app.data);
             
             this.cloudConnected = true;
+            this.lastFirestoreError = null;
             this.updateStatus("Online", "var(--success)");
             this.setOfflineMode(false);
         } catch(e) {
             console.error("Sync Failed", e);
             this.cloudConnected = false;
+            this.lastFirestoreError = e?.message || String(e);
             this.updateStatus("Sync Error", "var(--danger)");
             this.setOfflineMode(true);
         }
@@ -98,6 +104,7 @@ window.app.database = {
             if (doc.exists) {
                 // CONNECTION SUCCESS
                 this.cloudConnected = true;
+                this.lastFirestoreError = null;
                 this.setOfflineMode(false);
                 this.updateStatus("Online", "var(--success)");
 
@@ -150,6 +157,7 @@ window.app.database = {
         }, (error) => {
             console.error("Listener Error:", error);
             this.cloudConnected = false;
+            this.lastFirestoreError = error?.message || String(error);
             this.setOfflineMode(true);
             this.updateStatus("Offline", "var(--danger)");
         });
@@ -190,6 +198,35 @@ window.app.database = {
             banner.style.display = isOffline ? 'block' : 'none';
         }
         document.body.classList.toggle('offline-banner-visible', isOffline);
+        if (isOffline) this.startRetryTimer();
+        else this.stopRetryTimer();
+    },
+
+    startRetryTimer: function() {
+        if (this.retryTimer) return;
+        this.retryCountdown = this.retryIntervalSec;
+        this.retryTimer = setInterval(() => {
+            if (this.cloudConnected) {
+                this.stopRetryTimer();
+                return;
+            }
+            this.retryCountdown = Math.max(0, (this.retryCountdown ?? this.retryIntervalSec) - 1);
+            if (this.retryCountdown <= 0) {
+                this.retryCountdown = this.retryIntervalSec;
+                this.recheckFirestore();
+            }
+        }, 1000);
+    },
+
+    stopRetryTimer: function() {
+        if (this.retryTimer) clearInterval(this.retryTimer);
+        this.retryTimer = null;
+        this.retryCountdown = null;
+    },
+
+    recheckFirestore: function() {
+        if (!this.docRef) return;
+        this.sync();
     },
 
     // Updates the text in the Sidebar Footer

@@ -49,6 +49,8 @@ window.app.itHub = {
         
         const isOnline = navigator.onLine;
         const isCloudConnected = window.app.database?.cloudConnected === true;
+        const retryCountdown = window.app.database?.retryCountdown;
+        const lastError = window.app.database?.lastFirestoreError;
         const isDataValid = window.app.data && Array.isArray(window.app.data.products);
 
         // --- 2. CALCULATE RECORD STATS ---
@@ -76,6 +78,12 @@ window.app.itHub = {
                     
                     ${this.renderStatusPill("Network Connection", isOnline, isOnline ? "Online" : "Offline")}
                     ${this.renderStatusPill("Cloud Database", isCloudConnected, isCloudConnected ? "Connected" : "Disconnected")}
+                    <div style="font-size:0.85rem; color:#666; margin-top:6px;">
+                        ${retryCountdown !== null && !isCloudConnected ? `Auto-retry in ${retryCountdown}s...` : "Auto-retry idle"}
+                    </div>
+                    <div style="font-size:0.8rem; color:#888; margin-top:4px;">
+                        Last Firestore error: ${lastError ? lastError : "None"}
+                    </div>
                     ${this.renderStatusPill("Local Data Integrity", isDataValid, isDataValid ? "Valid JSON" : "Corrupt")}
                     
                     <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
@@ -127,6 +135,9 @@ window.app.itHub = {
                             <i class="fa-solid fa-upload"></i> Restore
                         </button>
                     </div>
+                    <button class="btn-pay" style="width:100%; margin-bottom:10px; background:#f1f5f9; color:#1f2937;" onclick="window.app.database.recheckFirestore()">
+                        <i class="fa-solid fa-rotate"></i> Recheck Firestore
+                    </button>
                     <input type="file" id="restore-file" style="display:none;" accept=".json" onchange="window.app.itHub.restoreBackup(this)">
 
                     <div id="backup-status" style="margin-top:10px; font-size:0.85rem; color:#666;">
