@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js";
 import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -12,6 +13,10 @@ const firebaseConfig = {
 };
 
 const fbApp = initializeApp(firebaseConfig);
+initializeAppCheck(fbApp, {
+    provider: new ReCaptchaV3Provider("6LcZ9GAsAAAAAI1yVKr9V68SQKpF3Etx-YyjfQFQ"),
+    isTokenAutoRefreshEnabled: true
+});
 const db = getFirestore(fbApp);
 const docRef = doc(db, "stores", "classroom_cafe_main");
 
