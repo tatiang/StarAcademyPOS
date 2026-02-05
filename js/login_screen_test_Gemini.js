@@ -79,12 +79,19 @@ window.app.loginScreen = {
     title.innerText = "System Login";
     container.appendChild(title);
 
-    // Status row
+    // Status row (connectivity lights)
     const statusRow = document.createElement("div");
     statusRow.className = "login-status-row";
+    const networkOnline = navigator.onLine;
+    const cloudConnected = window.app.database?.cloudConnected === true;
+    const cloudLabel = cloudConnected ? "Cloud OK" : "Cloud Down";
+    const networkLabel = networkOnline ? "Network OK" : "Network Down";
+    const cloudClass = cloudConnected ? "status-online" : "status-offline";
+    const networkClass = networkOnline ? "status-online" : "status-offline";
+
     statusRow.innerHTML = `
-      <span class="dot"></span>
-      <span style="color: var(--success); font-weight:800;">Ready</span>
+      <span class="status-pill ${networkClass}"><span class="dot"></span>${networkLabel}</span>
+      <span class="status-pill ${cloudClass}"><span class="dot"></span>${cloudLabel}</span>
       <span class="muted">${statusLabel}</span>
     `;
     container.appendChild(statusRow);

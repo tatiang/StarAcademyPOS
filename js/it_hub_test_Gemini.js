@@ -51,6 +51,7 @@ window.app.itHub = {
         const isCloudConnected = window.app.database?.cloudConnected === true;
         const retryCountdown = window.app.database?.retryCountdown;
         const lastError = window.app.database?.lastFirestoreError;
+        const isPermissionsIssue = lastError && /permission|insufficient/i.test(lastError);
         const isDataValid = window.app.data && Array.isArray(window.app.data.products);
 
         // --- 2. CALCULATE RECORD STATS ---
@@ -84,6 +85,11 @@ window.app.itHub = {
                     <div style="font-size:0.8rem; color:#888; margin-top:4px;">
                         Last Firestore error: ${lastError ? lastError : "None"}
                     </div>
+                    ${isPermissionsIssue ? `
+                        <div style="margin-top:6px; padding:8px 10px; background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; color:#9a3412; font-size:0.8rem;">
+                            Permissions blocked. Check Firestore rules and allow access for this app.
+                        </div>
+                    ` : ""}
                     ${this.renderStatusPill("Local Data Integrity", isDataValid, isDataValid ? "Valid JSON" : "Corrupt")}
                     
                     <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
@@ -146,6 +152,9 @@ window.app.itHub = {
 
                     <button class="btn-pay" style="width:100%; margin-top:12px; background:#eef3ff; color:#1E2741;" onclick="window.app.itHub.openFirestoreConsole()">
                         <i class="fa-solid fa-database"></i> Open Firestore Console
+                    </button>
+                    <button class="btn-pay" style="width:100%; margin-top:8px; background:#f8fafc; color:#1f2937;" onclick="window.app.itHub.openFirestoreRules()">
+                        <i class="fa-solid fa-shield-halved"></i> Firestore Rules (Test)
                     </button>
                 </div>
 
@@ -323,6 +332,11 @@ window.app.itHub = {
 
     openFirestoreConsole: function() {
         const url = "https://console.firebase.google.com/u/1/project/star-academy-cafe-pos/firestore/databases/-default-/data";
+        window.open(url, "_blank", "noopener");
+    },
+
+    openFirestoreRules: function() {
+        const url = "https://console.firebase.google.com/u/1/project/star-academy-cafe-pos/firestore/rules";
         window.open(url, "_blank", "noopener");
     },
 

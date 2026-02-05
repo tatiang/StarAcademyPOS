@@ -4,7 +4,7 @@
 
 window.app = {
     version: "v2.50", // Updated Version
-    lastModified: "2026-02-05T12:19:13-08:00",
+    lastModified: "2026-02-05T14:41:33-08:00",
     storageKey: "star_pos_v2_data",
     taxRate: 0.0925,
     session: {

@@ -111,13 +111,28 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--success);
   display: inline-block;
 }
 
 .login-status-row .muted {
   color: #9aa0a6;
 }
+
+.login-status-row .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.login-status-row .status-online .dot { background: var(--success); }
+.login-status-row .status-offline .dot { background: var(--danger); }
+.login-status-row .status-warn .dot { background: #f59e0b; }
 
 /* Primary kiosk button */
 .btn-kiosk {
