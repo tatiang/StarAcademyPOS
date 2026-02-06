@@ -156,6 +156,18 @@ window.app.itHub = {
                     <button class="btn-pay" style="width:100%; margin-top:8px; background:#f8fafc; color:#1f2937;" onclick="window.app.itHub.openFirestoreRules()">
                         <i class="fa-solid fa-shield-halved"></i> Firestore Rules (Test)
                     </button>
+                    <div style="margin-top:10px; padding:10px; border:1px solid #e5e7eb; border-radius:8px; background:#f8fafc;">
+                        <div style="font-weight:700; font-size:0.85rem; margin-bottom:6px;">Rules Snippet (Testing)</div>
+                        <textarea readonly style="width:100%; min-height:110px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size:0.8rem; padding:8px; border-radius:6px; border:1px solid #e5e7eb; background:white;">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /stores/{docId} {
+      allow read, write: if true;
+    }
+  }
+}</textarea>
+                        <button class="btn-sm" style="margin-top:8px;" onclick="window.app.itHub.copyRulesSnippet()">Copy Snippet</button>
+                    </div>
                 </div>
 
                 <div class="mgr-card" style="text-align:left;">
@@ -338,6 +350,17 @@ window.app.itHub = {
     openFirestoreRules: function() {
         const url = "https://console.firebase.google.com/u/1/project/star-academy-cafe-pos/firestore/rules";
         window.open(url, "_blank", "noopener");
+    },
+
+    copyRulesSnippet: async function() {
+        const snippet = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /stores/{docId} {\n      allow read, write: if true;\n    }\n  }\n}`;
+        try {
+            await navigator.clipboard.writeText(snippet);
+            alert("Rules snippet copied.");
+        } catch (e) {
+            console.error("Copy failed", e);
+            alert("Copy failed. Please select and copy manually.");
+        }
     },
 
     backupFilter: "all",
